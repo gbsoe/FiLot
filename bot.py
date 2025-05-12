@@ -277,26 +277,29 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         await update.message.reply_markdown(
             f"👋 Welcome to FiLot, {user.first_name}!\n\n"
             "I'm your AI-powered investment assistant for cryptocurrency liquidity pools. "
-            "With real-time analytics and personalized insights, I'll help you make informed investment decisions.\n\n"
-            "🤖 *FiLot Bot Features*\n"
-            "• Tap 💰 *Invest* to start the simplified investment flow\n"
-            "• Tap 🔍 *Explore* to learn about pools and simulate returns\n"
-            "• Tap 👤 *Account* to manage wallet and profile settings\n\n"
-            "You can also ask me any questions about FiLot, LA! Token, or crypto investing in general.",
+            "With just one tap, you can now invest, explore, and manage your account!\n\n"
+            "🤖 *New One-Touch Interface*\n"
+            "• Tap 💰 *Invest* to get personalized investment recommendations\n"
+            "• Tap 🔍 *Explore* to discover top pools and simulate returns\n"
+            "• Tap 👤 *Account* to connect wallet and set preferences\n\n"
+            "I can also answer any questions about cryptocurrencies and help guide your investment decisions!",
             reply_markup=get_main_menu()
         )
         
         # Then, provide the persistent keyboard for easier access
         from keyboard_utils import MAIN_KEYBOARD
-        await update.message.reply_text(
-            "I've set up quick-access buttons below to make investing even easier! Just tap a button to get started:",
+        await update.message.reply_markdown(
+            "👇 *Just tap the buttons below* 👇\n\n"
+            "I've added these persistent buttons that stay available at all times!\n"
+            "This makes navigating much easier - just one tap to access any feature!",
             reply_markup=MAIN_KEYBOARD
         )
     except Exception as e:
         logger.error(f"Error in start command: {e}")
         from keyboard_utils import MAIN_KEYBOARD
-        await update.message.reply_text(
-            "Sorry, an error occurred while processing your request. Please try again later.",
+        await update.message.reply_markdown(
+            "Sorry, an error occurred while processing your request.\n\n"
+            "Please try the buttons below to access features:",
             reply_markup=MAIN_KEYBOARD
         )
 
@@ -313,16 +316,17 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         
         # Send help message with focus on the button-based UX
         await update.message.reply_markdown(
-            "🤖 *FiLot Bot - Quick Guide*\n\n"
-            "*New Button-Based Interface:*\n"
-            "• Tap 💰 *Invest* to start guided investment steps\n"
-            "• Tap 🔍 *Explore* to browse pools and simulate returns\n"
-            "• Tap 👤 *Account* to manage wallet and profile settings\n\n"
-            "*Natural Language Commands:*\n"
-            "• Type \"I want to invest $500\" to start with that amount\n"
-            "• Ask \"Show me my positions\" to view your investments\n"
-            "• Say \"What's the best pool for $1000?\" for personalized advice\n\n"
-            "You can also ask me questions about cryptocurrencies and DeFi concepts at any time!",
+            "🤖 *FiLot Bot - New One-Command Interface*\n\n"
+            "*Just one tap to access any feature:*\n"
+            "• 💰 *Invest* - View opportunities and manage investments\n"
+            "• 🔍 *Explore* - Discover top pools and simulate returns\n"
+            "• 👤 *Account* - Connect wallet and set preferences\n\n"
+            "*The buttons remain available at all times* - no more typing commands!\n\n"
+            "*You can still use natural language:*\n"
+            "• \"I want to invest $500\" - I'll guide you through options\n"
+            "• \"Show my positions\" - I'll display your investments\n"
+            "• \"What's the best pool now?\" - I'll provide current recommendations\n\n"
+            "💡 *Pro tip:* The persistent buttons below make navigation instant!",
             reply_markup=get_main_menu()
         )
         
@@ -336,8 +340,11 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         )
     except Exception as e:
         logger.error(f"Error in help command: {e}")
-        await update.message.reply_text(
-            "Sorry, an error occurred while processing your request. Please try again later."
+        from keyboard_utils import MAIN_KEYBOARD
+        await update.message.reply_markdown(
+            "Sorry, an error occurred while processing your request.\n\n"
+            "Please use the buttons below to access features:",
+            reply_markup=MAIN_KEYBOARD
         )
 
 async def account_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
