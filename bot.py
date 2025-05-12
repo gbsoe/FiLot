@@ -285,12 +285,6 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             "I've set up quick-access buttons below to make investing even easier! Just tap a button to get started:",
             reply_markup=MAIN_KEYBOARD
         )
-        
-        # Then, send the persistent keyboard
-        await update.message.reply_text(
-            "Tap a button below to get started:",
-            reply_markup=MAIN_KEYBOARD
-        )
     except Exception as e:
         logger.error(f"Error in start command: {e}")
         await update.message.reply_text(
@@ -310,7 +304,12 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         
         # Send help message with inline buttons
         await update.message.reply_markdown(
-            "🤖 *FiLot Bot Commands*\n"
+            "🤖 *FiLot Bot Features*\n\n"
+            "*One-Command UX:*\n"
+            "• Tap 💰 *Invest* to start the simplified investment flow\n"
+            "• Tap 🔍 *Explore* to learn about pools and simulate returns\n"
+            "• Tap 👤 *Account* to manage wallet and profile settings\n\n"
+            "*Traditional Commands:*\n"
             "• /invest [high-risk|stable] [amount] – full investment flow\n"
             "• /explore [pools|simulate|faq] – learn and explore\n"
             "• /account – manage wallet, profile & settings\n\n"
@@ -318,9 +317,12 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             reply_markup=get_main_menu()
         )
         
+        # Import keyboard module
+        from keyboard_utils import MAIN_KEYBOARD
+        
         # Send persistent keyboard buttons
         await update.message.reply_text(
-            "Or just tap a button below to get started:",
+            "Just tap a button below to quickly access features:",
             reply_markup=MAIN_KEYBOARD
         )
     except Exception as e:
