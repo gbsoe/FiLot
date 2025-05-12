@@ -749,8 +749,9 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # If amount is provided, add investment buttons
         if amount is not None:
             response += (
-                f"Ready to invest ${amount:.2f} in one of these pools?\n"
-                f"Click one of the buttons below to proceed."
+                f"💰 *Ready to Invest ${amount:.2f}*\n\n"
+                f"With our One-Touch interface, you can complete your investment with a single tap. "
+                f"Choose one of these recommended pools below:"
             )
             
             # Create invest buttons for the specific amount
@@ -777,16 +778,30 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             
             reply_markup = InlineKeyboardMarkup(keyboard)
         else:
-            # Without amount, show standard invest menu
+            # Without amount, show standard invest menu with One-Command approach
             response += (
-                f"Use `/invest {profile} <amount>` to invest in these pools. For example:\n"
-                f"`/invest {profile} 100` to invest $100 USD.\n\n"
-                f"Or select an amount below:"
+                f"✨ *Ready to Invest?* ✨\n\n"
+                f"With our One-Touch interface, just select an investment amount using the buttons below. "
+                f"No need to type commands!"
             )
             reply_markup = get_invest_menu()
+            
+            # After sending the inline menu, also ensure the persistent keyboard is shown
+            from keyboard_utils import MAIN_KEYBOARD
+            # We'll add this keyboard after sending the main message
         
         # Send response
         await message.reply_markdown(response, reply_markup=reply_markup)
+        
+        # If showing the standard menu (no amount), also remind about persistent keyboard
+        if amount is None:
+            # Send the persistent keyboard in a follow-up message
+            from keyboard_utils import MAIN_KEYBOARD
+            await message.reply_markdown(
+                "👇 *One-Tap Navigation* 👇\n\n"
+                "These persistent buttons make FiLot even easier to use!",
+                reply_markup=MAIN_KEYBOARD
+            )
         
     except Exception as e:
         logger.error(f"Error in invest_command: {e}", exc_info=True)
