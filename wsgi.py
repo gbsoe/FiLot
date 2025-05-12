@@ -66,6 +66,26 @@ def main():
         # Create logs directory if it doesn't exist
         if not os.path.exists('logs'):
             os.makedirs('logs')
+            
+        # Use our new instance locking system to prevent duplicate bots
+        import time
+        from debug_message_tracking import acquire_instance_lock, force_kill_competing_instances
+        
+        # Try to kill any competing bot instances first
+        killed = force_kill_competing_instances()
+        if killed > 0:
+            logger.warning(f"Killed {killed} competing bot instances")
+            # Sleep briefly to allow processes to terminate
+            time.sleep(2)
+        
+        # Now try to acquire the instance lock
+        if not acquire_instance_lock():
+            logger.critical("Another bot instance appears to be running. Cannot start.")
+            logger.critical("Please terminate the other instance first or delete the .bot_instance.lock file.")
+            # Exit with an error code
+            sys.exit(1)
+            
+        logger.info("Successfully acquired exclusive lock. Starting bot...")
 
         # Start Flask in a separate thread
         flask_thread = threading.Thread(target=run_flask)

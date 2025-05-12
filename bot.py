@@ -2068,10 +2068,21 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         from app import app
         import hashlib
         
+        # Use aggressive anti-loop protection first
+        from anti_loop import is_looping, lock_chat
+        
         query = update.callback_query
         user = query.from_user
+        chat_id = query.message.chat_id
         callback_data = query.data
         
+        # Check if this is a potential message loop with our aggressive protection
+        if is_looping(chat_id, callback_data, query.id):
+            logger.warning(f"Anti-loop system prevented processing callback: {callback_data[:30]}...")
+            # Lock this chat for a short period to prevent more loops
+            lock_chat(chat_id, 5.0)
+            return
+            
         # Create unique tracking IDs for this callback to prevent duplicates
         callback_id = f"cb_{query.id}"
         content_id = f"cb_data_{user.id}_{hashlib.md5(callback_data.encode()).hexdigest()[:8]}"

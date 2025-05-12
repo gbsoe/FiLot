@@ -1,156 +1,74 @@
-# FiLot Telegram Bot Message Loop Bugfix
+# Message Looping Bug Fix
 
-## Issue Description
-The FiLot Telegram bot was experiencing message loops and duplicate responses when users clicked menu buttons or sent messages. This created a poor user experience where:
-- Multiple identical responses were sent for a single button click
-- The same message would trigger repeated responses
-- Clicking buttons could cause an endless loop of messages
+## Problem Description
 
-## Root Cause Analysis
-After investigating the code, several issues were identified that contributed to message looping:
+The FiLot Telegram Bot was experiencing severe message looping issues:
+- Multiple identical responses to the same user message
+- Duplicate callback query handling
+- Competing server processes causing message loops
+- Poor user experience due to chat flooding
 
-1. **Insufficient Message Tracking**: Messages weren't properly tracked, allowing duplicate processing
-2. **Missing Callback Checking**: Callback queries lacked proper duplicate detection
-3. **Parallel Processing Conflicts**: Both main.py and bot.py were handling the same events
-4. **No Content-Based Detection**: Similar messages weren't detected as duplicates 
-5. **Memory Leaks**: Tracking systems didn't manage memory efficiently
+## Root Causes Identified
 
-## Implemented Fixes
+1. **Competing Processes**: Both wsgi.py and main.py were running separate instances of the bot, each polling the Telegram API independently.
 
-### 1. Comprehensive Message Tracking System
-- Added global tracking with unique IDs for all message and callback types
-- Implemented both message ID and content-based tracking for redundancy
-- Created memory management to prevent tracking set from growing unbounded
+2. **Duplicate Message Tracking**: The previous message tracking mechanisms were insufficient and didn't prevent all edge cases.
 
-```python
-# Global tracking systems
-processed_messages = set()
-MAX_PROCESSED_MESSAGES = 1000
-recent_messages = {}
+3. **Callback Query Handling**: Multiple handlers in both bot.py and main.py were processing the same callback queries.
 
-def is_message_processed(chat_id, message_id):
-    """Check if a message has already been processed and mark it as processed if not."""
-    global processed_messages
-    
-    # Create a unique tracking ID for this message
-    tracking_id = f"{chat_id}_{message_id}"
-    
-    # Check if we've seen this message before
-    if tracking_id in processed_messages:
-        return True
-        
-    # Mark message as processed
-    processed_messages.add(tracking_id)
-    
-    # Maintain max size for processed_messages
-    if len(processed_messages) > MAX_PROCESSED_MESSAGES:
-        processed_messages_list = list(processed_messages)
-        processed_messages = set(processed_messages_list[-MAX_PROCESSED_MESSAGES:])
-        
-    return False
-```
+4. **No Process Locking**: There was no locking mechanism to ensure only one bot instance was running at a time.
 
-### 2. Enhanced Callback Query Protection
-- Added multiple tracking IDs for each callback query
-- Created both ID-based and content-based checks
-- Implemented redundant protection in both main.py and bot.py
+## Solution Implemented
 
-```python
-# Create multiple tracking IDs to robustly prevent duplicate processing
-query_track_id = f"cb_{query_id}"
-data_track_id = f"cb_data_{chat_id}_{hashlib.md5(callback_data.encode()).hexdigest()[:8]}"
+The solution employs a multi-layered approach:
 
-# Check if we've already processed this callback using any of our tracking methods
-if is_message_processed(chat_id, query_track_id) or is_message_processed(chat_id, data_track_id):
-    logger.info(f"Skipping already processed callback query {query_id} with data {callback_data}")
-    # Skip further processing for this callback
-    return
-    
-# Mark both IDs as processed
-is_message_processed(chat_id, query_track_id)
-is_message_processed(chat_id, data_track_id)
-```
+### 1. Process-Level Protection
 
-### 3. Duplicate Message Content Detection
-- Added hash-based message content fingerprinting
-- Created time-windowed tracking to prevent similar messages within 10 seconds
-- Implemented memory management for the tracking system
+- Created a file-based locking system that ensures only one bot instance can run
+- Added ability to detect and terminate competing bot processes
+- Implemented instance ID tracking to identify which process is handling messages
 
-```python
-def send_response(chat_id, text, parse_mode=None, reply_markup=None, message_id=None):
-    try:
-        # Create a unique identifier for this message to prevent duplicates
-        msg_hash = f"{chat_id}_{hashlib.md5(text.encode()).hexdigest()[:8]}"
-        
-        # Check if we've already sent a very similar message in the last 10 seconds
-        now = time.time()
-        if msg_hash in recent_messages:
-            if now - recent_messages[msg_hash] < 10:
-                logger.warning(f"Preventing duplicate message: {text[:30]}...")
-                return
-        
-        # Update the recent messages tracker
-        recent_messages[msg_hash] = now
-        
-        # Clean up old messages to prevent memory leak
-        old_msgs = [k for k, v in recent_messages.items() if now - v > 30]
-        for k in old_msgs:
-            recent_messages.pop(k, None)
-```
+### 2. Database-Backed Message Tracking
 
-### 4. Regular Message Enhanced Tracking
-- Implemented multiple tracking methods for regular text messages
-- Added content hash-based tracking to prevent processing similar messages
-- Created redundant protection across different message handlers
+- Added SQLite database tracking for all messages and callbacks
+- Used hash-based message fingerprinting to detect similar messages
+- Implemented time-based expiration of message tracking
 
-```python
-# Create multiple tracking IDs for this message
-msg_track_id = f"msg_{message_id}"
-msg_content_id = f"msg_content_{chat_id}_{hashlib.md5(message_text.encode()).hexdigest()[:8]}"
+### 3. Bot Framework Patching
 
-# Check if we've already processed this message using any tracking method
-if is_message_processed(chat_id, msg_track_id) or is_message_processed(chat_id, msg_content_id):
-    logger.info(f"Skipping already processed message {message_id}: {message_text[:30]}...")
-    # Skip further processing for this message
-    return
-    
-# Mark both IDs as processed
-is_message_processed(chat_id, msg_track_id)
-is_message_processed(chat_id, msg_content_id)
-```
+- Added function decorators that patch key message handling functions in bot.py
+- Implemented monkey-patching for better compatibility
 
-### 5. User Data Context Tracking
-- Added user_data context flags to track message handling status
-- Implemented redundant checks in handler functions 
-- Created multiple tracking mechanisms in both main.py and bot.py
+### 4. Callback Centralization
 
-```python
-# Store callback tracking IDs for additional protection
-if not hasattr(context, 'user_data'):
-    context.user_data = {}
+- Created a centralized callback registry and router in callback_handler.py
+- Ensured all callback queries go through a single path regardless of source
 
-# Check multiple ways to detect duplicates
-if context.user_data.get("callback_handled", False):
-    logger.info("Skipping already handled callback query (user_data flag)")
-    return
-    
-if context.user_data.get(callback_id, False) or context.user_data.get(content_id, False):
-    logger.info(f"Skipping duplicate callback: {callback_data[:30]}...")
-    return
-    
-# Mark as being handled using multiple methods for redundancy
-context.user_data["callback_handled"] = True
-context.user_data["message_response_sent"] = False
-context.user_data[callback_id] = True
-context.user_data[content_id] = True
-```
+## Files Changed
 
-## Testing Procedures
-1. Click menu buttons repeatedly to verify no duplicate messages
-2. Send the same message multiple times to ensure single processing
-3. Use inline keyboards to verify callbacks are processed once
-4. Restart the bot and check message handling remains stable
-5. Monitor logs for "Skipping already processed" indicators
+1. **anti_loop.py** - Core protection system with monkey patching capabilities
+2. **debug_message_tracking.py** - SQLite-backed message tracking with process locking
+3. **callback_handler.py** - Centralized callback handling registry
+4. **main.py** - Added instance locking and anti-loop protection
+5. **wsgi.py** - Added instance locking and competing process detection
+6. **bot.py** - Enhanced callback handling with anti-loop protection
 
-## Conclusion
-The implemented changes provide multiple layers of protection against message looping and duplicate responses. By using redundant tracking methods and content-based fingerprinting, the bot now provides a more stable and predictable user experience when interacting with buttons and commands.
+## Testing
+
+This solution has been tested under high load conditions with:
+- Multiple simultaneous users
+- Rapid button clicking
+- Multiple processes trying to run concurrently
+
+## Usage Notes
+
+- The `.bot_instance.lock` file indicates an active bot instance
+- If the bot fails to start due to a lock, but no bot is running, delete this file
+- The `bot_status.db` file contains message tracking data
+- If needed, the tracking can be reset by deleting `bot_status.db` and restarting
+
+## Future Improvements
+
+1. Add a centralized message queue for more robust message handling
+2. Implement Redis-based tracking for distributed deployments
+3. Add webhook support as an alternative to polling

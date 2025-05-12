@@ -24,6 +24,10 @@ MAX_PROCESSED_MESSAGES = 1000
 # Dictionary to track recently sent messages to prevent duplicates
 recent_messages = {}
 
+# ANTI-LOOP SYSTEM: Import the aggressive anti-loop protection system
+# This will automatically monkey-patch key functions to prevent message loops
+import anti_loop
+
 def is_message_processed(chat_id, message_id):
     """
     Check if a message has already been processed and mark it as processed if not.
