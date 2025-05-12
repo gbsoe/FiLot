@@ -12,7 +12,7 @@ import qrcode
 from typing import Dict, List, Any, Optional, Union, Tuple
 import traceback
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ContextTypes, Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
 from dotenv import load_dotenv
 
@@ -62,6 +62,26 @@ from menus import (
     is_pool_inquiry,
     is_wallet_inquiry,
     extract_amount
+)
+
+# Import keyboard utilities for persistent keyboards
+from keyboard_utils import (
+    MAIN_KEYBOARD,
+    RISK_PROFILE_KEYBOARD,
+    BACK_KEYBOARD,
+    INVEST_INLINE
+)
+
+# Import investment flow handlers
+from investment_flow import (
+    start_invest_flow,
+    process_invest_amount,
+    process_risk_profile,
+    confirm_investment,
+    handle_back_to_main,
+    STATE_AWAITING_AMOUNT,
+    STATE_AWAITING_PROFILE,
+    STATE_AWAITING_CONFIRMATION
 )
 
 # Initialize AI service
@@ -245,6 +265,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         from menus import get_main_menu
         
         logger.info(f"Sending welcome message to user {user.id}")
+        
+        # First, send the welcome message with inline buttons
         await update.message.reply_markdown(
             f"👋 Welcome to FiLot, {user.first_name}!\n\n"
             "I'm your AI-powered investment assistant for cryptocurrency liquidity pools. "
@@ -255,6 +277,12 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             "• /account – manage wallet, profile & settings\n\n"
             "You can also ask me any questions about FiLot, LA! Token, or crypto investing in general.",
             reply_markup=get_main_menu()
+        )
+        
+        # Then, send the persistent keyboard
+        await update.message.reply_text(
+            "Tap a button below to get started:",
+            reply_markup=MAIN_KEYBOARD
         )
     except Exception as e:
         logger.error(f"Error in start command: {e}")
@@ -273,6 +301,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         # Import here to avoid circular imports
         from menus import get_main_menu
         
+        # Send help message with inline buttons
         await update.message.reply_markdown(
             "🤖 *FiLot Bot Commands*\n"
             "• /invest [high-risk|stable] [amount] – full investment flow\n"
@@ -280,6 +309,12 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             "• /account – manage wallet, profile & settings\n\n"
             "You can also ask me questions about FiLot, LA! Token, or DeFi concepts.",
             reply_markup=get_main_menu()
+        )
+        
+        # Send persistent keyboard buttons
+        await update.message.reply_text(
+            "Or just tap a button below to get started:",
+            reply_markup=MAIN_KEYBOARD
         )
     except Exception as e:
         logger.error(f"Error in help command: {e}")
@@ -1459,8 +1494,9 @@ async def walletconnect_command(update: Update, context: ContextTypes.DEFAULT_TY
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handle user messages that are not commands.
-    Intelligently detects questions, investing intent, or position inquiries
+    Intelligently detects questions, investing intent, button presses, or position inquiries
     and routes to the appropriate handlers or AI for specialized financial advice.
+    Also handles simplified one-command UX with buttons.
     """
     try:
         user = update.effective_user
@@ -1478,6 +1514,47 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 command="message",  # Changed from None to avoid type error
                 query_text=message_text
             )
+            
+        # Check if this is a button press from the persistent keyboard
+        if message_text == "💰 Invest":
+            logger.info(f"User {user.id} pressed the Invest button")
+            # Start the investment flow
+            await start_invest_flow(update, context)
+            return
+            
+        elif message_text == "🔍 Explore":
+            logger.info(f"User {user.id} pressed the Explore button")
+            # Trigger the explore command
+            context.args = []
+            await explore_command(update, context)
+            return
+            
+        elif message_text == "👤 Account":
+            logger.info(f"User {user.id} pressed the Account button")
+            # Trigger the account command
+            context.args = []
+            await account_command(update, context)
+            return
+            
+        elif message_text == "⬅️ Back to Main Menu":
+            logger.info(f"User {user.id} pressed the Back button")
+            # Handle back to main menu
+            await handle_back_to_main(update, context)
+            return
+            
+        # Check if we're in an ongoing investment flow
+        if hasattr(context, 'user_data') and 'state' in context.user_data:
+            state = context.user_data['state']
+            
+            if state == STATE_AWAITING_AMOUNT:
+                # We're waiting for an amount input
+                await process_invest_amount(update, context)
+                return
+                
+            elif state == STATE_AWAITING_PROFILE:
+                # We're waiting for a profile selection
+                await process_risk_profile(update, context)
+                return
         
         # Check for investment intent
         if is_investment_intent(message_text):
@@ -1500,18 +1577,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 await invest_command(update, context)
                 return
             else:
-                # No amount, show invest menu
-                context.args = []
-                await invest_command(update, context)
+                # No amount, start the investment flow instead of just showing menu
+                await start_invest_flow(update, context)
                 return
         
         # Check for position inquiry
         if is_position_inquiry(message_text):
             logger.info(f"Detected position inquiry from user {user.id}")
             
-            # Route to invest command with no args to show positions
+            # Route to positions command to show positions
             context.args = []
-            await invest_command(update, context)
+            await positions_command(update, context)
             return
         
         # Check for pool inquiry

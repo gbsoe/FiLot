@@ -30,8 +30,16 @@ async def start_invest_flow(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         update: Telegram update object
         context: Callback context
     """
+    if not update or not context:
+        logger.error("Update or context is None in start_invest_flow")
+        return
+    
     user = update.effective_user
     message = update.effective_message
+    
+    if not user or not message:
+        logger.error("User or message is None in start_invest_flow")
+        return
     
     # Log activity
     from app import app
@@ -45,7 +53,8 @@ async def start_invest_flow(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     )
     
     # Set state to await amount
-    context.user_data["state"] = STATE_AWAITING_AMOUNT
+    if hasattr(context, 'user_data'):
+        context.user_data["state"] = STATE_AWAITING_AMOUNT
 
 async def process_invest_amount(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
