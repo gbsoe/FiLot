@@ -526,8 +526,11 @@ async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             
     except Exception as e:
         logger.error(f"Error in explore_command: {e}", exc_info=True)
-        await update.message.reply_text(
-            "Sorry, an error occurred while processing your request. Please try again later."
+        from keyboard_utils import MAIN_KEYBOARD
+        await update.message.reply_markdown(
+            "Sorry, an error occurred while processing your request.\n\n"
+            "Please use the buttons below to continue:",
+            reply_markup=MAIN_KEYBOARD
         )
 
 async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -561,9 +564,12 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     try:
                         amount = float(args[1])
                     except ValueError:
-                        await message.reply_text(
-                            "Invalid amount. Please provide a numeric value, for example:\n"
-                            "/invest high-risk 100"
+                        from keyboard_utils import MAIN_KEYBOARD
+                        await message.reply_markdown(
+                            "❗ *Invalid Amount Format*\n\n"
+                            "Please provide a numeric value when investing.\n\n"
+                            "Or simply use the buttons for a smoother experience:",
+                            reply_markup=MAIN_KEYBOARD
                         )
                         return
             else:
@@ -571,9 +577,12 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 try:
                     amount = float(args[0])
                 except ValueError:
-                    await message.reply_text(
-                        "Invalid command format. Use:\n"
-                        "/invest [high-risk|stable] [amount]"
+                    from keyboard_utils import MAIN_KEYBOARD
+                    await message.reply_markdown(
+                        "❗ *Command Format Not Recognized*\n\n"
+                        "For a much simpler experience, try using the buttons below instead!\n\n"
+                        "Our One-Tap Navigation makes investing effortless:",
+                        reply_markup=MAIN_KEYBOARD
                     )
                     return
         
@@ -594,10 +603,19 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             positions = result.get("positions", [])
             
             if not positions:
-                await message.reply_text(
-                    "You don't have any positions yet.\n\n"
-                    "Choose an investment option below:",
+                await message.reply_markdown(
+                    "📈 *No Active Positions*\n\n"
+                    "You don't have any active investments yet.\n\n"
+                    "Choose an investment option below, or use the persistent buttons for quick navigation:",
                     reply_markup=get_invest_menu()
+                )
+                
+                # Also send the persistent keyboard for easy navigation
+                from keyboard_utils import MAIN_KEYBOARD
+                await message.reply_markdown(
+                    "👇 *One-Tap Navigation* 👇\n\n"
+                    "These buttons provide instant access to all features!",
+                    reply_markup=MAIN_KEYBOARD
                 )
                 return
                 
@@ -669,10 +687,20 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await processing_message.delete()
         
         if not result.get("success", False):
-            await message.reply_text(
-                f"❌ Sorry, I couldn't generate recommendations at this time.\n\n"
-                f"Error: {result.get('error', 'Unknown error')}",
+            await message.reply_markdown(
+                f"❌ *Recommendation Error*\n\n"
+                f"I couldn't generate investment recommendations right now.\n"
+                f"Error: {result.get('error', 'Unknown error')}\n\n"
+                f"Please try again using the buttons below:",
                 reply_markup=get_invest_menu()
+            )
+            
+            # Also ensure the persistent keyboard is shown
+            from keyboard_utils import MAIN_KEYBOARD
+            await message.reply_markdown(
+                "👇 *One-Touch Navigation* 👇\n\n"
+                "Use these persistent buttons for quick access to all features!",
+                reply_markup=MAIN_KEYBOARD
             )
             return
             
@@ -762,8 +790,13 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         
     except Exception as e:
         logger.error(f"Error in invest_command: {e}", exc_info=True)
-        await update.message.reply_text(
-            "Sorry, an error occurred while processing your request. Please try again later."
+        # Import the keyboard here to avoid circular imports
+        from keyboard_utils import MAIN_KEYBOARD
+        await update.message.reply_markdown(
+            "❗ *Oops! Something went wrong*\n\n"
+            "Sorry, I encountered an error processing your request.\n\n"
+            "Please try again using one of the buttons below:",
+            reply_markup=MAIN_KEYBOARD
         )
 
 async def info_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
