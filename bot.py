@@ -309,18 +309,18 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         # Import here to avoid circular imports
         from menus import get_main_menu
         
-        # Send help message with inline buttons
+        # Send help message with focus on the button-based UX
         await update.message.reply_markdown(
-            "🤖 *FiLot Bot Features*\n\n"
-            "*One-Command UX:*\n"
-            "• Tap 💰 *Invest* to start the simplified investment flow\n"
-            "• Tap 🔍 *Explore* to learn about pools and simulate returns\n"
+            "🤖 *FiLot Bot - Quick Guide*\n\n"
+            "*New Button-Based Interface:*\n"
+            "• Tap 💰 *Invest* to start guided investment steps\n"
+            "• Tap 🔍 *Explore* to browse pools and simulate returns\n"
             "• Tap 👤 *Account* to manage wallet and profile settings\n\n"
-            "*Traditional Commands:*\n"
-            "• /invest [high-risk|stable] [amount] – full investment flow\n"
-            "• /explore [pools|simulate|faq] – learn and explore\n"
-            "• /account – manage wallet, profile & settings\n\n"
-            "You can also ask me questions about FiLot, LA! Token, or DeFi concepts.",
+            "*Natural Language Commands:*\n"
+            "• Type \"I want to invest $500\" to start with that amount\n"
+            "• Ask \"Show me my positions\" to view your investments\n"
+            "• Say \"What's the best pool for $1000?\" for personalized advice\n\n"
+            "You can also ask me questions about cryptocurrencies and DeFi concepts at any time!",
             reply_markup=get_main_menu()
         )
         
@@ -389,13 +389,23 @@ async def account_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             f"Select an option below to manage your account:"
         )
         
-        # Show the account menu
+        # Import keyboard module
+        from keyboard_utils import MAIN_KEYBOARD
+        
+        # Show the account menu with inline buttons
         await message.reply_markdown(response, reply_markup=get_account_menu())
+        
+        # Also ensure the persistent keyboard is shown
+        await message.reply_text(
+            "Use these buttons to navigate quickly:",
+            reply_markup=MAIN_KEYBOARD
+        )
         
     except Exception as e:
         logger.error(f"Error in account_command: {e}", exc_info=True)
         await update.message.reply_text(
-            "Sorry, an error occurred while processing your request. Please try again later."
+            "Sorry, an error occurred while processing your request. Please try again later.",
+            reply_markup=MAIN_KEYBOARD  # Ensure keyboard is shown even in error case
         )
 
 async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -418,13 +428,23 @@ async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         # Get arguments
         args = context.args
         
+        # Import keyboard module
+        from keyboard_utils import MAIN_KEYBOARD
+        
         # No arguments: Show menu
         if not args:
+            # First show the explore menu with inline buttons
             await message.reply_text(
                 "📊 *Explore DeFi Opportunities* 📊\n\n"
                 "Select an option to explore:",
                 parse_mode="Markdown",
                 reply_markup=get_explore_menu()
+            )
+            
+            # Then ensure the persistent keyboard is shown
+            await message.reply_text(
+                "Or use these quick buttons to navigate:",
+                reply_markup=MAIN_KEYBOARD
             )
             return
             
