@@ -20,6 +20,10 @@ from dotenv import load_dotenv
 import db_utils
 from models import User, Pool, UserQuery, CompositeSignal, Position, PositionStatus, db
 from question_detector import get_predefined_response, is_question
+from intent_detector import (
+    is_investment_intent, is_position_inquiry, is_pool_inquiry, 
+    is_wallet_inquiry, extract_amount
+)
 from raydium_client import get_client
 from utils import format_pool_info, format_simulation_results, format_daily_update
 from wallet_utils import connect_wallet, check_wallet_balance, calculate_deposit_strategy, get_wallet_balances
@@ -2007,9 +2011,16 @@ def create_application():
     # Create the Application
     application = Application.builder().token(token).build()
     
-    # Register existing command handlers
+    # Register core command handlers (simplified UX with 3 main commands)
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
+    
+    # Register the three main commands
+    application.add_handler(CommandHandler("invest", invest_command))
+    application.add_handler(CommandHandler("explore", explore_command))
+    application.add_handler(CommandHandler("account", account_command))
+    
+    # Register legacy/auxiliary commands (still accessible but de-emphasized in help)
     application.add_handler(CommandHandler("info", info_command))
     application.add_handler(CommandHandler("simulate", simulate_command))
     application.add_handler(CommandHandler("subscribe", subscribe_command))
