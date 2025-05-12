@@ -497,6 +497,7 @@ async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             
         # Invalid option
         else:
+            # First show the error with inline buttons
             await message.reply_text(
                 "Invalid option. Available explore options are:\n"
                 "• pools - View top-performing pools\n"
@@ -504,6 +505,12 @@ async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 "• faq - Frequently asked questions\n"
                 "• social - Our social media links",
                 reply_markup=get_explore_menu()
+            )
+            
+            # Then ensure the persistent keyboard is shown
+            await message.reply_text(
+                "Or use these quick buttons to navigate:",
+                reply_markup=MAIN_KEYBOARD
             )
             
     except Exception as e:
