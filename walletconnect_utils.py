@@ -283,7 +283,7 @@ async def create_walletconnect_session(telegram_user_id: int) -> Dict[str, Any]:
         
         # Try to save to database if available, but continue even if it fails
         try:
-            if PSYCOPG2_AVAILABLE and DATABASE_URL:
+            if SQLITE_AVAILABLE:
                 # Use app context for database operations
                 with app.app_context():
                     conn = get_db_connection()
@@ -305,7 +305,7 @@ async def create_walletconnect_session(telegram_user_id: int) -> Dict[str, Any]:
                             """
                             INSERT INTO wallet_sessions 
                             (session_id, session_data, telegram_user_id, status, expires_at) 
-                            VALUES (%s, %s, %s, %s, %s)
+                            VALUES (?, ?, ?, ?, ?)
                             """, 
                             (session_id, Json(session_data), telegram_user_id, "pending", expires_at)
                         )
@@ -369,7 +369,7 @@ async def check_walletconnect_session(session_id: str) -> Dict[str, Any]:
     logger.info("Using legacy session check implementation")
     
     # If the database is not available, provide some basic info
-    if not PSYCOPG2_AVAILABLE or not DATABASE_URL:
+    if not SQLITE_AVAILABLE:
         logger.warning("Database not available for session check, providing default response")
         return {
             "success": True,
@@ -505,7 +505,7 @@ async def kill_walletconnect_session(session_id: str) -> Dict[str, Any]:
     logger.info("Using legacy session deletion implementation")
     
     # If the database is not available, just return success
-    if not PSYCOPG2_AVAILABLE or not DATABASE_URL:
+    if not SQLITE_AVAILABLE:
         logger.warning("Database not available for session deletion, skipping")
         return {
             "success": True,
@@ -575,7 +575,7 @@ async def get_user_walletconnect_sessions(telegram_user_id: int) -> Dict[str, An
     from app import app
     
     # If database not available, return empty list
-    if not PSYCOPG2_AVAILABLE or not DATABASE_URL:
+    if not SQLITE_AVAILABLE:
         logger.warning("Database not available for getting user sessions, returning empty list")
         return {
             "success": True,
