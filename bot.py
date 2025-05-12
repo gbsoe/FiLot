@@ -271,12 +271,19 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             f"👋 Welcome to FiLot, {user.first_name}!\n\n"
             "I'm your AI-powered investment assistant for cryptocurrency liquidity pools. "
             "With real-time analytics and personalized insights, I'll help you make informed investment decisions.\n\n"
-            "🤖 *FiLot Bot Commands*\n"
-            "• /invest [high-risk|stable] [amount] – full investment flow\n"
-            "• /explore [pools|simulate|faq] – learn and explore\n"
-            "• /account – manage wallet, profile & settings\n\n"
+            "🤖 *FiLot Bot Features*\n"
+            "• Tap 💰 *Invest* to start the simplified investment flow\n"
+            "• Tap 🔍 *Explore* to learn about pools and simulate returns\n"
+            "• Tap 👤 *Account* to manage wallet and profile settings\n\n"
             "You can also ask me any questions about FiLot, LA! Token, or crypto investing in general.",
             reply_markup=get_main_menu()
+        )
+        
+        # Then, provide the persistent keyboard for easier access
+        from keyboard_utils import MAIN_KEYBOARD
+        await update.message.reply_text(
+            "I've set up quick-access buttons below to make investing even easier! Just tap a button to get started:",
+            reply_markup=MAIN_KEYBOARD
         )
         
         # Then, send the persistent keyboard
@@ -1865,11 +1872,93 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         # Acknowledge the callback query
         await query.answer()
         
+        # One-command UX specific callbacks
+        if callback_data == "start_invest":
+            # Start the investment flow
+            logger.info(f"User {user.id} clicked inline Invest button")
+            await start_invest_flow(update, context)
+            return
+            
+        elif callback_data == "invest_back_to_profile":
+            # Go back to profile selection in investment flow
+            logger.info(f"User {user.id} went back to profile selection")
+            if 'invest_amount' in context.user_data:
+                amount = context.user_data['invest_amount']
+                await query.message.reply_text(
+                    f"You want to invest ${amount:.2f}.\n\n"
+                    "What risk profile would you prefer?",
+                    reply_markup=RISK_PROFILE_KEYBOARD
+                )
+                context.user_data["state"] = STATE_AWAITING_PROFILE
+            else:
+                # If no amount stored, restart the flow
+                await start_invest_flow(update, context)
+            return
+            
+        elif callback_data.startswith("confirm_invest_"):
+            # User confirmed an investment in a specific pool
+            pool_id = callback_data.replace("confirm_invest_", "")
+            logger.info(f"User {user.id} confirmed investment in pool {pool_id}")
+            await confirm_investment(update, context, pool_id)
+            return
+        
         if callback_data == "walletconnect":
             # Create a new context.args with empty list for the walletconnect command
             context.args = []
             await walletconnect_command(update, context)
             
+        # Handle menu navigation
+        elif callback_data == "menu_invest":
+            # Show invest menu
+            await query.message.edit_reply_markup(reply_markup=get_invest_menu())
+            return
+            
+        elif callback_data == "menu_explore":
+            # Show explore menu
+            await query.message.edit_reply_markup(reply_markup=get_explore_menu())
+            return
+            
+        elif callback_data == "menu_account":
+            # Show account menu
+            await query.message.edit_reply_markup(reply_markup=get_account_menu())
+            return
+            
+        elif callback_data == "menu_main":
+            # Show main menu
+            await query.message.edit_reply_markup(reply_markup=get_main_menu())
+            return
+            
+        # Handle invest menu options
+        elif callback_data.startswith("invest_"):
+            # Parse the investment option
+            parts = callback_data.split("_")
+            if len(parts) >= 3:
+                profile = parts[1]
+                amount = float(parts[2])
+                
+                # Store in user data
+                context.user_data["invest_profile"] = profile
+                context.user_data["invest_amount"] = amount
+                
+                # Get pool data and show options
+                pools = await get_top_pools_for_profile(profile, amount)
+                
+                # Show confirmation options
+                if len(pools) >= 2:
+                    await query.message.reply_markdown(
+                        f"*Investment Options for ${amount}*\n\n"
+                        f"Please choose a pool to invest in:",
+                        reply_markup=get_invest_confirmation_keyboard(pools[0], pools[1])
+                    )
+                    context.user_data["state"] = STATE_AWAITING_CONFIRMATION
+                else:
+                    # Not enough pools, show a message
+                    await query.message.reply_text(
+                        "Sorry, not enough investment options available at the moment. Please try again later.",
+                        reply_markup=MAIN_KEYBOARD
+                    )
+            return
+                
         elif callback_data.startswith("check_wc_"):
             try:
                 # Check WalletConnect session status
