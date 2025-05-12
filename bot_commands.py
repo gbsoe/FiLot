@@ -346,10 +346,14 @@ async def positions_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             
         positions = result.get("positions", [])
         
+        # Import keyboard module
+        from keyboard_utils import MAIN_KEYBOARD
+        
         if not positions:
             await message.reply_text(
                 "You don't have any positions yet.\n\n"
-                "Use /recommend to get investment recommendations and start investing."
+                "Tap 💰 *Invest* to get recommendations and start investing.",
+                reply_markup=MAIN_KEYBOARD
             )
             return
             
@@ -406,13 +410,31 @@ async def positions_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 f"Created: {date_formatted}\n\n"
             )
             
-        # Add call to action
+        # Add call to action for the new button-based UX
         response += (
-            "Use `/exit <position_id>` to exit a specific position.\n"
-            "Example: `/exit demo_pos_sol_usdc_1683921846.2342` to exit the SOL/USDC position."
+            "To exit a position, tap the position ID button below or use the 'Exit Position' option."
         )
         
-        await message.reply_text(response, parse_mode="Markdown")
+        # Create inline keyboard with position exit buttons
+        keyboard = []
+        for position in positions:
+            pos_id = position.get('id', '')
+            if pos_id:
+                keyboard.append([
+                    InlineKeyboardButton(f"Exit {position.get('token_a', '')}/"
+                                        f"{position.get('token_b', '')} Position", 
+                                        callback_data=f"exit_position:{pos_id}")
+                ])
+        
+        # Add back button
+        keyboard.append([InlineKeyboardButton("Back to Main Menu", callback_data="back_to_main")])
+        
+        # Send response with both persistent and inline keyboards
+        await message.reply_text(
+            response, 
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
         
     except Exception as e:
         logger.error(f"Error in positions_command: {e}")

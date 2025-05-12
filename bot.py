@@ -27,6 +27,13 @@ from intent_detector import (
 from raydium_client import get_client
 from utils import format_pool_info, format_simulation_results, format_daily_update
 from wallet_utils import connect_wallet, check_wallet_balance, calculate_deposit_strategy, get_wallet_balances
+from investment_flow import (
+    start_invest_flow, handle_back_to_main, 
+    STATE_AWAITING_AMOUNT, STATE_AWAITING_PROFILE, STATE_AWAITING_CONFIRMATION,
+    process_invest_amount, process_risk_profile, confirm_investment,
+    get_top_pools_for_profile
+)
+from keyboard_utils import MAIN_KEYBOARD, RISK_PROFILE_KEYBOARD, BACK_KEYBOARD
 from walletconnect_utils import (
     create_walletconnect_session, 
     check_walletconnect_session, 
