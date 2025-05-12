@@ -50,7 +50,7 @@ class SolPoolClient:
     def __init__(self):
         """Initialize the client with configuration from environment variables."""
         # Use the correct API URL, ensuring it doesn't end with a slash
-        base_url = os.environ.get("SOLPOOL_API_URL", "https://filotanalytics.replit.app/API")
+        base_url = os.environ.get("SOLPOOL_API_URL", "https://filotanalytics.replit.app/api")
         # Remove trailing slash if it exists to avoid double slash issues
         self.base_url = base_url.rstrip('/')
         self.api_key = os.environ.get("SOLPOOL_API_KEY", "")

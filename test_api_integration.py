@@ -23,6 +23,19 @@ async def test_solpool_api():
     client = get_solpool_client()
     
     try:
+        # Test direct URL access to diagnose
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"{client.base_url}/health") as response:
+                logger.info(f"Direct URL test: {client.base_url}/health")
+                logger.info(f"Status: {response.status}")
+                logger.info(f"Content-Type: {response.headers.get('Content-Type')}")
+                try:
+                    text = await response.text()
+                    logger.info(f"Response (first 500 chars): {text[:500]}")
+                except Exception as e:
+                    logger.error(f"Could not get response text: {e}")
+        
         # Test health check
         health = await client.check_health()
         logger.info(f"SolPool API health check: {'Healthy' if health else 'Unhealthy'}")
@@ -47,6 +60,19 @@ async def test_filotsense_api():
     client = get_filotsense_client()
     
     try:
+        # Test direct URL access to diagnose
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"{client.base_url}/health") as response:
+                logger.info(f"Direct URL test: {client.base_url}/health")
+                logger.info(f"Status: {response.status}")
+                logger.info(f"Content-Type: {response.headers.get('Content-Type')}")
+                try:
+                    text = await response.text()
+                    logger.info(f"Response (first 500 chars): {text[:500]}")
+                except Exception as e:
+                    logger.error(f"Could not get response text: {e}")
+        
         # Test health check
         health = await client.check_health()
         logger.info(f"FiLotSense API health check: {'Healthy' if health else 'Unhealthy'}")
