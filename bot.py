@@ -1474,30 +1474,82 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 command="message",  # Changed from None to avoid type error
                 query_text=message_text
             )
+        
+        # Check for investment intent
+        if is_investment_intent(message_text):
+            logger.info(f"Detected investment intent from user {user.id}")
             
-            # First, check if this is a question
-            question_detected = is_question(message_text)
-            logger.info(f"Is question detection: {question_detected}")
+            # Extract amount if present
+            amount = extract_amount(message_text)
             
-            # Check for predefined responses
-            predefined_response = get_predefined_response(message_text)
-            
-            if predefined_response:
-                logger.info(f"Found predefined response for: {message_text[:30]}...")
+            # If amount is found, route to invest command with amount
+            if amount > 0:
+                logger.info(f"Extracted investment amount: ${amount}")
                 
-                # Send predefined response
-                await update.message.reply_markdown(predefined_response)
+                # Determine profile type (default to high-risk)
+                profile = "high-risk"
+                if "stable" in message_text.lower() or "safe" in message_text.lower():
+                    profile = "stable"
                 
-                # Update the query with the response
-                if query:
-                    query.response_text = predefined_response
-                    query.processing_time = (datetime.datetime.now() - query.timestamp).total_seconds() * 1000
-                    # Save to db in a non-blocking way
-                    asyncio.create_task(update_query_response(query.id, predefined_response, query.processing_time))
-                
-                # Log that we've responded with a predefined answer
-                db_utils.log_user_activity(user.id, "predefined_response", details=f"Question: {message_text[:50]}")
+                # Set up context args for invest_command
+                context.args = [profile, str(amount)]
+                await invest_command(update, context)
                 return
+            else:
+                # No amount, show invest menu
+                context.args = []
+                await invest_command(update, context)
+                return
+        
+        # Check for position inquiry
+        if is_position_inquiry(message_text):
+            logger.info(f"Detected position inquiry from user {user.id}")
+            
+            # Route to invest command with no args to show positions
+            context.args = []
+            await invest_command(update, context)
+            return
+        
+        # Check for pool inquiry
+        if is_pool_inquiry(message_text):
+            logger.info(f"Detected pool inquiry from user {user.id}")
+            
+            # Route to explore command with "pools" arg
+            context.args = ["pools"]
+            await explore_command(update, context)
+            return
+        
+        # Check for wallet inquiry
+        if is_wallet_inquiry(message_text):
+            logger.info(f"Detected wallet inquiry from user {user.id}")
+            
+            # Route to account command
+            await account_command(update, context)
+            return
+            
+        # First, check if this is a question
+        question_detected = is_question(message_text)
+        logger.info(f"Is question detection: {question_detected}")
+        
+        # Check for predefined responses
+        predefined_response = get_predefined_response(message_text)
+        
+        if predefined_response:
+            logger.info(f"Found predefined response for: {message_text[:30]}...")
+            
+            # Send predefined response
+            await update.message.reply_markdown(predefined_response)
+            
+            # Update the query with the response
+            if query:
+                query.response_text = predefined_response
+                query.processing_time = (datetime.datetime.now() - query.timestamp).total_seconds() * 1000
+                # Save to db in a non-blocking way
+                asyncio.create_task(update_query_response(query.id, predefined_response, query.processing_time))
+            
+            # Log that we've responded with a predefined answer
+            db_utils.log_user_activity(user.id, "predefined_response", details=f"Question: {message_text[:50]}")
+            return
         
         # No predefined response available, use Anthropic AI for specialized financial advice
         logger.info(f"No predefined response for: {message_text}, using AI advisor")
