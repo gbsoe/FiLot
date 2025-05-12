@@ -14,8 +14,16 @@ import threading
 import time
 import hashlib
 import json
+import requests
 from collections import deque
 from dotenv import load_dotenv
+
+# Import Telegram components - these need to be accessible globally
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, ContextTypes
+
+# Import keyboard utilities for consistent UI
+from keyboard_utils import MAIN_KEYBOARD
 
 # Global set to track processed messages and prevent duplication
 processed_messages = set()
@@ -232,8 +240,12 @@ def run_telegram_bot():
         def handle_update(update_dict):
             from app import app
             import threading
+            from telegram import Bot
 
             try:
+                # Create a bot instance to use with de_json
+                bot = Bot(token=os.environ.get("TELEGRAM_BOT_TOKEN"))
+                
                 # Convert the dictionary to a Telegram Update object
                 update_obj = Update.de_json(update_dict, bot)
                 logger.info(f"Processing update type: {update_dict.keys()}")
