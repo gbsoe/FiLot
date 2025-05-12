@@ -69,7 +69,7 @@ def main():
             
         # Use our new instance locking system to prevent duplicate bots
         import time
-        from debug_message_tracking import acquire_instance_lock, force_kill_competing_instances
+        from debug_message_tracking import acquire_instance_lock, force_kill_competing_instances, is_message_tracked
         
         # Try to kill any competing bot instances first
         killed = force_kill_competing_instances()
@@ -77,26 +77,39 @@ def main():
             logger.warning(f"Killed {killed} competing bot instances")
             # Sleep briefly to allow processes to terminate
             time.sleep(2)
-        
-        # Now try to acquire the instance lock
-        if not acquire_instance_lock():
-            logger.critical("Another bot instance appears to be running. Cannot start.")
-            logger.critical("Please terminate the other instance first or delete the .bot_instance.lock file.")
-            # Exit with an error code
-            sys.exit(1)
             
-        logger.info("Successfully acquired exclusive lock. Starting bot...")
-
-        # Start Flask in a separate thread
+        # CRITICAL FIX FOR MESSAGE LOOPING:
+        # This process (wsgi.py) should ALWAYS run the Flask app, but only run the Telegram
+        # bot if it can acquire the lock.
+        
+        # Start Flask in a separate thread - this always runs
         flask_thread = threading.Thread(target=run_flask)
         flask_thread.daemon = True
         flask_thread.start()
-
-        # Run bot directly in main thread
-        run_bot()
+        logger.info("Started Flask server thread")
+        
+        # Try to acquire the exclusive bot lock
+        if acquire_instance_lock():
+            logger.info("✅ Successfully acquired exclusive bot lock. Starting Telegram bot...")
+            
+            # Create a marker in the tracking database to indicate this is the primary bot
+            is_message_tracked(0, "PRIMARY_BOT_INSTANCE")
+            
+            # Run bot directly in main thread
+            run_bot()
+        else:
+            # Another process is already running the bot polling
+            logger.warning("⚠️ Another process is already running the Telegram bot.")
+            logger.warning("This process will only run the Flask server and not the Telegram polling.")
+            
+            # Keep the process alive without running the bot
+            while True:
+                time.sleep(10)
+                logger.info("Flask-only process running (no Telegram polling)")
 
     except Exception as e:
         logger.error(f"Error in main function: {e}")
+        logger.error(traceback.format_exc())
         sys.exit(1)
 
 if __name__ == "__main__":

@@ -1200,6 +1200,23 @@ def main():
     Main function to start both the Flask app and Telegram bot
     """
     try:
+        # Check if we're allowed to run the bot using our anti-looping protection
+        from debug_message_tracking import acquire_instance_lock, is_message_tracked
+        
+        # First, check if another process already has the lock 
+        has_lock = acquire_instance_lock()
+        
+        # If another process already holds the lock (likely the Start application workflow)
+        if not has_lock:
+            logger.warning("⚠️ Another process (likely the Start application workflow) already holds the bot lock.")
+            logger.warning("Exiting this process to prevent duplicate polling.")
+            
+            # Exit gracefully
+            logger.info("Exiting to prevent duplicate Telegram polling")
+            sys.exit(0)
+        
+        # We have the lock, proceed with normal startup
+        
         # First, kill any existing bot process that might be running
         try:
             # Try to terminate any other instance gracefully
@@ -1213,6 +1230,10 @@ def main():
                 logger.info("Terminated any existing bot polling")
         except Exception as e:
             logger.warning(f"Failed to terminate existing bot: {e}")
+            
+        # Mark this as the primary bot instance
+        is_message_tracked(0, "MAIN_PY_PRIMARY_BOT_INSTANCE")
+        logger.info("✅ This is now the primary bot instance")
         
         # Start in the appropriate mode
         if os.environ.get('PRODUCTION') == 'true':
