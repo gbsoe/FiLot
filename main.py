@@ -12,7 +12,48 @@ import asyncio
 import traceback
 import threading
 import time
+import hashlib
+import json
+from collections import deque
 from dotenv import load_dotenv
+
+# Global set to track processed messages and prevent duplication
+processed_messages = set()
+# Keep track of only the last 1000 messages to prevent memory leaks
+MAX_PROCESSED_MESSAGES = 1000
+# Dictionary to track recently sent messages to prevent duplicates
+recent_messages = {}
+
+def is_message_processed(chat_id, message_id):
+    """
+    Check if a message has already been processed and mark it as processed if not.
+    
+    Args:
+        chat_id: Chat ID
+        message_id: Message ID
+        
+    Returns:
+        bool: True if the message has already been processed, False otherwise
+    """
+    global processed_messages
+    
+    # Create a unique tracking ID for this message
+    tracking_id = f"{chat_id}_{message_id}"
+    
+    # Check if we've seen this message before
+    if tracking_id in processed_messages:
+        return True
+        
+    # Mark message as processed
+    processed_messages.add(tracking_id)
+    
+    # Maintain max size for processed_messages
+    if len(processed_messages) > MAX_PROCESSED_MESSAGES:
+        # Convert to list, slice, and convert back to set to remove oldest entries
+        processed_messages_list = list(processed_messages)
+        processed_messages = set(processed_messages_list[-MAX_PROCESSED_MESSAGES:])
+        
+    return False
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -204,8 +245,26 @@ def run_telegram_bot():
                         self.bot_data = {}
 
                 # Function to directly send a response without using async
-                def send_response(chat_id, text, parse_mode=None, reply_markup=None):
+                def send_response(chat_id, text, parse_mode=None, reply_markup=None, message_id=None):
                     try:
+                        # Create a unique identifier for this message to prevent duplicates
+                        msg_hash = f"{chat_id}_{hashlib.md5(text.encode()).hexdigest()[:8]}"
+                        
+                        # Check if we've already sent a very similar message in the last 10 seconds
+                        now = time.time()
+                        if msg_hash in recent_messages:
+                            if now - recent_messages[msg_hash] < 10:
+                                logger.warning(f"Preventing duplicate message: {text[:30]}...")
+                                return
+                        
+                        # Update the recent messages tracker
+                        recent_messages[msg_hash] = now
+                        
+                        # Clean up old messages to prevent memory leak
+                        old_msgs = [k for k, v in recent_messages.items() if now - v > 30]
+                        for k in old_msgs:
+                            recent_messages.pop(k, None)
+
                         params = {
                             "chat_id": chat_id,
                             "text": text,
@@ -217,6 +276,11 @@ def run_telegram_bot():
                         if reply_markup:
                             # Direct use of the dictionary
                             params["reply_markup"] = json.dumps(reply_markup)
+                            
+                        # Add message tracking ID if provided
+                        if message_id:
+                            # Use the message ID to mark this as already processed
+                            is_message_processed(chat_id, message_id)
 
                         response = requests.post(f"{base_url}/sendMessage", json=params)
                         if response.status_code != 200:
@@ -628,6 +692,21 @@ def run_telegram_bot():
                     # Basic callback handling without async
                     chat_id = update_obj.callback_query.message.chat_id
                     callback_data = update_obj.callback_query.data
+                    query_id = update_obj.callback_query.id
+                    
+                    # Create multiple tracking IDs to robustly prevent duplicate processing
+                    query_track_id = f"cb_{query_id}"
+                    data_track_id = f"cb_data_{chat_id}_{hashlib.md5(callback_data.encode()).hexdigest()[:8]}"
+                    
+                    # Check if we've already processed this callback using any of our tracking methods
+                    if is_message_processed(chat_id, query_track_id) or is_message_processed(chat_id, data_track_id):
+                        logger.info(f"Skipping already processed callback query {query_id} with data {callback_data}")
+                        # Skip further processing for this callback
+                        return
+                        
+                    # Mark both IDs as processed
+                    is_message_processed(chat_id, query_track_id)
+                    is_message_processed(chat_id, data_track_id)
 
                     logger.info(f"Processing callback data: {callback_data}")
 
@@ -747,12 +826,135 @@ def run_telegram_bot():
                                 )
                                 logger.info("Sent wallet address entry instructions from callback")
 
+                            # Handle menu button callbacks
+                            elif callback_data.startswith("menu_"):
+                                # Get bot instance for update creation
+                                from telegram.ext import Application
+                                
+                                # Get the bot from the global application
+                                bot = Application.get_instance().bot  
+                                
+                                menu_action = callback_data.replace("menu_", "")
+                                
+                                if menu_action == "invest":
+                                    # Create a simplified object to pass to start_invest_flow
+                                    from investment_flow import start_invest_flow
+                                    logger.info(f"Triggering investment flow from menu button")
+                                    
+                                    # Run the investment flow handler using async and the event loop
+                                    import asyncio
+                                    loop = asyncio.new_event_loop()
+                                    asyncio.set_event_loop(loop)
+                                    
+                                    try:
+                                        # Need to create a simplified update object for the handler
+                                        # The telegram Update constructor doesn't take effective_user directly
+                                        # so we'll create a modified update with just the message
+                                        simplified_update = Update.de_json(
+                                            {
+                                                'update_id': update_dict.get('update_id', 0),
+                                                'message': update_obj.callback_query.message.to_dict()
+                                            }, 
+                                            bot
+                                        )
+                                        simplified_context = SimpleContext()
+                                        simplified_context.user_data = {"message_handled": True}
+                                        
+                                        # Run the invest flow handler
+                                        loop.run_until_complete(start_invest_flow(simplified_update, simplified_context))
+                                        logger.info("Successfully triggered investment flow")
+                                    except Exception as menu_error:
+                                        logger.error(f"Error in menu_invest handler: {menu_error}")
+                                        logger.error(traceback.format_exc())
+                                        send_response(
+                                            chat_id,
+                                            "Sorry, there was an error starting the investment flow. Please try again using the 💰 Invest button."
+                                        )
+                                    finally:
+                                        loop.close()
+                                
+                                elif menu_action == "explore":
+                                    # Handle explore menu item
+                                    from bot import explore_command
+                                    logger.info(f"Triggering explore flow from menu button")
+                                    
+                                    # Run the explore command handler using async
+                                    import asyncio
+                                    loop = asyncio.new_event_loop()
+                                    asyncio.set_event_loop(loop)
+                                    
+                                    try:
+                                        # Create a message-based update for the handler
+                                        simplified_update = Update.de_json(
+                                            {
+                                                'update_id': update_dict.get('update_id', 0),
+                                                'message': update_obj.callback_query.message.to_dict()
+                                            }, 
+                                            bot
+                                        )
+                                        simplified_context = SimpleContext()
+                                        simplified_context.args = []
+                                        simplified_context.user_data = {"message_handled": True}
+                                        
+                                        loop.run_until_complete(explore_command(simplified_update, simplified_context))
+                                        logger.info("Successfully triggered explore flow")
+                                    except Exception as menu_error:
+                                        logger.error(f"Error in menu_explore handler: {menu_error}")
+                                        logger.error(traceback.format_exc())
+                                        send_response(
+                                            chat_id,
+                                            "Sorry, there was an error starting the explore flow. Please try again using the 🔍 Explore button."
+                                        )
+                                    finally:
+                                        loop.close()
+                                
+                                elif menu_action == "account":
+                                    # Handle account menu item
+                                    from bot import account_command
+                                    logger.info(f"Triggering account flow from menu button")
+                                    
+                                    # Run the account command handler using async
+                                    import asyncio
+                                    loop = asyncio.new_event_loop()
+                                    asyncio.set_event_loop(loop)
+                                    
+                                    try:
+                                        # Create a message-based update for the handler
+                                        simplified_update = Update.de_json(
+                                            {
+                                                'update_id': update_dict.get('update_id', 0),
+                                                'message': update_obj.callback_query.message.to_dict()
+                                            }, 
+                                            bot
+                                        )
+                                        simplified_context = SimpleContext()
+                                        simplified_context.args = []
+                                        simplified_context.user_data = {"message_handled": True}
+                                        
+                                        loop.run_until_complete(account_command(simplified_update, simplified_context))
+                                        logger.info("Successfully triggered account flow")
+                                    except Exception as menu_error:
+                                        logger.error(f"Error in menu_account handler: {menu_error}")
+                                        logger.error(traceback.format_exc())
+                                        send_response(
+                                            chat_id,
+                                            "Sorry, there was an error starting the account management flow. Please try again using the 👤 Account button."
+                                        )
+                                    finally:
+                                        loop.close()
+                                else:
+                                    logger.warning(f"Unknown menu action: {menu_action}")
+                                    send_response(
+                                        chat_id,
+                                        "Sorry, that menu option is not available yet. Please try another option."
+                                    )
+                            
                             # Handle any other callback type
                             else:
                                 # Send a generic response for unhandled callback types
                                 send_response(
                                     chat_id,
-                                    "I received your selection. Please use /help to see available commands."
+                                    "I received your selection, but I'm not sure how to process it. Please use /help to see available commands."
                                 )
                                 logger.warning(f"Unhandled callback type: {callback_data}")
 
@@ -771,6 +973,21 @@ def run_telegram_bot():
                     logger.info("Handling regular message")
                     chat_id = update_obj.message.chat_id
                     message_text = update_obj.message.text
+                    message_id = update_obj.message.message_id
+                    
+                    # Create multiple tracking IDs for this message
+                    msg_track_id = f"msg_{message_id}"
+                    msg_content_id = f"msg_content_{chat_id}_{hashlib.md5(message_text.encode()).hexdigest()[:8]}"
+                    
+                    # Check if we've already processed this message using any tracking method
+                    if is_message_processed(chat_id, msg_track_id) or is_message_processed(chat_id, msg_content_id):
+                        logger.info(f"Skipping already processed message {message_id}: {message_text[:30]}...")
+                        # Skip further processing for this message
+                        return
+                        
+                    # Mark both IDs as processed
+                    is_message_processed(chat_id, msg_track_id)
+                    is_message_processed(chat_id, msg_content_id)
 
                     # For question detection and predefined answers
                     with app.app_context():
@@ -810,16 +1027,35 @@ def run_telegram_bot():
                     asyncio.set_event_loop(loop)
 
                     try:
+                        # Get message ID
+                        message_id = update_obj.message.message_id if update_obj and update_obj.message else "unknown"
+                        
+                        # Check if we've already processed this message
+                        if is_message_processed(chat_id, message_id):
+                            logger.info(f"Skipping already processed message {chat_id}_{message_id}")
+                            # Skip further processing for this message
+                            return
+                            
+                        # This message is new, process it
                         # Run the message handler
                         context = SimpleContext()
+                        # Add a flag to indicate message is being handled to prevent duplicate responses
+                        context.user_data["message_handled"] = True
+                        context.user_data["tracking_id"] = f"{chat_id}_{message_id}"
                         loop.run_until_complete(handle_message(update_obj, context))
+                        
+                        # Mark as response sent
+                        context.user_data["message_response_sent"] = True
                     except Exception as msg_error:
                         logger.error(f"Error handling message: {msg_error}")
-                        # Simple fallback response
-                        send_response(
-                            chat_id,
-                            "I've received your message. To see available commands, type /help"
-                        )
+                        logger.error(traceback.format_exc())
+                        # Only send fallback response if not already handled
+                        if not context.user_data.get("message_response_sent", False):
+                            send_response(
+                                chat_id,
+                                "Sorry, I encountered a problem processing your message. Please try again or type /help for available commands."
+                            )
+                            context.user_data["message_response_sent"] = True
                     finally:
                         # Clean up the loop
                         try:
@@ -833,6 +1069,32 @@ def run_telegram_bot():
             except Exception as e:
                 logger.error(f"Error processing update: {e}")
                 logger.error(traceback.format_exc())
+                
+                # Try to send an error message with the inline menu if we have a chat_id
+                try:
+                    if 'message' in update_dict and 'chat' in update_dict['message']:
+                        chat_id = update_dict['message']['chat']['id']
+                        
+                        # Import the keyboard helper
+                        from keyboard_utils import MAIN_KEYBOARD, get_main_menu_inline
+                        
+                        # First show error message with inline buttons
+                        send_response(
+                            chat_id,
+                            "❗ *Sorry, something went wrong*\n\n"
+                            "Please select an option to continue:",
+                            parse_mode="Markdown",
+                            reply_markup=get_main_menu_inline()
+                        )
+                        
+                        # Also ensure persistent keyboard is shown
+                        send_response(
+                            chat_id,
+                            "Or use these persistent buttons for navigation:",
+                            reply_markup=MAIN_KEYBOARD
+                        )
+                except Exception as inner_e:
+                    logger.error(f"Error sending error message: {inner_e}")
 
         # Function to continuously poll for updates
         def poll_for_updates():

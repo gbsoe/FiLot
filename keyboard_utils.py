@@ -1,5 +1,6 @@
 """
 Persistent keyboard utilities for simplified bot interaction
+Provides a consistent One-Command UX with persistent menu buttons
 """
 
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
@@ -10,6 +11,25 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup(
     resize_keyboard=True,
     one_time_keyboard=False
 )
+
+# Inline version of the main keyboard for embedding in messages
+def get_main_menu_inline() -> InlineKeyboardMarkup:
+    """
+    Creates an inline keyboard with the main menu options
+    
+    Returns:
+        InlineKeyboardMarkup with Invest, Explore and Account buttons
+    """
+    keyboard = [
+        [
+            InlineKeyboardButton("💰 Invest", callback_data="menu_invest")
+        ],
+        [
+            InlineKeyboardButton("🔍 Explore", callback_data="menu_explore"),
+            InlineKeyboardButton("👤 Account", callback_data="menu_account")
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
 
 # Risk profile selection keyboard with clear visual indicators
 RISK_PROFILE_KEYBOARD = ReplyKeyboardMarkup(

@@ -207,8 +207,17 @@ async def process_risk_profile(update: Update, context: ContextTypes.DEFAULT_TYP
     # Store profile in user data
     context.user_data["invest_profile"] = profile
     
-    # Get investment amount
-    amount = context.user_data.get("invest_amount", 100)  # Default to 100 if not specified
+    # Get investment amount with improved error handling
+    try:
+        if not hasattr(context, 'user_data') or "invest_amount" not in context.user_data:
+            logger.warning(f"invest_amount not found in user_data for user {user.id}. Using default.")
+            amount = 100  # Default value
+        else:
+            amount = context.user_data["invest_amount"]
+            logger.info(f"Retrieved invest_amount: {amount} for user {user.id} in risk profile selection")
+    except Exception as e:
+        logger.error(f"Error retrieving invest_amount: {e}")
+        amount = 100  # Default on error
     
     # Log activity
     from app import app
@@ -349,7 +358,16 @@ async def confirm_investment(update: Update, context: ContextTypes.DEFAULT_TYPE,
     query = update.callback_query
     
     # Get investment parameters from user data
-    amount = context.user_data.get("invest_amount", 100)
+    # Ensure we have a valid invest_amount using a more robust method
+    if not hasattr(context, 'user_data') or "invest_amount" not in context.user_data or not context.user_data["invest_amount"]:
+        # Log the issue for debugging
+        logger.warning(f"Missing invest_amount in user_data for user {user.id}. Setting default value.")
+        # Set a default value since we're missing the user-specified amount
+        amount = 100
+    else:
+        amount = context.user_data["invest_amount"]
+        logger.info(f"Retrieved invest_amount: {amount} for user {user.id}")
+    
     profile = context.user_data.get("invest_profile", "high-risk")
     recommendations = context.user_data.get("invest_recommendations", [])
     
@@ -492,12 +510,23 @@ async def process_invest_amount_callback(update: Update, context: ContextTypes.D
         if hasattr(context, 'user_data'):
             context.user_data["state"] = STATE_AWAITING_AMOUNT
     else:
-        # Parse the amount from the callback data
-        amount = float(callback_data.replace("amount_", ""))
-        
-        # Store amount in user data
-        if hasattr(context, 'user_data'):
-            context.user_data["invest_amount"] = amount
+        try:
+            # Parse the amount from the callback data
+            amount = float(callback_data.replace("amount_", ""))
+            
+            # Store amount in user data with more robust approach
+            if hasattr(context, 'user_data'):
+                context.user_data["invest_amount"] = amount
+                # Log to confirm storage
+                logger.info(f"Stored invest_amount: {amount} for user {user.id}")
+            else:
+                logger.warning(f"Failed to store amount {amount} - context.user_data not accessible")
+        except (ValueError, TypeError) as e:
+            # Handle potential parsing errors
+            logger.error(f"Error parsing amount from callback data '{callback_data}': {e}")
+            amount = 100  # Default fallback
+            if hasattr(context, 'user_data'):
+                context.user_data["invest_amount"] = amount
         
         # Log activity
         from app import app

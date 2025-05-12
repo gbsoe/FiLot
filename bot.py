@@ -273,6 +273,9 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         
         logger.info(f"Sending welcome message to user {user.id}")
         
+        # Import our new inline main menu
+        from keyboard_utils import get_main_menu_inline
+        
         # First, send the welcome message with inline buttons
         await update.message.reply_markdown(
             f"👋 Welcome to FiLot, {user.first_name}!\n\n"
@@ -283,7 +286,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             "• Tap 🔍 *Explore* to discover top pools and simulate returns\n"
             "• Tap 👤 *Account* to connect wallet and set preferences\n\n"
             "I can also answer any questions about cryptocurrencies and help guide your investment decisions!",
-            reply_markup=get_main_menu()
+            reply_markup=get_main_menu_inline()
         )
         
         # Then, provide the persistent keyboard for easier access
@@ -311,8 +314,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             user = update.effective_user
             db_utils.log_user_activity(user.id, "help_command")
         
-        # Import here to avoid circular imports
-        from menus import get_main_menu
+        # Import our new inline keyboard buttons
+        from keyboard_utils import get_main_menu_inline
         
         # Send help message with focus on the enhanced One-Touch UX approach
         await update.message.reply_markdown(
@@ -328,7 +331,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             "• \"What are the best pools now?\" - Understands market inquiries\n"
             "• \"Help with my wallet\" - Intelligently routes to account features\n\n"
             "💡 *Pro tip:* Use the colorful buttons below for the fastest experience!",
-            reply_markup=get_main_menu()
+            reply_markup=get_main_menu_inline()
         )
         
         # Import keyboard module
@@ -415,9 +418,19 @@ async def account_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         
     except Exception as e:
         logger.error(f"Error in account_command: {e}", exc_info=True)
+        from keyboard_utils import MAIN_KEYBOARD, get_main_menu_inline
+        
+        # First show error message with inline buttons
         await update.message.reply_markdown(
-            "Sorry, an error occurred while processing your request.\n\n"
-            "Please use the buttons below to continue:",
+            "❗ *Account Access Error*\n\n"
+            "Sorry, an error occurred while accessing your account information.\n\n"
+            "Please select an option to continue:",
+            reply_markup=get_main_menu_inline()
+        )
+        
+        # Also ensure persistent keyboard is shown
+        await update.message.reply_markdown(
+            "Or use these persistent buttons for navigation:",
             reply_markup=MAIN_KEYBOARD  # Ensure keyboard is shown even in error case
         )
 
@@ -527,10 +540,18 @@ async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             
     except Exception as e:
         logger.error(f"Error in explore_command: {e}", exc_info=True)
-        from keyboard_utils import MAIN_KEYBOARD
+        from keyboard_utils import MAIN_KEYBOARD, get_main_menu_inline
+        
+        # First show error message with inline buttons
         await update.message.reply_markdown(
             "Sorry, an error occurred while processing your request.\n\n"
-            "Please use the buttons below to continue:",
+            "Please select an option to continue:",
+            reply_markup=get_main_menu_inline()
+        )
+        
+        # Also ensure persistent keyboard is shown
+        await update.message.reply_markdown(
+            "Or use these persistent buttons for navigation:",
             reply_markup=MAIN_KEYBOARD
         )
 
@@ -806,12 +827,20 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         
     except Exception as e:
         logger.error(f"Error in invest_command: {e}", exc_info=True)
-        # Import the keyboard here to avoid circular imports
-        from keyboard_utils import MAIN_KEYBOARD
+        # Import the keyboards here to avoid circular imports
+        from keyboard_utils import MAIN_KEYBOARD, get_main_menu_inline
+        
+        # First show error message with inline buttons for immediate navigation
         await update.message.reply_markdown(
             "❗ *Oops! Something went wrong*\n\n"
-            "Sorry, I encountered an error processing your request.\n\n"
-            "Please try again using one of the buttons below:",
+            "Sorry, I encountered an error processing your investment request.\n\n"
+            "Please select an option to continue:",
+            reply_markup=get_main_menu_inline()
+        )
+        
+        # Then ensure the persistent keyboard is shown
+        await update.message.reply_markdown(
+            "Or use these persistent buttons for easy navigation:",
             reply_markup=MAIN_KEYBOARD
         )
 
@@ -1608,6 +1637,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # Log the user's message
         logger.info(f"Received message from user {user.id}: {message_text}")
         
+        # Mark this message as being handled to prevent duplicate acknowledgment messages
+        if hasattr(context, 'user_data'):
+            context.user_data["message_response_sent"] = True
+        
         # We'll wrap all database operations in an app context
         from app import app
         with app.app_context():
@@ -2033,10 +2066,34 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
     try:
         # Import app at function level to avoid circular imports
         from app import app
+        import hashlib
         
         query = update.callback_query
         user = query.from_user
         callback_data = query.data
+        
+        # Create unique tracking IDs for this callback to prevent duplicates
+        callback_id = f"cb_{query.id}"
+        content_id = f"cb_data_{user.id}_{hashlib.md5(callback_data.encode()).hexdigest()[:8]}"
+        
+        # Store callback tracking IDs for additional protection
+        if not hasattr(context, 'user_data'):
+            context.user_data = {}
+        
+        # Check multiple ways to detect duplicates
+        if context.user_data.get("callback_handled", False):
+            logger.info("Skipping already handled callback query (user_data flag)")
+            return
+            
+        if context.user_data.get(callback_id, False) or context.user_data.get(content_id, False):
+            logger.info(f"Skipping duplicate callback: {callback_data[:30]}...")
+            return
+            
+        # Mark as being handled using multiple methods for redundancy
+        context.user_data["callback_handled"] = True
+        context.user_data["message_response_sent"] = False
+        context.user_data[callback_id] = True
+        context.user_data[content_id] = True
         
         # Log user activity within app context
         with app.app_context():
