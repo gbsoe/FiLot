@@ -110,85 +110,140 @@ def get_exit_position_menu(positions) -> InlineKeyboardMarkup:
 
 def get_main_menu() -> InlineKeyboardMarkup:
     """
-    Creates the main menu inline keyboard
+    Creates the One-Touch main menu inline keyboard with clear visual emphasis
     """
     keyboard = [
         [
-            InlineKeyboardButton("📈 Invest", callback_data="menu_invest"),
-            InlineKeyboardButton("🔍 Explore", callback_data="menu_explore")
+            InlineKeyboardButton("💰 INVEST NOW", callback_data="menu_invest")
         ],
         [
-            InlineKeyboardButton("👤 Account", callback_data="menu_account")
+            InlineKeyboardButton("🔍 Explore Options", callback_data="menu_explore"),
+            InlineKeyboardButton("👤 My Account", callback_data="menu_account")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 def get_simulate_menu() -> InlineKeyboardMarkup:
     """
-    Creates the inline keyboard for simulation amount options
+    Creates the One-Touch inline keyboard for simulation amount options with visual improvements
     """
     keyboard = [
         [
-            InlineKeyboardButton("$100", callback_data="simulate_100"),
-            InlineKeyboardButton("$500", callback_data="simulate_500"),
-            InlineKeyboardButton("$1000", callback_data="simulate_1000")
+            InlineKeyboardButton("$100 💵", callback_data="simulate_100"),
+            InlineKeyboardButton("$500 💵", callback_data="simulate_500")
         ],
         [
-            InlineKeyboardButton("Back to Explore Menu", callback_data="menu_explore")
+            InlineKeyboardButton("$1,000 💵", callback_data="simulate_1000"),
+            InlineKeyboardButton("$5,000 💵", callback_data="simulate_5000")
+        ],
+        [
+            InlineKeyboardButton("$10,000 💵", callback_data="simulate_10000"),
+            InlineKeyboardButton("✏️ Custom", callback_data="simulate_custom")
+        ],
+        [
+            InlineKeyboardButton("⬅️ Back to Explore", callback_data="menu_explore")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 def is_investment_intent(text: str) -> bool:
     """
-    Check if the message text indicates investment intent
+    Check if the message text indicates investment intent.
+    This enables button-like behavior even when users type similar text instead.
+    Part of the One-Touch navigation system for improved UX.
     """
-    investment_keywords = [
-        "invest", "buy", "purchase", "put money", "allocate funds", 
+    # Button-text matches - handle cases where users type the button text
+    button_texts = [
+        "invest", "💰 invest", "invest now", "💰 invest now",
+        "$50", "$100", "$250", "$500", "$1,000", "$5,000", 
+        "high-risk", "stable", "high risk", "custom amount", "custom investment"
+    ]
+    
+    # Intent keywords - identify investment intent in natural language
+    intent_keywords = [
+        "buy", "purchase", "put money", "allocate funds", 
         "deploy capital", "deposit", "money in", "want to invest",
-        "looking to invest", "interested in investing"
+        "looking to invest", "interested in investing", "invest in", 
+        "start investing", "place order", "make investment",
+        "fund", "invest my", "put in", "get started"
     ]
     
     text_lower = text.lower()
-    return any(keyword in text_lower for keyword in investment_keywords)
+    return (any(keyword in text_lower for keyword in button_texts) or 
+            any(keyword in text_lower for keyword in intent_keywords))
 
 def is_position_inquiry(text: str) -> bool:
     """
-    Check if the message text is asking about positions
+    Check if the message text is asking about positions.
+    Part of the intelligent recognition system for the One-Touch navigation.
     """
-    position_keywords = [
-        "my position", "my investment", "portfolio", "holdings", 
-        "my stake", "balance", "my pools", "my liquidity", 
-        "what am i holding", "where is my money"
+    # Button-text matches
+    button_texts = [
+        "view my positions", "view positions", "positions", "my positions", 
+        "👁️ view my positions", "portfolio"
+    ]
+    
+    # Intent keywords - natural language variations
+    intent_keywords = [
+        "my investment", "holdings", "my stake", "balance", "my pools", 
+        "my liquidity", "what am i holding", "where is my money",
+        "show me my investments", "what do i own", "my funds", 
+        "what have i invested in", "show investments", 
+        "my portfolio", "check positions", "check my positions"
     ]
     
     text_lower = text.lower()
-    return any(keyword in text_lower for keyword in position_keywords)
+    return (any(keyword in text_lower for keyword in button_texts) or 
+            any(keyword in text_lower for keyword in intent_keywords))
 
 def is_pool_inquiry(text: str) -> bool:
     """
-    Check if the message text is asking about pools
+    Check if the message text is asking about pools.
+    Part of the One-Touch navigation system's intelligent text recognition.
     """
-    pool_keywords = [
-        "pool", "pools", "liquidity", "market", "opportunities", 
-        "best rates", "top pools", "high yield", "apr", 
-        "returns", "earning"
+    # Button-text matches
+    button_texts = [
+        "explore", "🔍 explore", "explore options", "top pools", "🏆 top pools",
+        "pools", "show pools", "list pools"
+    ]
+    
+    # Intent keywords - natural language variations
+    intent_keywords = [
+        "liquidity pool", "best pools", "pool options", "market", 
+        "opportunities", "pairs", "apr", "yield", "returns", 
+        "what pools", "show me pools", "available pools", "highest apr",
+        "profitable pools", "good investments", "promising pools",
+        "which pools", "recommend pools", "pool list", "pool data",
+        "highest yield", "current pools", "best options", "top performing",
+        "best rates", "high yield", "earning"
     ]
     
     text_lower = text.lower()
-    return any(keyword in text_lower for keyword in pool_keywords)
+    return (any(keyword in text_lower for keyword in button_texts) or 
+            any(keyword in text_lower for keyword in intent_keywords))
 
 def is_wallet_inquiry(text: str) -> bool:
     """
-    Check if the message text is asking about wallet
+    Check if the message text is asking about wallet connections.
+    This assists the One-Touch navigation by recognizing wallet-related requests.
     """
-    wallet_keywords = [
-        "wallet", "connect", "walletconnect", "my wallet", 
-        "link wallet", "crypto wallet", "connect wallet"
+    # Button-text matches
+    button_texts = [
+        "account", "👤 account", "my account", "👤 my account",
+        "connect wallet", "💼 connect wallet", "wallet"
+    ]
+    
+    # Intent keywords - natural language variations
+    intent_keywords = [
+        "walletconnect", "my wallet", "link wallet", "crypto wallet",  
+        "connect my wallet", "setup wallet", "pair wallet", "wallet setup",
+        "add wallet", "register wallet", "use my wallet", "scan qr code",
+        "wallet address", "wallet integration", "solana wallet"
     ]
     
     text_lower = text.lower()
-    return any(keyword in text_lower for keyword in wallet_keywords)
+    return (any(keyword in text_lower for keyword in button_texts) or 
+            any(keyword in text_lower for keyword in intent_keywords))
 
 def extract_amount(text: str) -> float:
     """
