@@ -435,7 +435,7 @@ async def confirm_investment(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
 async def handle_back_to_main(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
-    Handle back to main menu button press
+    Handle back to main menu button press with One-Touch Navigation
     
     Args:
         update: Telegram update object
@@ -449,8 +449,70 @@ async def handle_back_to_main(update: Update, context: ContextTypes.DEFAULT_TYPE
     context.user_data.pop("invest_profile", None)
     context.user_data.pop("invest_recommendations", None)
     
-    # Show main menu
-    await message.reply_text(
-        "Back to main menu. Please select an option:",
+    # Import here to avoid circular imports
+    from menus import get_main_menu
+    
+    # Show main menu options with One-Touch Navigation emphasis
+    await message.reply_markdown(
+        "🏠 *Back to Main Menu*\n\n"
+        "Use our One-Touch Navigation to continue your journey. "
+        "Just tap any button below to instantly access features!",
+        reply_markup=get_main_menu()
+    )
+    
+    # Also ensure the persistent keyboard is visible
+    await message.reply_markdown(
+        "👇 *Quick Access Buttons* 👇\n\n"
+        "These persistent buttons are always available for one-tap navigation!",
         reply_markup=MAIN_KEYBOARD
     )
+
+async def process_invest_amount_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, callback_data: str) -> None:
+    """
+    Process amount selection from callback buttons in the investment flow
+    
+    Args:
+        update: Telegram update object
+        context: Callback context
+        callback_data: The callback data containing the amount information
+    """
+    query = update.callback_query
+    user = query.from_user
+    
+    if callback_data == "amount_custom":
+        # User wants to enter a custom amount
+        await query.message.reply_markdown(
+            "💰 *Enter Your Investment Amount*\n\n"
+            "Please enter how much you would like to invest. Just type a number (e.g. 100).\n\n"
+            "💡 *Example:* 500 (represents $500 USD)",
+            reply_markup=BACK_KEYBOARD
+        )
+        
+        # Set state to await amount
+        if hasattr(context, 'user_data'):
+            context.user_data["state"] = STATE_AWAITING_AMOUNT
+    else:
+        # Parse the amount from the callback data
+        amount = float(callback_data.replace("amount_", ""))
+        
+        # Store amount in user data
+        if hasattr(context, 'user_data'):
+            context.user_data["invest_amount"] = amount
+        
+        # Log activity
+        from app import app
+        with app.app_context():
+            db_utils.log_user_activity(user.id, f"invest_amount_{amount}")
+        
+        # Ask for risk profile with improved one-command messaging
+        await query.message.reply_markdown(
+            f"✅ *Investment Amount: ${amount:,.2f}*\n\n"
+            "Now, please select your risk profile with our One-Touch buttons below:\n\n"
+            "• *High-Risk:* Higher potential returns with more volatility\n"
+            "• *Stable:* Lower risk with more consistent returns",
+            reply_markup=RISK_PROFILE_KEYBOARD
+        )
+        
+        # Set state to await profile
+        if hasattr(context, 'user_data'):
+            context.user_data["state"] = STATE_AWAITING_PROFILE

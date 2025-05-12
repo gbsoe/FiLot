@@ -2329,38 +2329,11 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             
         # Handle amount selection buttons from the new one-command invest flow
         elif callback_data.startswith("amount_"):
-            if callback_data == "amount_custom":
-                # User wants to enter a custom amount
-                await query.message.reply_markdown(
-                    "💰 *Enter Your Investment Amount*\n\n"
-                    "Please enter how much you would like to invest. Just type a number (e.g. 100).\n\n"
-                    "💡 *Example:* 500 (represents $500 USD)",
-                    reply_markup=BACK_KEYBOARD
-                )
-                
-                # Set state to await amount
-                if hasattr(context, 'user_data'):
-                    context.user_data["state"] = STATE_AWAITING_AMOUNT
-            else:
-                # Parse the amount from the callback data
-                amount = float(callback_data.replace("amount_", ""))
-                
-                # Store the amount in context
-                if hasattr(context, 'user_data'):
-                    context.user_data["invest_amount"] = amount
-                
-                from keyboard_utils import RISK_PROFILE_KEYBOARD
-                
-                # Ask for risk profile
-                await query.message.reply_markdown(
-                    f"✅ *Investment Amount: ${amount:,.2f}*\n\n"
-                    "Now, please select your risk profile with our One-Touch buttons below:",
-                    reply_markup=RISK_PROFILE_KEYBOARD
-                )
-                
-                # Set state to await profile
-                if hasattr(context, 'user_data'):
-                    context.user_data["state"] = STATE_AWAITING_PROFILE
+            # Import the proper handler from investment_flow
+            from investment_flow import process_invest_amount_callback
+
+            # Let the specialized handler in investment_flow.py handle this
+            await process_invest_amount_callback(update, context, callback_data)
             
         else:
             await query.message.reply_text(

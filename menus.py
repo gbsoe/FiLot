@@ -247,15 +247,52 @@ def is_wallet_inquiry(text: str) -> bool:
 
 def extract_amount(text: str) -> float:
     """
-    Extract an investment amount from text
-    Returns 0 if no amount found
+    Extract an investment amount from text with enhanced pattern matching.
+    Part of the One-Touch navigation system to detect investment amounts
+    in natural language.
+    
+    Returns:
+        float: The detected amount, or 0 if no amount found
     """
     import re
     
-    # Match patterns like "$100", "100 dollars", "100USD", "100.50"
-    amount_pattern = r'\$?(\d+(?:\.\d+)?)\s*(?:dollars|usd)?'
-    match = re.search(amount_pattern, text, re.IGNORECASE)
+    # Clean text for better pattern matching
+    text = text.lower().strip()
     
-    if match:
-        return float(match.group(1))
-    return 0
+    # First check for One-Touch button text with amounts
+    amount_buttons = {
+        "$50": 50.0, "$100": 100.0, "$200": 200.0, "$250": 250.0, 
+        "$300": 300.0, "$500": 500.0, "$750": 750.0, 
+        "$1,000": 1000.0, "$2,000": 2000.0, "$5,000": 5000.0, "$10,000": 10000.0
+    }
+    
+    # Check if any button amount text appears in the message
+    for button_text, amount in amount_buttons.items():
+        # Remove dollar sign and emoji from comparison
+        clean_button = button_text.replace("$", "").replace(",", "").replace("💰", "").strip()
+        if clean_button in text.replace(",", ""):
+            return amount
+            
+    # More comprehensive pattern matching
+    # Match patterns like "$100", "100 dollars", "100USD", "100.50", "1,000", "1k", "5k"
+    amount_patterns = [
+        # Standard currency format with or without $ and decimal
+        r'\$?(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:dollars|usd)?',
+        
+        # Handle "k" notation (e.g., "5k" = 5000)
+        r'(\d+(?:\.\d+)?)\s*k\b'
+    ]
+    
+    for pattern in amount_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            amount_str = match.group(1)
+            
+            # Handle "k" notation
+            if pattern.endswith(r'k\b'):
+                return float(amount_str) * 1000
+            
+            # Handle regular numbers with commas
+            return float(amount_str.replace(",", ""))
+    
+    return 0.0
