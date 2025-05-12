@@ -1559,23 +1559,41 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             )
             
         # Check if this is a button press from the persistent keyboard
-        # Using more flexible message handling to account for different button displays
-        if "invest" in message_text.lower() or message_text == "💰 Invest":
+        # Using exact matching for button texts
+        if message_text == "💰 Invest":
             logger.info(f"User {user.id} pressed the Invest button")
             # Start the investment flow
             await start_invest_flow(update, context)
             return
             
-        elif "explore" in message_text.lower() or message_text == "🔍 Explore":
+        elif message_text == "🔍 Explore":
             logger.info(f"User {user.id} pressed the Explore button")
             # Trigger the explore command
             context.args = []
             await explore_command(update, context)
             return
             
-        elif "account" in message_text.lower() or message_text == "👤 Account":
+        elif message_text == "👤 Account":
             logger.info(f"User {user.id} pressed the Account button")
             # Trigger the account command
+            context.args = []
+            await account_command(update, context)
+            return
+            
+        # Fallback for people typing text similar to button names
+        elif "invest" in message_text.lower() and message_text != "💰 Invest":
+            logger.info(f"User {user.id} typed invest-related text")
+            await start_invest_flow(update, context)
+            return
+            
+        elif "explore" in message_text.lower() and message_text != "🔍 Explore":
+            logger.info(f"User {user.id} typed explore-related text")
+            context.args = []
+            await explore_command(update, context)
+            return
+            
+        elif "account" in message_text.lower() and message_text != "👤 Account":
+            logger.info(f"User {user.id} typed account-related text")
             context.args = []
             await account_command(update, context)
             return
