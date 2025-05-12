@@ -294,8 +294,10 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         )
     except Exception as e:
         logger.error(f"Error in start command: {e}")
+        from keyboard_utils import MAIN_KEYBOARD
         await update.message.reply_text(
-            "Sorry, an error occurred while processing your request. Please try again later."
+            "Sorry, an error occurred while processing your request. Please try again later.",
+            reply_markup=MAIN_KEYBOARD
         )
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1823,6 +1825,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             
             ai_response = await ai_advisor.explain_financial_concept(concept)
             
+        # Check if this is just a simple button press with no specific function match
+        elif message_text in ["Invest", "Explore", "Account"] or message_text in ["💰", "🔍", "👤"]:
+            # Provide a more helpful response rather than going to AI
+            logger.info(f"Handling simple button text: {message_text}")
+            
+            # Map the button text to the appropriate response
+            if "Invest" in message_text or "💰" in message_text:
+                await start_invest_flow(update, context)
+                return
+            elif "Explore" in message_text or "🔍" in message_text:
+                context.args = []
+                await explore_command(update, context)
+                return
+            elif "Account" in message_text or "👤" in message_text:
+                context.args = []
+                await account_command(update, context)
+                return
+        
         else:
             # General financial advice
             logger.info("Generating general financial advice")
@@ -1854,8 +1874,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     except Exception as e:
         logger.error(f"Error handling message: {e}")
         logger.error(traceback.format_exc())
+        from keyboard_utils import MAIN_KEYBOARD
         await update.message.reply_text(
-            "Sorry, I encountered an error while processing your request. Please try again later."
+            "Sorry, I encountered an error while processing your request. Please try again later.",
+            reply_markup=MAIN_KEYBOARD
         )
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1895,12 +1917,14 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         except Exception as db_error:
             logger.error(f"Failed to log error to database: {db_error}")
         
-        # Inform user
+        # Inform user with persistent keyboard
         if update and isinstance(update, Update) and update.effective_message:
             try:
-                logger.info("Attempting to send error message to user")
+                from keyboard_utils import MAIN_KEYBOARD
+                logger.info("Attempting to send error message to user with persistent keyboard")
                 await update.effective_message.reply_text(
-                    "Sorry, an error occurred while processing your request. Please try again later."
+                    "Sorry, an error occurred while processing your request. Please try again later.",
+                    reply_markup=MAIN_KEYBOARD
                 )
                 logger.info("Error message sent to user successfully")
             except Exception as reply_error:
