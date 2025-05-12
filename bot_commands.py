@@ -575,8 +575,25 @@ async def handle_agentic_callback_query(update: Update, context: ContextTypes.DE
             context.args = [str(amount)]
             await execute_command(update, context)
             
+        elif data.startswith("exit_position:"):
+            # Exit a position using the new button format
+            await query.answer("Processing your exit request...")
+            
+            # Format is "exit_position:{position_id}"
+            position_id = data.split(":", 1)[1] if ":" in data else ""
+            
+            if not position_id:
+                await query.message.reply_text(
+                    "Invalid position ID. Please try again or use the /positions command."
+                )
+                return
+                
+            # Run the exit command with this position ID
+            context.args = [position_id]
+            await exit_command(update, context)
+            
         elif data.startswith("exit_"):
-            # Exit a position
+            # Legacy exit handler (for backward compatibility)
             await query.answer("Processing your exit request...")
             
             position_id_str = data.replace("exit_", "")
@@ -610,6 +627,16 @@ async def handle_agentic_callback_query(update: Update, context: ContextTypes.DE
             # Run the exit command with this position ID
             context.args = [str(position_id)]
             await exit_command(update, context)
+            
+        elif data == "back_to_main":
+            # User wants to go back to main menu
+            await query.answer("Returning to main menu")
+            
+            # Import the function to handle going back to main menu
+            from investment_flow import handle_back_to_main
+            
+            # Call the function to go back to main menu
+            await handle_back_to_main(update, context)
             
         elif data == "ignore_position_alert":
             # User ignored position exit alert
