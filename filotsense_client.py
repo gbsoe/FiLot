@@ -7,30 +7,20 @@ sentiment and price signals.
 """
 
 import os
-import logging
-import aiohttp
 import time
 import json
-from typing import Dict, Any, Optional, List, Union, Tuple
-from functools import lru_cache
+import logging
 import asyncio
+from typing import Dict, List, Any, Optional, Tuple
 
-try:
-    from dotenv import load_dotenv
-    # Load environment variables
-    load_dotenv()
-except ImportError:
-    # Ignore if dotenv is not installed
-    pass
+import aiohttp
+from functools import lru_cache
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 logger = logging.getLogger('filotsense_client')
 
-# Initialize a singleton instance
+# Singleton instance
 _instance = None
 
 def get_client() -> 'FiLotSenseClient':
@@ -59,25 +49,13 @@ class FiLotSenseClient:
         self.rate_limit_window = 3600  # 1 hour in seconds
         self.request_timestamps = []
         
-        # Cache TTLs (in seconds)
-        self.cache_ttl = {
-            "sentiment": 300,  # 5 minutes
-            "prices": 120,     # 2 minutes
-            "topics": 900,     # 15 minutes
-            "realdata": 300    # 5 minutes
-        }
-        
-        # Initialize request session
+        # aiohttp session
         self._session = None
-        
-        logger.info(f"Initialized FiLotSense client with API URL: {self.base_url}")
 
     async def ensure_session(self) -> aiohttp.ClientSession:
         """Ensure an aiohttp session exists for making requests."""
         if self._session is None or self._session.closed:
-            self._session = aiohttp.ClientSession(headers={
-                "Content-Type": "application/json"
-            })
+            self._session = aiohttp.ClientSession()
         return self._session
 
     async def close(self) -> None:
@@ -109,6 +87,39 @@ class FiLotSenseClient:
             return False, max(0, wait_time)
             
         return True, None
+    
+    async def _handle_html_response(self, response: aiohttp.ClientResponse, endpoint: str) -> Dict[str, Any]:
+        """
+        Handle HTML responses from the API which should return JSON.
+        
+        Args:
+            response: aiohttp response object
+            endpoint: The API endpoint that was requested
+            
+        Returns:
+            Extracted data if possible, error dict otherwise
+        """
+        text = await response.text()
+        logger.warning(f"Received HTML instead of JSON from API. Endpoint: {endpoint}")
+        
+        # Special case for health endpoint
+        if endpoint == "/health" and ('online' in text.lower() or 'success' in text.lower()):
+            logger.info("Detected positive health status from HTML response")
+            return {"status": "success"}
+        
+        # Try to extract JSON from HTML if it exists
+        try:
+            if '{' in text and '}' in text:
+                start_idx = text.find('{')
+                end_idx = text.rfind('}') + 1
+                if start_idx >= 0 and end_idx > start_idx:
+                    json_str = text[start_idx:end_idx]
+                    logger.info(f"Attempting to extract JSON from HTML")
+                    return json.loads(json_str)
+        except json.JSONDecodeError:
+            logger.warning("Could not extract valid JSON from HTML response")
+        
+        return {"error": "Received HTML instead of JSON", "details": text[:200]}
         
     async def _make_request(
         self, 
@@ -156,8 +167,20 @@ class FiLotSenseClient:
                             error_text = await response.text()
                             logger.error(f"API error {response.status}: {error_text}")
                             return {"error": f"API error {response.status}", "details": error_text}
+                        
+                        # Check content type for HTML instead of JSON
+                        content_type = response.headers.get('Content-Type', '')
+                        if 'text/html' in content_type:
+                            return await self._handle_html_response(response, endpoint)
                             
-                        return await response.json()
+                        try:
+                            return await response.json()
+                        except json.JSONDecodeError as e:
+                            text = await response.text()
+                            logger.error(f"Failed to decode JSON response: {e}. Response text: {text[:200]}")
+                            
+                            # Try to extract JSON if embedded in HTML
+                            return await self._handle_html_response(response, endpoint)
                 else:  # POST, PUT, etc.
                     async with session.request(method, url, params=params, json=data, timeout=aiohttp.ClientTimeout(total=10)) as response:
                         if response.status == 429:  # Rate limit exceeded
@@ -177,8 +200,20 @@ class FiLotSenseClient:
                             error_text = await response.text()
                             logger.error(f"API error {response.status}: {error_text}")
                             return {"error": f"API error {response.status}", "details": error_text}
+                        
+                        # Check content type for HTML instead of JSON
+                        content_type = response.headers.get('Content-Type', '')
+                        if 'text/html' in content_type:
+                            return await self._handle_html_response(response, endpoint)
                             
-                        return await response.json()
+                        try:
+                            return await response.json()
+                        except json.JSONDecodeError as e:
+                            text = await response.text()
+                            logger.error(f"Failed to decode JSON response: {e}. Response text: {text[:200]}")
+                            
+                            # Try to extract JSON if embedded in HTML
+                            return await self._handle_html_response(response, endpoint)
             
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
                 logger.warning(f"Request failed: {e}. Retrying ({retries+1}/{max_retries})")
@@ -188,16 +223,17 @@ class FiLotSenseClient:
         logger.error(f"Failed to make request after {max_retries} retries")
         return {"error": "Maximum retries exceeded"}
 
-    # Cache decorated function for simple sentiment
-    @lru_cache(maxsize=16)
+    # Cached sentiment fetch to minimize API calls
+    @lru_cache(maxsize=8)
     async def _fetch_sentiment_simple_cached(self, symbols: Optional[str], timestamp: int) -> Dict[str, Any]:
         """Cached version of fetch_sentiment_simple to minimize API calls."""
+        endpoint = "/sentiment/simple"
         params = {}
+        
         if symbols:
             params["symbols"] = symbols
-            
-        response = await self._make_request("/sentiment/simple", params=params)
-        return response
+        
+        return await self._make_request(endpoint, params=params)
 
     async def fetch_sentiment_simple(self, symbols: Optional[List[str]] = None) -> Dict[str, float]:
         """
@@ -209,38 +245,51 @@ class FiLotSenseClient:
         Returns:
             Dictionary mapping token symbols to sentiment scores (-1.0 to 1.0)
         """
-        # Create a timestamp that changes every self.cache_ttl["sentiment"] seconds
-        timestamp = int(time.time() / self.cache_ttl["sentiment"])
+        symbols_str = None
+        if symbols:
+            symbols_str = ",".join(symbols)
         
-        try:
-            symbols_str = None
-            if symbols:
-                symbols_str = ",".join(symbols)
-                
-            response = await self._fetch_sentiment_simple_cached(symbols_str, timestamp)
-            
-            if "error" in response:
-                logger.error(f"Error fetching sentiment: {response['error']}")
-                return {}
-                
-            if response.get("status") == "success":
-                return response.get("sentiment", {})
-            else:
-                logger.error(f"Unsuccessful response fetching sentiment: {response}")
-                return {}
-        except Exception as e:
-            logger.error(f"Error in fetch_sentiment_simple: {e}")
+        # Round to nearest minute to improve cache hits
+        timestamp = int(time.time()) // 60
+        
+        response = await self._fetch_sentiment_simple_cached(symbols_str, timestamp)
+        
+        if "error" in response:
+            logger.error(f"Error fetching simple sentiment: {response['error']}")
             return {}
+            
+        sentiment_data = {}
+        try:
+            # New API format
+            if "sentiment" in response and isinstance(response["sentiment"], dict):
+                for symbol, data in response["sentiment"].items():
+                    if isinstance(data, dict) and "score" in data:
+                        sentiment_data[symbol] = data["score"]
+                    elif isinstance(data, (int, float)):
+                        sentiment_data[symbol] = data
+            # Legacy API format
+            elif "data" in response and isinstance(response["data"], dict):
+                for symbol, score in response["data"].items():
+                    if isinstance(score, (int, float)):
+                        sentiment_data[symbol] = score
+                    elif isinstance(score, dict) and "score" in score:
+                        sentiment_data[symbol] = score["score"]
+        except Exception as e:
+            logger.error(f"Error processing sentiment data: {e}")
+            
+        return sentiment_data
 
-    @lru_cache(maxsize=16)
+    # Cached prices fetch to minimize API calls
+    @lru_cache(maxsize=8)
     async def _fetch_prices_latest_cached(self, symbols: Optional[str], timestamp: int) -> Dict[str, Any]:
         """Cached version of fetch_prices_latest to minimize API calls."""
+        endpoint = "/prices/latest"
         params = {}
+        
         if symbols:
             params["symbols"] = symbols
-            
-        response = await self._make_request("/prices/latest", params=params)
-        return response
+        
+        return await self._make_request(endpoint, params=params)
 
     async def fetch_prices_latest(self, symbols: Optional[List[str]] = None) -> Dict[str, Dict[str, Any]]:
         """
@@ -252,34 +301,38 @@ class FiLotSenseClient:
         Returns:
             Dictionary mapping token symbols to price information
         """
-        # Create a timestamp that changes every self.cache_ttl["prices"] seconds
-        timestamp = int(time.time() / self.cache_ttl["prices"])
+        symbols_str = None
+        if symbols:
+            symbols_str = ",".join(symbols)
         
-        try:
-            symbols_str = None
-            if symbols:
-                symbols_str = ",".join(symbols)
-                
-            response = await self._fetch_prices_latest_cached(symbols_str, timestamp)
-            
-            if "error" in response:
-                logger.error(f"Error fetching prices: {response['error']}")
-                return {}
-            
-            if response.get("status") == "success":
-                return response.get("data", {})
-            else:
-                logger.error(f"Unsuccessful response fetching prices: {response}")
-                return {}
-        except Exception as e:
-            logger.error(f"Error in fetch_prices_latest: {e}")
+        # Round to nearest minute to improve cache hits
+        timestamp = int(time.time()) // 60
+        
+        response = await self._fetch_prices_latest_cached(symbols_str, timestamp)
+        
+        if "error" in response:
+            logger.error(f"Error fetching latest prices: {response['error']}")
             return {}
+            
+        price_data = {}
+        try:
+            # New API format
+            if "prices" in response and isinstance(response["prices"], dict):
+                return response["prices"]
+            # Legacy API format
+            elif "data" in response and isinstance(response["data"], dict):
+                return response["data"]
+        except Exception as e:
+            logger.error(f"Error processing price data: {e}")
+            
+        return price_data
 
-    @lru_cache(maxsize=8)
+    # Cached sentiment topics fetch to minimize API calls
+    @lru_cache(maxsize=4)
     async def _fetch_sentiment_topics_cached(self, timestamp: int) -> Dict[str, Any]:
         """Cached version of fetch_sentiment_topics to minimize API calls."""
-        response = await self._make_request("/sentiment/topics")
-        return response
+        endpoint = "/sentiment/topics"
+        return await self._make_request(endpoint)
 
     async def fetch_sentiment_topics(self) -> List[Dict[str, Any]]:
         """
@@ -288,34 +341,42 @@ class FiLotSenseClient:
         Returns:
             List of topic dictionaries with sentiment information
         """
-        # Create a timestamp that changes every self.cache_ttl["topics"] seconds
-        timestamp = int(time.time() / self.cache_ttl["topics"])
+        # Round to nearest hour to improve cache hits
+        timestamp = int(time.time()) // 3600
         
-        try:
-            response = await self._fetch_sentiment_topics_cached(timestamp)
-            
-            if "error" in response:
-                logger.error(f"Error fetching sentiment topics: {response['error']}")
-                return []
-            
-            if response.get("status") == "success":
-                return response.get("data", [])
-            else:
-                logger.error(f"Unsuccessful response fetching sentiment topics: {response}")
-                return []
-        except Exception as e:
-            logger.error(f"Error in fetch_sentiment_topics: {e}")
+        response = await self._fetch_sentiment_topics_cached(timestamp)
+        
+        if "error" in response:
+            logger.error(f"Error fetching sentiment topics: {response['error']}")
             return []
+            
+        topics = []
+        try:
+            # New API format
+            if "topics" in response and isinstance(response["topics"], list):
+                topics = response["topics"]
+            # Alternative format
+            elif "data" in response and isinstance(response["data"], list):
+                topics = response["data"]
+            # Legacy format
+            elif "data" in response and isinstance(response["data"], dict) and "topics" in response["data"]:
+                topics = response["data"]["topics"]
+        except Exception as e:
+            logger.error(f"Error processing sentiment topics: {e}")
+            
+        return topics
 
+    # Cached realdata fetch to minimize API calls
     @lru_cache(maxsize=8)
     async def _fetch_realdata_cached(self, symbols: Optional[str], timestamp: int) -> Dict[str, Any]:
         """Cached version of fetch_realdata to minimize API calls."""
+        endpoint = "/realdata"
         params = {}
+        
         if symbols:
             params["symbols"] = symbols
-            
-        response = await self._make_request("/realdata", params=params)
-        return response
+        
+        return await self._make_request(endpoint, params=params)
 
     async def fetch_realdata(self, symbols: Optional[List[str]] = None) -> Dict[str, Dict[str, Any]]:
         """
@@ -327,29 +388,32 @@ class FiLotSenseClient:
         Returns:
             Dictionary mapping token symbols to comprehensive data
         """
-        # Create a timestamp that changes every self.cache_ttl["realdata"] seconds
-        timestamp = int(time.time() / self.cache_ttl["realdata"])
+        symbols_str = None
+        if symbols:
+            symbols_str = ",".join(symbols)
         
-        try:
-            symbols_str = None
-            if symbols:
-                symbols_str = ",".join(symbols)
-                
-            response = await self._fetch_realdata_cached(symbols_str, timestamp)
-            
-            if "error" in response:
-                logger.error(f"Error fetching realdata: {response['error']}")
-                return {}
-            
-            if response.get("status") == "success":
-                return response.get("data", {})
-            else:
-                logger.error(f"Unsuccessful response fetching realdata: {response}")
-                return {}
-        except Exception as e:
-            logger.error(f"Error in fetch_realdata: {e}")
+        # Round to nearest minute to improve cache hits
+        timestamp = int(time.time()) // 60
+        
+        response = await self._fetch_realdata_cached(symbols_str, timestamp)
+        
+        if "error" in response:
+            logger.error(f"Error fetching real-time data: {response['error']}")
             return {}
             
+        realdata = {}
+        try:
+            # New API format
+            if "data" in response and isinstance(response["data"], dict):
+                return response["data"]
+            # Legacy format or direct data
+            elif all(key not in ["status", "error", "message"] for key in response.keys()):
+                return response
+        except Exception as e:
+            logger.error(f"Error processing real-time data: {e}")
+            
+        return realdata
+
     async def fetch_token_sentiment_history(self, symbol: str, days: int = 7) -> List[Dict[str, Any]]:
         """
         Fetch historical sentiment data for a specific token.
@@ -361,19 +425,22 @@ class FiLotSenseClient:
         Returns:
             List of historical sentiment data points
         """
-        params = {"days": days}
+        endpoint = f"/sentiment/history/{symbol}"
+        params = {"days": min(max(1, days), 30)}  # Ensure days is between 1 and 30
+        
+        response = await self._make_request(endpoint, params=params)
+        
+        if "error" in response:
+            logger.error(f"Error fetching sentiment history: {response['error']}")
+            return []
+            
         try:
-            response = await self._make_request(f"/sentiment/history/{symbol}", params=params)
-            
-            if "error" in response:
-                logger.error(f"Error fetching sentiment history: {response['error']}")
-                return []
-            
-            if response.get("status") == "success":
-                return response.get("data", [])
-            else:
-                logger.error(f"Unsuccessful response fetching sentiment history: {response}")
-                return []
+            # New API format
+            if "history" in response and isinstance(response["history"], list):
+                return response["history"]
+            # Legacy API format
+            elif "data" in response and isinstance(response["data"], list):
+                return response["data"]
         except Exception as e:
             logger.error(f"Error in fetch_token_sentiment_history: {e}")
             return []
