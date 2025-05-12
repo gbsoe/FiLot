@@ -15,8 +15,13 @@ import time
 import hashlib
 import json
 import requests
+import sqlite3
 from collections import deque
 from dotenv import load_dotenv
+
+# Update DATABASE_URL in os.environ to use SQLite
+sqlite_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'filot_bot.db')
+os.environ["DATABASE_URL"] = f"sqlite:///{sqlite_path}"
 
 # Import Telegram components - these need to be accessible globally
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup

@@ -11,7 +11,7 @@ import time
 import logging
 import datetime
 import shutil
-import psycopg2
+import sqlite3
 from functools import wraps
 from typing import Dict, Any, List, Optional, Union, Callable, Tuple
 from sqlalchemy.exc import SQLAlchemyError
@@ -25,30 +25,26 @@ from app import db
 # Configure logging
 logger = logging.getLogger(__name__)
 
-def get_db_connection() -> Tuple[psycopg2.extensions.connection, psycopg2.extensions.cursor]:
+def get_db_connection() -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
     """
-    Get a connection to the PostgreSQL database.
+    Get a connection to the SQLite database.
     
     Returns:
         Tuple of connection and cursor objects
     """
     try:
-        # Get database URL from environment variable
-        database_url = os.environ.get("DATABASE_URL")
-        
-        if not database_url:
-            logger.error("DATABASE_URL environment variable not found")
-            raise ValueError("DATABASE_URL environment variable not found")
+        # Use the SQLite database file path
+        sqlite_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'filot_bot.db')
         
         # Connect to database
-        conn = psycopg2.connect(database_url)
-        conn.autocommit = False
+        conn = sqlite3.connect(sqlite_path)
+        conn.row_factory = sqlite3.Row  # This makes results accessible by column name
         cursor = conn.cursor()
         
-        logger.debug("Connected to PostgreSQL database")
+        logger.debug("Connected to SQLite database")
         return conn, cursor
     except Exception as e:
-        logger.error(f"Error connecting to database: {e}")
+        logger.error(f"Error connecting to SQLite database: {e}")
         raise
 
 def handle_db_error(func):
