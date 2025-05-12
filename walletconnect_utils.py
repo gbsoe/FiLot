@@ -31,12 +31,22 @@ except ImportError:
 
 # Try to import optional dependencies with fallbacks
 try:
-    import psycopg2
-    from psycopg2.extras import Json
-    PSYCOPG2_AVAILABLE = True
+    import sqlite3
+    import json
+    
+    # Define a Json adapter for SQLite
+    class Json:
+        def __init__(self, data):
+            self.data = data
+            
+        def __conform__(self, protocol):
+            if protocol is sqlite3.PrepareProtocol:
+                return json.dumps(self.data)
+                
+    SQLITE_AVAILABLE = True
 except ImportError:
-    logger.warning("psycopg2 not available, will use mock database functionality")
-    PSYCOPG2_AVAILABLE = False
+    logger.warning("sqlite3 not available, will use mock database functionality")
+    SQLITE_AVAILABLE = False
     # Define a mock Json class
     class Json:
         def __init__(self, data):
@@ -59,9 +69,10 @@ SOLANA_RPC_URL = os.environ.get("SOLANA_RPC_URL")
 if not SOLANA_RPC_URL:
     logger.warning("SOLANA_RPC_URL not found in environment variables, will use public endpoint")
 
-# Database connection string
-DATABASE_URL = os.environ.get("DATABASE_URL")
-if not DATABASE_URL and PSYCOPG2_AVAILABLE:
+# Database connection string (for SQLite)
+DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'filot_bot.db')
+DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{DATABASE_PATH}")
+if not DATABASE_URL and SQLITE_AVAILABLE:
     logger.warning("DATABASE_URL not found in environment variables, database features will be limited")
 
 #########################
@@ -70,14 +81,15 @@ if not DATABASE_URL and PSYCOPG2_AVAILABLE:
 
 def get_db_connection():
     """Create a database connection."""
-    # Skip if psycopg2 is not available or DATABASE_URL is not set
-    if not PSYCOPG2_AVAILABLE or not DATABASE_URL:
-        logger.warning("Database connection not available - psycopg2 or DATABASE_URL missing")
+    # Skip if sqlite3 is not available or DATABASE_PATH is not set
+    if not SQLITE_AVAILABLE:
+        logger.warning("Database connection not available - sqlite3 missing")
         return None
         
     try:
-        connection = psycopg2.connect(DATABASE_URL)
-        connection.autocommit = True
+        # Using SQLite file-based database
+        connection = sqlite3.connect(DATABASE_PATH)
+        connection.row_factory = sqlite3.Row  # This makes results accessible by column name
         return connection
     except Exception as e:
         logger.error(f"Database connection error: {e}")
@@ -89,7 +101,7 @@ def init_db():
     from app import app
     
     # Skip if database connection not available
-    if not PSYCOPG2_AVAILABLE or not DATABASE_URL:
+    if not SQLITE_AVAILABLE:
         logger.warning("Skipping database initialization - database not available")
         return False
     
@@ -103,14 +115,14 @@ def init_db():
                 
             cursor = conn.cursor()
             
-            # Create wallet_sessions table if it doesn't exist
+            # Create wallet_sessions table if it doesn't exist (SQLite syntax)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS wallet_sessions (
-                    session_id VARCHAR(255) PRIMARY KEY,
-                    session_data JSONB,
+                    session_id TEXT PRIMARY KEY,
+                    session_data TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    telegram_user_id BIGINT,
-                    status VARCHAR(50) DEFAULT 'pending',
+                    telegram_user_id INTEGER,
+                    status TEXT DEFAULT 'pending',
                     wallet_address TEXT,
                     expires_at TIMESTAMP
                 )
@@ -151,7 +163,7 @@ async def create_walletconnect_session(telegram_user_id: int) -> Dict[str, Any]:
             result = await wallet_service.create_session(telegram_user_id)
             
             # Save to database if successful and database is available
-            if result["success"] and PSYCOPG2_AVAILABLE and DATABASE_URL:
+            if result["success"] and SQLITE_AVAILABLE:
                 try:
                     with app.app_context():
                         conn = get_db_connection()
