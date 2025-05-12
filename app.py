@@ -23,11 +23,10 @@ load_dotenv()
 app = Flask(__name__)
 
 # Configure the Flask application
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
+# Use SQLite as the database
+sqlite_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'filot_bot.db')
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{sqlite_path}"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = os.environ.get("SESSION_SECRET", "default-secret-key")
 
 # Initialize SQLAlchemy with the Flask application
@@ -96,6 +95,14 @@ def start_anti_idle_thread():
                         logger.info("Anti-idle thread: Created initial statistics")
             except Exception as e:
                 logger.error(f"Anti-idle thread: Error during keep-alive operation: {e}")
+                
+                # Try to create the SQLite database tables if they don't exist
+                try:
+                    with app.app_context():
+                        db.create_all()
+                        logger.info("Anti-idle thread: Created SQLite database tables after error")
+                except Exception as db_error:
+                    logger.error(f"Anti-idle thread: Failed to create database tables: {db_error}")
             
             # Sleep for 60 seconds (well below the 2m21s timeout)
             time.sleep(60)
