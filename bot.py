@@ -44,6 +44,22 @@ from bot_commands import (
     handle_position_alert
 )
 
+# Import menu utilities
+from menus import (
+    get_invest_menu,
+    get_explore_menu,
+    get_account_menu,
+    get_custom_amount_menu,
+    get_simulate_menu,
+    get_exit_position_menu,
+    get_main_menu,
+    is_investment_intent,
+    is_position_inquiry,
+    is_pool_inquiry,
+    is_wallet_inquiry,
+    extract_amount
+)
+
 # Initialize AI service
 anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
 ai_advisor = AnthropicAI(api_key=anthropic_api_key)
@@ -221,20 +237,20 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             db_utils.log_user_activity(user.id, "start_command")
             logger.info(f"Activity logged for user {user.id}")
         
+        # Import here to avoid circular imports
+        from menus import get_main_menu
+        
         logger.info(f"Sending welcome message to user {user.id}")
         await update.message.reply_markdown(
             f"👋 Welcome to FiLot, {user.first_name}!\n\n"
             "I'm your AI-powered investment assistant for cryptocurrency liquidity pools. "
             "With real-time analytics and personalized insights, I'll help you make informed investment decisions.\n\n"
-            "🔹 Use /recommend [high-risk|stable] for personalized pool recommendations\n"
-            "🔹 Use /execute [amount] to invest in your selected pool\n"
-            "🔹 Use /positions to view your active investments\n"
-            "🔹 Use /exit to withdraw from a position\n"
-            "🔹 Use /info to see top-performing liquidity pools\n"
-            "🔹 Use /simulate [amount] to calculate potential earnings\n"
-            "🔹 Use /walletconnect to connect your wallet via QR code\n"
-            "🔹 Use /help to see all available commands\n\n"
-            "You can also ask me any questions about FiLot, LA! Token, or crypto investing in general."
+            "🤖 *FiLot Bot Commands*\n"
+            "• /invest [high-risk|stable] [amount] – full investment flow\n"
+            "• /explore [pools|simulate|faq] – learn and explore\n"
+            "• /account – manage wallet, profile & settings\n\n"
+            "You can also ask me any questions about FiLot, LA! Token, or crypto investing in general.",
+            reply_markup=get_main_menu()
         )
     except Exception as e:
         logger.error(f"Error in start command: {e}")
@@ -250,32 +266,409 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             user = update.effective_user
             db_utils.log_user_activity(user.id, "help_command")
         
+        # Import here to avoid circular imports
+        from menus import get_main_menu
+        
         await update.message.reply_markdown(
-            "🤖 *FiLot Bot Commands*\n\n"
-            "*Investment Commands:*\n"
-            "• /recommend [high-risk|stable] - Get personalized pool recommendations\n"
-            "• /execute [amount] - Invest in your selected pool\n"
-            "• /positions - View your active investments\n"
-            "• /exit - Withdraw from a position\n\n"
-            "*Information Commands:*\n"
-            "• /info - View top-performing liquidity pools\n"
-            "• /simulate [amount] - Calculate potential earnings\n"
-            "• /faq - Frequently asked questions\n"
-            "• /social - Our social media links\n\n"
-            "*Account Commands:*\n"
-            "• /wallet - Manage your crypto wallet\n"
-            "• /walletconnect - Connect wallet using QR code\n"
-            "• /profile - Set your investment preferences\n"
-            "• /verify [code] - Verify your account\n"
-            "• /subscribe - Receive daily updates\n"
-            "• /unsubscribe - Stop receiving updates\n"
-            "• /status - Check bot status\n"
-            "• /start - Start the bot and get a welcome message\n"
-            "• /help - Show this help message\n\n"
-            "You can also ask me questions about FiLot, LA! Token, or DeFi concepts."
+            "🤖 *FiLot Bot Commands*\n"
+            "• /invest [high-risk|stable] [amount] – full investment flow\n"
+            "• /explore [pools|simulate|faq] – learn and explore\n"
+            "• /account – manage wallet, profile & settings\n\n"
+            "You can also ask me questions about FiLot, LA! Token, or DeFi concepts.",
+            reply_markup=get_main_menu()
         )
     except Exception as e:
         logger.error(f"Error in help command: {e}")
+        await update.message.reply_text(
+            "Sorry, an error occurred while processing your request. Please try again later."
+        )
+
+async def account_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handles the account management flow:
+    Shows a menu with options for wallet connection, profile settings, and subscriptions
+    """
+    try:
+        user = update.effective_user
+        message = update.effective_message
+        
+        # Log command activity
+        from app import app
+        with app.app_context():
+            db_utils.log_user_activity(user.id, "account_command")
+        
+        # Get user information
+        from models import User
+        user_record = None
+        
+        with app.app_context():
+            user_record = User.query.filter_by(id=user.id).first()
+        
+        wallet_status = "❌ Not Connected"
+        profile_type = "Not Set"
+        subscription_status = "❌ Not Subscribed"
+        
+        if user_record:
+            # Check wallet connection
+            orchestrator = get_orchestrator()
+            wallet_info = await orchestrator.get_wallet_info(user.id)
+            if wallet_info.get("success", False):
+                wallet_address = wallet_info.get("address", "")
+                if wallet_address:
+                    wallet_status = f"✅ Connected ({wallet_address[:6]}...{wallet_address[-4:]})"
+            
+            # Get profile settings
+            if user_record.risk_profile:
+                profile_type = user_record.risk_profile.capitalize()
+            
+            # Check subscription status
+            if user_record.is_subscribed:
+                subscription_status = "✅ Subscribed"
+        
+        # Create response message
+        response = (
+            f"👤 *Your Account* 👤\n\n"
+            f"*Wallet:* {wallet_status}\n"
+            f"*Risk Profile:* {profile_type}\n"
+            f"*Daily Updates:* {subscription_status}\n\n"
+            f"Select an option below to manage your account:"
+        )
+        
+        # Show the account menu
+        await message.reply_markdown(response, reply_markup=get_account_menu())
+        
+    except Exception as e:
+        logger.error(f"Error in account_command: {e}", exc_info=True)
+        await update.message.reply_text(
+            "Sorry, an error occurred while processing your request. Please try again later."
+        )
+
+async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handles the exploration flow with several options:
+    1. No arguments: Shows a menu with options (pools, simulate, faq)
+    2. 'pools': Shows top-performing pools (calls info_command)
+    3. 'simulate [amount]': Simulates investment returns
+    4. 'faq': Shows FAQ information
+    """
+    try:
+        user = update.effective_user
+        message = update.effective_message
+        
+        # Log command activity
+        from app import app
+        with app.app_context():
+            db_utils.log_user_activity(user.id, "explore_command")
+        
+        # Get arguments
+        args = context.args
+        
+        # No arguments: Show menu
+        if not args:
+            await message.reply_text(
+                "📊 *Explore DeFi Opportunities* 📊\n\n"
+                "Select an option to explore:",
+                parse_mode="Markdown",
+                reply_markup=get_explore_menu()
+            )
+            return
+            
+        # Parse the option
+        option = args[0].lower()
+        
+        # Handle 'pools' option
+        if option == "pools":
+            # Call the existing info_command
+            context.args = []  # Clear arguments for info_command
+            await info_command(update, context)
+            return
+            
+        # Handle 'simulate' option
+        elif option == "simulate":
+            # If there's a second argument, it's the amount
+            if len(args) > 1:
+                try:
+                    amount = float(args[1])
+                    context.args = [str(amount)]  # Set arguments for simulate_command
+                    await simulate_command(update, context)
+                except ValueError:
+                    await message.reply_text(
+                        "Invalid amount for simulation. Please provide a numeric value, for example:\n"
+                        "/explore simulate 100",
+                        reply_markup=get_simulate_menu()
+                    )
+            else:
+                # No amount provided, show simulation options
+                await message.reply_text(
+                    "💰 *Simulate Investment Returns* 💰\n\n"
+                    "Select an amount to simulate or enter a custom amount using:\n"
+                    "`/explore simulate <amount>`",
+                    parse_mode="Markdown",
+                    reply_markup=get_simulate_menu()
+                )
+            return
+            
+        # Handle 'faq' option
+        elif option == "faq":
+            # Call the existing faq_command
+            await faq_command(update, context)
+            return
+            
+        # Handle 'social' option
+        elif option == "social":
+            # Call the existing social_command
+            await social_command(update, context)
+            return
+            
+        # Invalid option
+        else:
+            await message.reply_text(
+                "Invalid option. Available explore options are:\n"
+                "• pools - View top-performing pools\n"
+                "• simulate - Calculate potential returns\n"
+                "• faq - Frequently asked questions\n"
+                "• social - Our social media links",
+                reply_markup=get_explore_menu()
+            )
+            
+    except Exception as e:
+        logger.error(f"Error in explore_command: {e}", exc_info=True)
+        await update.message.reply_text(
+            "Sorry, an error occurred while processing your request. Please try again later."
+        )
+
+async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handles the consolidated investment flow with three modes:
+    1. No arguments: Shows active positions with options to add more or exit
+    2. Profile only (high-risk|stable): Shows recommended pools for that profile
+    3. Profile and amount: Shows recommended pools to invest the specified amount
+    """
+    try:
+        user = update.effective_user
+        message = update.effective_message
+        
+        # Log command activity
+        from app import app
+        with app.app_context():
+            db_utils.log_user_activity(user.id, "invest_command")
+        
+        # Get arguments
+        args = context.args
+        profile = "high-risk"  # Default profile
+        amount = None
+        
+        # Parse arguments
+        if args:
+            # First argument could be profile or amount
+            if args[0].lower() in ["high-risk", "stable"]:
+                profile = args[0].lower()
+                # If there's a second argument, it's the amount
+                if len(args) > 1:
+                    try:
+                        amount = float(args[1])
+                    except ValueError:
+                        await message.reply_text(
+                            "Invalid amount. Please provide a numeric value, for example:\n"
+                            "/invest high-risk 100"
+                        )
+                        return
+            else:
+                # First argument is amount, use default profile
+                try:
+                    amount = float(args[0])
+                except ValueError:
+                    await message.reply_text(
+                        "Invalid command format. Use:\n"
+                        "/invest [high-risk|stable] [amount]"
+                    )
+                    return
+        
+        # MODE 1: No arguments - show positions
+        if not args:
+            # Get positions from orchestrator
+            orchestrator = get_orchestrator()
+            result = await orchestrator.get_positions(user.id)
+            
+            if not result.get("success", False):
+                await message.reply_text(
+                    f"❌ Sorry, I couldn't retrieve your positions at this time.\n\n"
+                    f"Error: {result.get('error', 'Unknown error')}",
+                    reply_markup=get_invest_menu()
+                )
+                return
+                
+            positions = result.get("positions", [])
+            
+            if not positions:
+                await message.reply_text(
+                    "You don't have any positions yet.\n\n"
+                    "Choose an investment option below:",
+                    reply_markup=get_invest_menu()
+                )
+                return
+                
+            # Format response
+            response = "📊 *Your Liquidity Positions* 📊\n\n"
+            
+            for position in positions:
+                # Format status with emoji
+                status_emoji = {
+                    PositionStatus.PENDING.value: "⏳",
+                    PositionStatus.ACTIVE.value: "✅",
+                    PositionStatus.MONITORED.value: "🔍",
+                    PositionStatus.EXITING.value: "🚪",
+                    PositionStatus.COMPLETED.value: "🏁",
+                    PositionStatus.FAILED.value: "❌"
+                }.get(position["status"], "❓")
+                
+                # Get values from position, using appropriate keys
+                entry_value = position.get("entry_value", position.get("usd_value", 0))
+                current_value = position.get("current_value", entry_value)
+                profit_loss = position.get("pnl", current_value - entry_value)
+                profit_loss_pct = position.get("pnl_percent", 0)
+                
+                # Format profit/loss
+                profit_loss_text = (
+                    f"Profit: ${profit_loss:.2f} ({profit_loss_pct:.2f}%)" 
+                    if profit_loss >= 0 
+                    else f"Loss: -${abs(profit_loss):.2f} ({profit_loss_pct:.2f}%)"
+                )
+                
+                # Format date string
+                date_str = position.get("entry_date", "")
+                if isinstance(date_str, str):
+                    date_formatted = date_str.split("T")[0] if "T" in date_str else date_str
+                else:
+                    # Import in function scope to avoid circular imports
+                    from bot_commands import format_datetime
+                    date_formatted = format_datetime(date_str)
+                
+                # Add position details
+                response += (
+                    f"{status_emoji} *Position {position['id']}*\n"
+                    f"Pool: {position.get('token_a', 'Token A')}/{position.get('token_b', 'Token B')}\n"
+                    f"Status: {position['status'].capitalize()}\n"
+                    f"Invested: ${entry_value:.2f}\n"
+                    f"Current Value: ${current_value:.2f}\n"
+                    f"{profit_loss_text}\n"
+                    f"Current APR: {position.get('current_apr', 0):.2f}%\n"
+                    f"Created: {date_formatted}\n\n"
+                )
+            
+            # Send response with exit position menu
+            exit_menu = get_exit_position_menu(positions)
+            await message.reply_markdown(response, reply_markup=exit_menu)
+            return
+            
+        # MODE 2/3: Profile with or without amount - recommend pools
+        # Send processing message
+        processing_message = await message.reply_text(
+            "🔍 Analyzing the market for the best pools based on your risk profile...\n"
+            "This may take a moment as I'm checking on-chain data and market sentiment."
+        )
+        
+        # Get recommendations from orchestrator
+        orchestrator = get_orchestrator()
+        result = await orchestrator.recommend(user.id, profile)
+        
+        # Delete processing message
+        await processing_message.delete()
+        
+        if not result.get("success", False):
+            await message.reply_text(
+                f"❌ Sorry, I couldn't generate recommendations at this time.\n\n"
+                f"Error: {result.get('error', 'Unknown error')}",
+                reply_markup=get_invest_menu()
+            )
+            return
+            
+        # Get the recommended pools
+        higher_return = result.get("higher_return")
+        stable_return = result.get("stable_return")
+        
+        if not higher_return:
+            await message.reply_text(
+                "❌ Sorry, I couldn't find any suitable pools matching your profile.\n\n"
+                "Please try again later when market conditions improve.",
+                reply_markup=get_invest_menu()
+            )
+            return
+            
+        # Format response
+        response = (
+            f"🌟 *Recommended Pools for {profile}* 🌟\n\n"
+            f"I've analyzed the market and found the following opportunities for you:\n\n"
+        )
+        
+        # Import in function scope to avoid circular imports
+        from bot_commands import format_sentiment_score
+        
+        # Add higher return pool details
+        response += (
+            f"🚀 *Higher Return Option*\n"
+            f"Pool: {higher_return['token_a']}/{higher_return['token_b']}\n"
+            f"Current APR: {higher_return['apr_current']:.2f}%\n"
+            f"Prediction Score: {higher_return['sol_score']:.2f}\n"
+            f"Market Sentiment: {format_sentiment_score(higher_return['sentiment_score'])}\n"
+            f"TVL: ${higher_return['tvl']:,.2f}\n\n"
+        )
+        
+        # Add stable return pool details if available
+        if stable_return:
+            response += (
+                f"🛡️ *Stable Option*\n"
+                f"Pool: {stable_return['token_a']}/{stable_return['token_b']}\n"
+                f"Current APR: {stable_return['apr_current']:.2f}%\n"
+                f"Prediction Score: {stable_return['sol_score']:.2f}\n"
+                f"Market Sentiment: {format_sentiment_score(stable_return['sentiment_score'])}\n"
+                f"TVL: ${stable_return['tvl']:,.2f}\n\n"
+            )
+        
+        # If amount is provided, add investment buttons
+        if amount is not None:
+            response += (
+                f"Ready to invest ${amount:.2f} in one of these pools?\n"
+                f"Click one of the buttons below to proceed."
+            )
+            
+            # Create invest buttons for the specific amount
+            keyboard = [
+                [
+                    InlineKeyboardButton(
+                        f"Invest ${amount:.2f} in {higher_return['token_a']}/{higher_return['token_b']}", 
+                        callback_data=f"execute_{amount}"
+                    )
+                ]
+            ]
+            
+            if stable_return:
+                keyboard.append([
+                    InlineKeyboardButton(
+                        f"Invest ${amount:.2f} in {stable_return['token_a']}/{stable_return['token_b']}", 
+                        callback_data=f"execute_{amount}_stable"
+                    )
+                ])
+                
+            keyboard.append([
+                InlineKeyboardButton("Back to Invest Menu", callback_data="menu_invest")
+            ])
+            
+            reply_markup = InlineKeyboardMarkup(keyboard)
+        else:
+            # Without amount, show standard invest menu
+            response += (
+                f"Use `/invest {profile} <amount>` to invest in these pools. For example:\n"
+                f"`/invest {profile} 100` to invest $100 USD.\n\n"
+                f"Or select an amount below:"
+            )
+            reply_markup = get_invest_menu()
+        
+        # Send response
+        await message.reply_markdown(response, reply_markup=reply_markup)
+        
+    except Exception as e:
+        logger.error(f"Error in invest_command: {e}", exc_info=True)
         await update.message.reply_text(
             "Sorry, an error occurred while processing your request. Please try again later."
         )
@@ -1062,8 +1455,8 @@ async def walletconnect_command(update: Update, context: ContextTypes.DEFAULT_TY
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handle user messages that are not commands.
-    Intelligently detects questions and provides predefined answers or 
-    routes to AI for specialized financial advice.
+    Intelligently detects questions, investing intent, or position inquiries
+    and routes to the appropriate handlers or AI for specialized financial advice.
     """
     try:
         user = update.effective_user
