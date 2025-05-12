@@ -63,31 +63,35 @@ class Orchestrator:
                     "error": "Invalid profile. Choose 'high-risk' or 'stable'."
                 }
                 
-            # Get user from database
-            user = db.session.query(User).filter(User.id == user_id).first()
+            # Import Flask app
+            from app import app
             
-            if not user:
-                logger.warning(f"User {user_id} not found in database")
-                # Create user if not exists
-                from db_utils import get_or_create_user
-                user = get_or_create_user(user_id)
-            
-            # Get recommendations from agent
-            recommendations = await self.recommendation_agent.compute_recommendations(profile)
-            
-            # Store in session
-            self.user_sessions[user_id] = {
-                "last_recommendation": recommendations,
-                "timestamp": datetime.now().isoformat(),
-                "profile": profile
-            }
-            
-            # Update user profile if different
-            if user.risk_profile != profile:
-                user.risk_profile = profile
-                user.updated_at = datetime.now()
-                db.session.commit()
-                logger.info(f"Updated user {user_id} risk profile to {profile}")
+            # Get user from database within application context
+            with app.app_context():
+                user = db.session.query(User).filter(User.id == user_id).first()
+                
+                if not user:
+                    logger.warning(f"User {user_id} not found in database")
+                    # Create user if not exists
+                    from db_utils import get_or_create_user
+                    user = get_or_create_user(user_id)
+                
+                # Get recommendations from agent
+                recommendations = await self.recommendation_agent.compute_recommendations(profile)
+                
+                # Store in session
+                self.user_sessions[user_id] = {
+                    "last_recommendation": recommendations,
+                    "timestamp": datetime.now().isoformat(),
+                    "profile": profile
+                }
+                
+                # Update user profile if different
+                if user.risk_profile != profile:
+                    user.risk_profile = profile
+                    user.updated_at = datetime.now()
+                    db.session.commit()
+                    logger.info(f"Updated user {user_id} risk profile to {profile}")
             
             return recommendations
             
@@ -225,20 +229,23 @@ class Orchestrator:
         logger.info(f"Getting positions for user {user_id}")
         
         try:
-            # Get positions using the monitoring agent
-            positions = await self.monitoring_agent.get_user_positions(user_id)
-            
-            if not positions:
+            # Import Flask app and run within application context
+            from app import app
+            with app.app_context():
+                # Get positions using the monitoring agent
+                positions = await self.monitoring_agent.get_user_positions(user_id)
+                
+                if not positions:
+                    return {
+                        "success": True,
+                        "positions": [],
+                        "message": "No positions found."
+                    }
+                    
                 return {
                     "success": True,
-                    "positions": [],
-                    "message": "No positions found."
+                    "positions": positions
                 }
-                
-            return {
-                "success": True,
-                "positions": positions
-            }
             
         except Exception as e:
             logger.error(f"Error getting positions: {e}")
