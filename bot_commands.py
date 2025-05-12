@@ -367,11 +367,11 @@ async def positions_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 PositionStatus.FAILED.value: "❌"
             }.get(position["status"], "❓")
             
-            # Calculate profit/loss
-            invested = position["invested_amount_usd"]
-            current = position.get("current_value_usd", invested)
-            profit_loss = current - invested
-            profit_loss_pct = (profit_loss / invested) * 100 if invested > 0 else 0
+            # Get values from position, using appropriate keys
+            entry_value = position.get("entry_value", position.get("usd_value", 0))
+            current_value = position.get("current_value", entry_value)
+            profit_loss = position.get("pnl", current_value - entry_value)
+            profit_loss_pct = position.get("pnl_percent", 0)
             
             # Format profit/loss
             profit_loss_text = (
@@ -380,22 +380,36 @@ async def positions_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 else f"Loss: -${abs(profit_loss):.2f} ({profit_loss_pct:.2f}%)"
             )
             
+            # Get status string (can be either a string or an enum value)
+            status_str = position["status"]
+            if hasattr(position["status"], "value"):
+                status_str = position["status"].value
+                
+            # Format date string from various possible formats
+            date_str = position.get("entry_date", "")
+            if isinstance(date_str, str):
+                # If it's already a string, use it directly
+                date_formatted = date_str.split("T")[0] if "T" in date_str else date_str
+            else:
+                # Otherwise format it
+                date_formatted = format_datetime(date_str)
+            
             # Add position details
             response += (
-                f"{status_emoji} *Position #{position['id']}*\n"
+                f"{status_emoji} *Position {position['id']}*\n"
                 f"Pool: {position.get('token_a', 'Token A')}/{position.get('token_b', 'Token B')}\n"
-                f"Status: {position['status'].capitalize()}\n"
-                f"Invested: ${position['invested_amount_usd']:.2f}\n"
-                f"Current Value: ${position.get('current_value_usd', position['invested_amount_usd']):.2f}\n"
+                f"Status: {status_str.capitalize()}\n"
+                f"Invested: ${entry_value:.2f}\n"
+                f"Current Value: ${current_value:.2f}\n"
                 f"{profit_loss_text}\n"
                 f"Current APR: {position.get('current_apr', 0):.2f}%\n"
-                f"Created: {format_datetime(position['created_at'])}\n\n"
+                f"Created: {date_formatted}\n\n"
             )
             
         # Add call to action
         response += (
             "Use `/exit <position_id>` to exit a specific position.\n"
-            "Example: `/exit 1` to exit position #1."
+            "Example: `/exit demo_pos_sol_usdc_1683921846.2342` to exit the SOL/USDC position."
         )
         
         await message.reply_text(response, parse_mode="Markdown")
@@ -424,14 +438,8 @@ async def exit_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         position_id = None
         
         if args and len(args) > 0:
-            try:
-                position_id = int(args[0])
-            except ValueError:
-                await message.reply_text(
-                    "Invalid position ID. Please provide a numeric value, for example:\n"
-                    "/exit 1"
-                )
-                return
+            # Use the position ID as a string
+            position_id = args[0]
                 
         # Send processing message
         processing_message = await message.reply_text(
@@ -453,65 +461,44 @@ async def exit_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             )
             return
             
-        # Get transaction details
-        position_id = result.get("position_id")
-        pool_id = result.get("pool_id")
-        token_a = result.get("token_a")
-        token_b = result.get("token_b")
-        token_a_amount = result.get("token_a_amount")
-        token_b_amount = result.get("token_b_amount")
-        total_value_usd = result.get("total_value_usd")
-        transaction = result.get("transaction", {})
+        # Get transaction details from exit_position response
+        position_id = result.get("position_id", "Unknown")
+        token_a = result.get("token_a", "Unknown")
+        token_b = result.get("token_b", "Unknown")
+        token_a_amount = result.get("token_a_amount", 0)
+        token_b_amount = result.get("token_b_amount", 0)
+        entry_value = result.get("entry_value", 0)
+        exit_value = result.get("exit_value", 0)
+        pnl = result.get("pnl", 0)
+        pnl_percent = result.get("pnl_percent", 0)
+        tx_signature = result.get("tx_signature", "")
         
-        # Generate WalletConnect session for signing
-        wc_result = await create_walletconnect_session(
-            user.id,
-            transaction=transaction.get("serialized_transaction"),
-            metadata={
-                "position_id": position_id,
-                "is_exit": True
-            }
+        # Format profit/loss text
+        profit_loss_text = (
+            f"Profit: ${pnl:.2f} ({pnl_percent:.2f}%)" 
+            if pnl >= 0 
+            else f"Loss: -${abs(pnl):.2f} ({pnl_percent:.2f}%)"
         )
         
-        if not wc_result.get("success", False):
-            await message.reply_text(
-                f"❌ Exit transaction prepared but couldn't create signing session.\n\n"
-                f"Error: {wc_result.get('error', 'Unknown error')}"
-            )
-            return
-            
-        # Send confirmation message with signing QR code
+        # Get transaction message from result if available
+        success_message = result.get("message", "Successfully exited position")
+        
+        # Format and send exit success message
         response = (
-            f"✅ *Exit Transaction Ready*\n\n"
-            f"Position: #{position_id}\n"
+            f"✅ *Position Successfully Exited*\n\n"
+            f"Position: {position_id}\n"
             f"Pool: {token_a}/{token_b}\n"
-            f"Removing: {token_a_amount:.6f} {token_a} and {token_b_amount:.6f} {token_b}\n"
-            f"Estimated Value: ${total_value_usd:.2f}\n\n"
-            f"Please scan the QR code below with your wallet app to sign and submit this transaction."
+            f"Removed: {token_a_amount:.6f} {token_a} and {token_b_amount:.6f} {token_b}\n"
+            f"Entry Value: ${entry_value:.2f}\n"
+            f"Exit Value: ${exit_value:.2f}\n"
+            f"{profit_loss_text}\n\n"
         )
         
-        # Create QR code
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(wc_result["uri"])
-        qr.make(fit=True)
-        
-        img = qr.make_image(fill_color="black", back_color="white")
-        
-        # Convert to bytes
-        img_byte_arr = io.BytesIO()
-        img.save(img_byte_arr, format='PNG')
-        img_byte_arr.seek(0)
-        
-        await message.reply_photo(
-            photo=img_byte_arr,
-            caption=response,
-            parse_mode="Markdown"
-        )
+        # Add transaction signature if available
+        if tx_signature:
+            response += f"Transaction: `{tx_signature[:12]}...`\n\n"
+            
+        await message.reply_markdown(response)
         
     except Exception as e:
         logger.error(f"Error in exit_command: {e}")

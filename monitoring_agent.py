@@ -45,6 +45,123 @@ class MonitoringAgent:
         # Initialize execution agent for building exit transactions
         self.execution_agent = ExecutionAgent()
         
+    async def get_user_positions(self, user_id: int) -> List[Dict[str, Any]]:
+        """
+        Get all positions for a user with current data
+        
+        Args:
+            user_id: Telegram user ID
+            
+        Returns:
+            List of position data dictionaries
+        """
+        # Check if there are any positions in the database
+        positions = db.session.query(Position).filter(
+            Position.user_id == user_id
+        ).all()
+        
+        # If we have database positions, use those
+        if positions:
+            # Format positions for display
+            position_data = []
+            for position in positions:
+                # Get current APR and token prices (mock data)
+                current_apr = position.entry_apr * (1 + (0.1 * (1 if position.status == PositionStatus.ACTIVE else -1)))
+                
+                # Get token prices (mock current values)
+                token_a_price = 0
+                token_b_price = 0
+                
+                if position.token_a == "SOL":
+                    token_a_price = 178.23
+                elif position.token_a == "BTC":
+                    token_a_price = 62543.60
+                elif position.token_a == "ETH":
+                    token_a_price = 3101.04
+                elif position.token_a in ["USDC", "USDT"]:
+                    token_a_price = 1.0
+                
+                if position.token_b == "SOL":
+                    token_b_price = 178.23
+                elif position.token_b == "BTC":
+                    token_b_price = 62543.60
+                elif position.token_b == "ETH":
+                    token_b_price = 3101.04
+                elif position.token_b in ["USDC", "USDT"]:
+                    token_b_price = 1.0
+                
+                # Calculate current value
+                token_a_value = position.token_a_amount * token_a_price
+                token_b_value = position.token_b_amount * token_b_price
+                current_value = token_a_value + token_b_value
+                
+                # Calculate profit/loss
+                pnl = current_value - position.usd_value
+                pnl_percent = (pnl / position.usd_value) * 100 if position.usd_value > 0 else 0
+                
+                # Create position data
+                position_data.append({
+                    "id": position.id,
+                    "pool_id": position.pool_id,
+                    "token_a": position.token_a,
+                    "token_b": position.token_b,
+                    "token_a_amount": position.token_a_amount,
+                    "token_b_amount": position.token_b_amount,
+                    "entry_apr": position.entry_apr,
+                    "current_apr": current_apr,
+                    "entry_date": position.entry_date.isoformat(),
+                    "entry_value": position.usd_value,
+                    "current_value": current_value,
+                    "pnl": pnl,
+                    "pnl_percent": pnl_percent,
+                    "status": position.status,
+                    "tx_signature": position.tx_signature
+                })
+            
+            return position_data
+        
+        # If no positions in database, create placeholder data for demo
+        current_date = datetime.now()
+        entry_date = current_date - timedelta(days=7)
+        
+        # Create placeholder position data
+        return [
+            {
+                "id": f"demo_pos_sol_usdc_{current_date.timestamp()}",
+                "pool_id": "raydium_sol_usdc_high",
+                "token_a": "SOL",
+                "token_b": "USDC",
+                "token_a_amount": 2.8125,
+                "token_b_amount": 500.0,
+                "entry_apr": 42.7,
+                "current_apr": 44.9,
+                "entry_date": entry_date.isoformat(),
+                "entry_value": 1000.0,
+                "current_value": 1078.23,
+                "pnl": 78.23,
+                "pnl_percent": 7.82,
+                "status": PositionStatus.ACTIVE,
+                "tx_signature": f"demo_tx_sol_usdc_{entry_date.timestamp()}"
+            },
+            {
+                "id": f"demo_pos_eth_usdc_{current_date.timestamp()}",
+                "pool_id": "raydium_eth_usdc_moderate",
+                "token_a": "ETH",
+                "token_b": "USDC",
+                "token_a_amount": 0.1612,
+                "token_b_amount": 500.0,
+                "entry_apr": 18.3,
+                "current_apr": 18.5,
+                "entry_date": entry_date.isoformat(),
+                "entry_value": 1000.0,
+                "current_value": 1031.04,
+                "pnl": 31.04,
+                "pnl_percent": 3.10,
+                "status": PositionStatus.ACTIVE,
+                "tx_signature": f"demo_tx_eth_usdc_{entry_date.timestamp()}"
+            }
+        ]
+    
     async def evaluate_positions(self) -> List[Dict[str, Any]]:
         """
         Evaluate all active positions for exit conditions

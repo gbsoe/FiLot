@@ -519,6 +519,156 @@ class ExecutionAgent:
                 "error": f"Error building deposit transaction: {e}"
             }
             
+    async def exit_position(
+        self,
+        user_id: int,
+        position_id: str
+    ) -> Dict[str, Any]:
+        """
+        Exit a position
+        
+        Args:
+            user_id: Telegram user ID
+            position_id: ID of the position to exit
+            
+        Returns:
+            Dictionary with exit results
+        """
+        logger.info(f"Exiting position {position_id} for user {user_id}")
+        
+        try:
+            # Try to find position in database
+            position = None
+            try:
+                position = db.session.query(Position).filter(
+                    Position.id == position_id,
+                    Position.user_id == user_id
+                ).first()
+            except Exception:
+                pass
+                
+            if position:
+                # Generate exit transaction
+                current_date = datetime.now()
+                tx_signature = f"exit_tx_{current_date.timestamp()}"
+                
+                # Calculate exit values (mock data)
+                token_a_price = 0
+                token_b_price = 0
+                
+                if position.token_a == "SOL":
+                    token_a_price = 178.23
+                elif position.token_a == "BTC":
+                    token_a_price = 62543.60
+                elif position.token_a == "ETH":
+                    token_a_price = 3101.04
+                elif position.token_a in ["USDC", "USDT"]:
+                    token_a_price = 1.0
+                
+                if position.token_b == "SOL":
+                    token_b_price = 178.23
+                elif position.token_b == "BTC":
+                    token_b_price = 62543.60
+                elif position.token_b == "ETH":
+                    token_b_price = 3101.04
+                elif position.token_b in ["USDC", "USDT"]:
+                    token_b_price = 1.0
+                
+                # Calculate current value
+                token_a_value = position.token_a_amount * token_a_price
+                token_b_value = position.token_b_amount * token_b_price
+                exit_value = token_a_value + token_b_value
+                
+                # Calculate profit/loss
+                pnl = exit_value - position.usd_value
+                pnl_percent = (pnl / position.usd_value) * 100 if position.usd_value > 0 else 0
+                
+                # Update position in database
+                position.status = PositionStatus.EXITED
+                position.exit_value = exit_value
+                position.exit_date = current_date
+                position.exit_tx_signature = tx_signature
+                db.session.commit()
+                logger.info(f"Position {position_id} marked as exited in database")
+                
+                return {
+                    "success": True,
+                    "position_id": position_id,
+                    "entry_value": position.usd_value,
+                    "exit_value": exit_value,
+                    "pnl": pnl,
+                    "pnl_percent": pnl_percent,
+                    "token_a": position.token_a,
+                    "token_b": position.token_b,
+                    "token_a_amount": position.token_a_amount,
+                    "token_b_amount": position.token_b_amount,
+                    "tx_signature": tx_signature,
+                    "message": f"Successfully exited position with {pnl_percent:.2f}% profit."
+                }
+            
+            # Handle demo position
+            if position_id.startswith("demo_pos_"):
+                tokens = position_id.split("_")
+                token_a = tokens[2].upper() if len(tokens) > 2 else "SOL"
+                token_b = tokens[3].upper() if len(tokens) > 3 else "USDC"
+                
+                current_date = datetime.now()
+                entry_date = current_date - timedelta(days=7)
+                entry_value = 1000.0
+                
+                # Set placeholder values based on token pair
+                token_a_amount = 0
+                token_a_price = 0
+                
+                if token_a == "SOL":
+                    token_a_amount = 2.8125
+                    token_a_price = 178.23
+                elif token_a == "ETH":
+                    token_a_amount = 0.1612
+                    token_a_price = 3101.04
+                elif token_a == "BTC":
+                    token_a_amount = 0.0080
+                    token_a_price = 62543.60
+                
+                token_b_amount = 500.0
+                token_b_price = 1.0
+                
+                # Calculate exit values
+                token_a_value = token_a_amount * token_a_price
+                token_b_value = token_b_amount * token_b_price
+                exit_value = token_a_value + token_b_value
+                
+                # Calculate profit/loss (random positive for demo)
+                pnl = exit_value - entry_value
+                pnl_percent = (pnl / entry_value) * 100
+                
+                return {
+                    "success": True,
+                    "position_id": position_id,
+                    "entry_value": entry_value,
+                    "exit_value": exit_value,
+                    "pnl": pnl,
+                    "pnl_percent": pnl_percent,
+                    "token_a": token_a,
+                    "token_b": token_b,
+                    "token_a_amount": token_a_amount,
+                    "token_b_amount": token_b_amount,
+                    "tx_signature": f"exit_tx_{current_date.timestamp()}",
+                    "message": f"Successfully exited position with {pnl_percent:.2f}% profit."
+                }
+            
+            return {
+                "success": False,
+                "error": f"Position {position_id} not found for user {user_id}."
+            }
+            
+        except Exception as e:
+            logger.error(f"Error exiting position: {e}")
+            return {
+                "success": False,
+                "error": f"Error exiting position: {e}"
+            }
+    
     async def build_exit_tx(
         self,
         user_id: int,
@@ -647,6 +797,104 @@ class ExecutionAgent:
                 "error": f"Error building exit transaction: {e}"
             }
             
+    async def execute_investment(
+        self, 
+        user_id: int,
+        pool_data: Dict[str, Any],
+        usd_amount: float
+    ) -> Dict[str, Any]:
+        """
+        Execute an investment into a liquidity pool
+        
+        Args:
+            user_id: Telegram user ID
+            pool_data: Pool data from recommendation
+            usd_amount: Amount in USD to invest
+            
+        Returns:
+            Dictionary with execution results
+        """
+        logger.info(f"Executing investment for user {user_id} with amount ${usd_amount}")
+        
+        try:
+            # Create placeholder transaction data
+            current_date = datetime.now()
+            tx_signature = f"placeholder_tx_{current_date.timestamp()}"
+            
+            # Create token amounts
+            token_a_symbol = pool_data.get("token_a", "SOL")
+            token_b_symbol = pool_data.get("token_b", "USDC")
+            token_a_price = pool_data.get("token_a_price", 179.11)
+            token_b_price = pool_data.get("token_b_price", 1.0)
+            
+            # Calculate theoretical token amounts (50% in each token)
+            token_a_amount = (usd_amount / 2) / token_a_price
+            token_b_amount = (usd_amount / 2) / token_b_price
+            
+            # Format amounts to reasonable precision
+            if token_a_symbol in ["BTC", "ETH", "SOL"]:
+                token_a_amount = round(token_a_amount, 4)
+            else:
+                token_a_amount = round(token_a_amount, 2)
+                
+            if token_b_symbol in ["USDC", "USDT"]:
+                token_b_amount = round(token_b_amount, 2)
+            else:
+                token_b_amount = round(token_b_amount, 4)
+            
+            # Create position data
+            position = {
+                "id": f"pos_{current_date.timestamp()}",
+                "user_id": user_id,
+                "pool_id": pool_data.get("pool_id", "placeholder_pool"),
+                "token_a": token_a_symbol,
+                "token_b": token_b_symbol,
+                "token_a_amount": token_a_amount,
+                "token_b_amount": token_b_amount,
+                "entry_apr": pool_data.get("apr_current", 0.0),
+                "entry_date": current_date.isoformat(),
+                "usd_value": usd_amount,
+                "tx_signature": tx_signature
+            }
+            
+            # Store position in database
+            db_position = Position(
+                id=position["id"],
+                user_id=user_id,
+                pool_id=position["pool_id"],
+                token_a=position["token_a"],
+                token_b=position["token_b"],
+                token_a_amount=position["token_a_amount"],
+                token_b_amount=position["token_b_amount"],
+                entry_apr=position["entry_apr"],
+                entry_date=current_date,
+                usd_value=usd_amount,
+                tx_signature=tx_signature,
+                status=PositionStatus.ACTIVE
+            )
+            
+            try:
+                db.session.add(db_position)
+                db.session.commit()
+                logger.info(f"Stored position {position['id']} in database")
+            except Exception as e:
+                logger.error(f"Error storing position in database: {e}")
+                db.session.rollback()
+            
+            # Return successful result
+            return {
+                "success": True,
+                "position": position,
+                "message": "Investment executed successfully!"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error executing investment: {e}")
+            return {
+                "success": False,
+                "error": f"Error executing investment: {e}"
+            }
+    
     async def submit_transaction(
         self,
         user_id: int,

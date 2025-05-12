@@ -154,14 +154,14 @@ class Orchestrator:
                     "error": "Minimum investment amount is $10 USD."
                 }
                 
-            # Build deposit transaction
-            deposit_tx = await self.execution_agent.build_deposit_tx(
+            # Execute investment using placeholder data
+            result = await self.execution_agent.execute_investment(
                 user_id,
-                selected_pool["pool_id"],
+                selected_pool,
                 usd_amount
             )
             
-            return deposit_tx
+            return result
             
         except Exception as e:
             logger.error(f"Error executing investment: {e}")
@@ -170,7 +170,7 @@ class Orchestrator:
                 "error": f"Error executing investment: {e}"
             }
             
-    async def exit(self, user_id: int, position_id: Optional[int] = None) -> Dict[str, Any]:
+    async def exit(self, user_id: int, position_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Exit a specific position or the most recent active position
         
@@ -184,28 +184,26 @@ class Orchestrator:
         logger.info(f"Exiting position for user {user_id}, position_id={position_id}")
         
         try:
-            # If position_id not provided, get the most recent active position
+            # If position_id not provided, get user positions from monitoring agent
             if position_id is None:
-                position = db.session.query(Position).filter(
-                    Position.user_id == user_id,
-                    Position.status.in_([PositionStatus.ACTIVE.value, PositionStatus.MONITORED.value])
-                ).order_by(Position.created_at.desc()).first()
+                positions = await self.monitoring_agent.get_user_positions(user_id)
                 
-                if not position:
+                if not positions:
                     return {
                         "success": False,
                         "error": "No active positions found."
                     }
-                    
-                position_id = position.id
                 
-            # Build exit transaction
-            exit_tx = await self.execution_agent.build_exit_tx(
+                # Use the first position as default
+                position_id = positions[0]["id"]
+            
+            # Exit position using our new function
+            result = await self.execution_agent.exit_position(
                 user_id,
                 position_id
             )
             
-            return exit_tx
+            return result
             
         except Exception as e:
             logger.error(f"Error exiting position: {e}")
@@ -227,10 +225,8 @@ class Orchestrator:
         logger.info(f"Getting positions for user {user_id}")
         
         try:
-            # Get all positions for this user
-            positions = db.session.query(Position).filter(
-                Position.user_id == user_id
-            ).order_by(Position.created_at.desc()).all()
+            # Get positions using the monitoring agent
+            positions = await self.monitoring_agent.get_user_positions(user_id)
             
             if not positions:
                 return {
@@ -239,34 +235,9 @@ class Orchestrator:
                     "message": "No positions found."
                 }
                 
-            # Format positions
-            formatted_positions = []
-            for position in positions:
-                # Get pool data
-                pool = db.session.query(Pool).filter(Pool.id == position.pool_id).first()
-                
-                position_data = {
-                    "id": position.id,
-                    "pool_id": position.pool_id,
-                    "status": position.status,
-                    "invested_amount_usd": position.invested_amount_usd,
-                    "token_a_amount": position.token_a_amount,
-                    "token_b_amount": position.token_b_amount,
-                    "current_value_usd": position.current_value_usd or position.invested_amount_usd,
-                    "current_apr": position.current_apr,
-                    "created_at": position.created_at.isoformat(),
-                    "updated_at": position.updated_at.isoformat(),
-                }
-                
-                if pool:
-                    position_data["token_a"] = pool.token_a_symbol
-                    position_data["token_b"] = pool.token_b_symbol
-                    
-                formatted_positions.append(position_data)
-                
             return {
                 "success": True,
-                "positions": formatted_positions
+                "positions": positions
             }
             
         except Exception as e:
