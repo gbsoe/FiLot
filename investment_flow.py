@@ -46,10 +46,34 @@ async def start_invest_flow(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     with app.app_context():
         db_utils.log_user_activity(user.id, "invest_flow_start")
     
-    # Ask for amount
-    await message.reply_text(
-        "How much would you like to invest? Please reply with a number (e.g. 100).",
-        reply_markup=BACK_KEYBOARD
+    # Create inline keyboard with amount options
+    keyboard = [
+        [
+            InlineKeyboardButton("$50", callback_data="amount_50"),
+            InlineKeyboardButton("$100", callback_data="amount_100"),
+            InlineKeyboardButton("$250", callback_data="amount_250")
+        ],
+        [
+            InlineKeyboardButton("$500", callback_data="amount_500"),
+            InlineKeyboardButton("$1,000", callback_data="amount_1000"),
+            InlineKeyboardButton("$5,000", callback_data="amount_5000")
+        ],
+        [InlineKeyboardButton("Custom Amount", callback_data="amount_custom")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    # Ask for amount with a more engaging and button-focused message
+    await message.reply_markdown(
+        "💰 *Ready to Invest?* 💰\n\n"
+        "With our One-Touch interface, simply select an investment amount below or choose 'Custom Amount' to enter a specific value.\n\n"
+        "💡 *Tip:* All investment options can be managed through our convenient buttons - no typing required!",
+        reply_markup=reply_markup
+    )
+    
+    # Send follow-up with persistent keyboard as a reminder
+    await message.reply_markdown(
+        "👇 *Remember:* You can always use these buttons for quick navigation! 👇",
+        reply_markup=MAIN_KEYBOARD
     )
     
     # Set state to await amount
@@ -78,17 +102,55 @@ async def process_invest_amount(update: Update, context: ContextTypes.DEFAULT_TY
         if match:
             amount = float(match.group(1))
         else:
+            # Create the amount keyboard for a more button-focused approach
+            keyboard = [
+                [
+                    InlineKeyboardButton("$50", callback_data="amount_50"),
+                    InlineKeyboardButton("$100", callback_data="amount_100"),
+                    InlineKeyboardButton("$250", callback_data="amount_250")
+                ],
+                [
+                    InlineKeyboardButton("$500", callback_data="amount_500"),
+                    InlineKeyboardButton("$1,000", callback_data="amount_1000"),
+                    InlineKeyboardButton("$5,000", callback_data="amount_5000")
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await message.reply_markdown(
+                "❓ *I couldn't understand that amount*\n\n"
+                "With our One-Touch interface, you can simply select an amount below or type a specific number (e.g., 100):",
+                reply_markup=reply_markup
+            )
+            
+            # Also show the back button
             await message.reply_text(
-                "Please provide a valid amount. For example: 100",
+                "Or go back to the main menu:",
                 reply_markup=BACK_KEYBOARD
             )
             return
     
     # Validate amount
     if amount <= 0:
-        await message.reply_text(
-            "Amount must be positive. Please try again with a valid amount.",
-            reply_markup=BACK_KEYBOARD
+        # Create the amount keyboard again
+        keyboard = [
+            [
+                InlineKeyboardButton("$50", callback_data="amount_50"),
+                InlineKeyboardButton("$100", callback_data="amount_100"),
+                InlineKeyboardButton("$250", callback_data="amount_250")
+            ],
+            [
+                InlineKeyboardButton("$500", callback_data="amount_500"),
+                InlineKeyboardButton("$1,000", callback_data="amount_1000"),
+                InlineKeyboardButton("$5,000", callback_data="amount_5000")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await message.reply_markdown(
+            "⚠️ *Amount must be positive*\n\n"
+            "Please select an investment amount from the options below or type a specific positive number:",
+            reply_markup=reply_markup
         )
         return
     
@@ -100,10 +162,12 @@ async def process_invest_amount(update: Update, context: ContextTypes.DEFAULT_TY
     with app.app_context():
         db_utils.log_user_activity(user.id, f"invest_amount_{amount}")
     
-    # Ask for risk profile
-    await message.reply_text(
-        f"Great! You want to invest ${amount:.2f}.\n\n"
-        "What risk profile would you prefer?",
+    # Ask for risk profile with improved one-command messaging
+    await message.reply_markdown(
+        f"✅ *Investment Amount: ${amount:,.2f}*\n\n"
+        "Now, please select your risk profile with our One-Touch buttons below:\n\n"
+        "• *High-Risk:* Higher potential returns with more volatility\n"
+        "• *Stable:* Lower risk with more consistent returns",
         reply_markup=RISK_PROFILE_KEYBOARD
     )
     
@@ -112,7 +176,7 @@ async def process_invest_amount(update: Update, context: ContextTypes.DEFAULT_TY
 
 async def process_risk_profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
-    Process the risk profile selection
+    Process the risk profile selection - supports both button press and text input
     
     Args:
         update: Telegram update object
@@ -120,16 +184,22 @@ async def process_risk_profile(update: Update, context: ContextTypes.DEFAULT_TYP
     """
     user = update.effective_user
     message = update.effective_message
-    text = message.text.lower()
+    text = message.text.lower() if message and message.text else ""
     
-    # Normalize profile input
-    if "high" in text or "risk" in text:
+    # Normalize profile input - better handling of button text
+    if "high" in text or "risk" in text or text == "🔴 high-risk":
         profile = "high-risk"
-    elif "stable" in text or "safe" in text or "conservative" in text:
+        profile_emoji = "🔴"
+    elif "stable" in text or "safe" in text or "conservative" in text or text == "🟢 stable":
         profile = "stable"
+        profile_emoji = "🟢"
     else:
-        await message.reply_text(
-            "Please select either 'High-risk' or 'Stable' as your risk profile.",
+        # Show the risk profile keyboard again with a clearer message that emphasizes buttons
+        await message.reply_markdown(
+            "🤔 *I didn't recognize that risk profile*\n\n"
+            "With our One-Touch interface, please select one of these options:\n"
+            "• *High-Risk:* Higher potential returns but more volatility\n"
+            "• *Stable:* Lower risk with more consistent returns",
             reply_markup=RISK_PROFILE_KEYBOARD
         )
         return
@@ -150,6 +220,13 @@ async def process_risk_profile(update: Update, context: ContextTypes.DEFAULT_TYP
         db_user.risk_profile = profile
         from models import db
         db.session.commit()
+    
+    # Send confirmation with a more engaging message emphasizing one-command UX
+    await message.reply_markdown(
+        f"✅ *Risk Profile Selected: {profile.title()}* {profile_emoji}\n\n"
+        f"With our One-Touch interface, I'll now find the best pools for your {profile} investment style.\n\n"
+        f"💡 *Calculating optimal investment options...*"
+    )
     
     # Get top pool recommendations for this profile
     pools = await get_top_pools_for_profile(profile, amount)
