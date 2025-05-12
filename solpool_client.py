@@ -16,9 +16,21 @@ from typing import Dict, List, Any, Optional
 import aiohttp
 from functools import lru_cache
 
+# Import mock data functions for fallback when API is unavailable
+from api_mock_data import (
+    get_mock_pools, 
+    get_mock_pool_detail,
+    get_mock_pool_history,
+    get_mock_predictions,
+    get_mock_forecast
+)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 logger = logging.getLogger('solpool_client')
+
+# Flag to control when to use mock data
+USE_MOCK_DATA = os.environ.get("USE_MOCK_DATA", "true").lower() in ("true", "1", "yes")
 
 # Singleton instance
 _instance = None
@@ -53,6 +65,11 @@ class SolPoolClient:
             "predictions": 1800,    # 30 minutes
             "forecast": 1800        # 30 minutes
         }
+        
+        # Track API health
+        self.api_healthy = False
+        self.last_health_check = 0
+        self.health_check_interval = 300  # Check health every 5 minutes
         
         # aiohttp session
         self._session = None
@@ -233,6 +250,11 @@ class SolPoolClient:
         Returns:
             List of pool dictionaries
         """
+        # Check if we should use mock data based on environment setting or API health
+        if USE_MOCK_DATA or not await self.check_health():
+            logger.info("Using mock data for fetch_pools")
+            return get_mock_pools(dex, min_tvl, min_apr, min_prediction)
+        
         # Round to nearest 5 minutes to improve cache hits
         timestamp = int(time.time()) // 300
         
@@ -240,7 +262,8 @@ class SolPoolClient:
         
         if "error" in response:
             logger.error(f"Error fetching pools: {response['error']}")
-            return []
+            logger.info("Falling back to mock data for fetch_pools due to API error")
+            return get_mock_pools(dex, min_tvl, min_apr, min_prediction)
             
         # Handle different response formats
         if "data" in response and isinstance(response["data"], list):
@@ -253,7 +276,8 @@ class SolPoolClient:
                 return response
             
             logger.warning(f"Unexpected response format from fetch_pools: {response}")
-            return []
+            logger.info("Falling back to mock data for fetch_pools due to unexpected response format")
+            return get_mock_pools(dex, min_tvl, min_apr, min_prediction)
 
     # Cache decorated function for pool detail by id
     @lru_cache(maxsize=32)
@@ -271,6 +295,11 @@ class SolPoolClient:
         Returns:
             Dictionary with pool details
         """
+        # Check if we should use mock data based on environment setting or API health
+        if USE_MOCK_DATA or not await self.check_health():
+            logger.info("Using mock data for fetch_pool_detail")
+            return get_mock_pool_detail(pool_id)
+        
         # Round to nearest 5 minutes to improve cache hits
         timestamp = int(time.time()) // 300
         
@@ -278,7 +307,8 @@ class SolPoolClient:
         
         if "error" in response:
             logger.error(f"Error fetching pool detail: {response['error']}")
-            return {}
+            logger.info("Falling back to mock data for fetch_pool_detail due to API error")
+            return get_mock_pool_detail(pool_id)
             
         # Handle different response formats
         if "data" in response and isinstance(response["data"], dict):
@@ -289,7 +319,8 @@ class SolPoolClient:
                 return response
                 
             logger.warning(f"Unexpected response format from fetch_pool_detail: {response}")
-            return {}
+            logger.info("Falling back to mock data for fetch_pool_detail due to unexpected response format")
+            return get_mock_pool_detail(pool_id)
 
     # Cache decorated function for pool history
     @lru_cache(maxsize=16)
@@ -314,6 +345,11 @@ class SolPoolClient:
         Returns:
             List of historical data points
         """
+        # Check if we should use mock data based on environment setting or API health
+        if USE_MOCK_DATA or not await self.check_health():
+            logger.info("Using mock data for fetch_pool_history")
+            return get_mock_pool_history(pool_id, days, interval)
+        
         # Ensure valid interval
         if interval not in ["hour", "day", "week"]:
             interval = "day"
@@ -328,7 +364,8 @@ class SolPoolClient:
         
         if "error" in response:
             logger.error(f"Error fetching pool history: {response['error']}")
-            return []
+            logger.info("Falling back to mock data for fetch_pool_history due to API error")
+            return get_mock_pool_history(pool_id, days, interval)
             
         # Handle different response formats
         if "data" in response and isinstance(response["data"], list):
@@ -341,7 +378,8 @@ class SolPoolClient:
                 return response
                 
             logger.warning(f"Unexpected response format from fetch_pool_history: {response}")
-            return []
+            logger.info("Falling back to mock data for fetch_pool_history due to unexpected response format")
+            return get_mock_pool_history(pool_id, days, interval)
 
     # Cache decorated function for predictions with min score
     @lru_cache(maxsize=8)
@@ -364,6 +402,11 @@ class SolPoolClient:
         Returns:
             List of prediction dictionaries
         """
+        # Check if we should use mock data based on environment setting or API health
+        if USE_MOCK_DATA or not await self.check_health():
+            logger.info("Using mock data for fetch_predictions")
+            return get_mock_predictions(min_score)
+        
         # Round to nearest 30 minutes to improve cache hits
         timestamp = int(time.time()) // 1800
         
@@ -371,7 +414,8 @@ class SolPoolClient:
         
         if "error" in response:
             logger.error(f"Error fetching predictions: {response['error']}")
-            return []
+            logger.info("Falling back to mock data for fetch_predictions due to API error")
+            return get_mock_predictions(min_score)
             
         # Handle different response formats
         if "data" in response and isinstance(response["data"], list):
@@ -384,7 +428,8 @@ class SolPoolClient:
                 return response
                 
             logger.warning(f"Unexpected response format from fetch_predictions: {response}")
-            return []
+            logger.info("Falling back to mock data for fetch_predictions due to unexpected response format")
+            return get_mock_predictions(min_score)
 
     async def fetch_forecast(self, pool_id: str, days: int = 7) -> Dict[str, Any]:
         """
@@ -397,6 +442,11 @@ class SolPoolClient:
         Returns:
             Dictionary with forecast data
         """
+        # Check if we should use mock data based on environment setting or API health
+        if USE_MOCK_DATA or not await self.check_health():
+            logger.info("Using mock data for fetch_forecast")
+            return get_mock_forecast(pool_id, days)
+        
         # Limit days to a reasonable range
         days = max(1, min(days, 30))
         
@@ -406,7 +456,8 @@ class SolPoolClient:
         
         if "error" in response:
             logger.error(f"Error fetching pool forecast: {response['error']}")
-            return {}
+            logger.info("Falling back to mock data for fetch_forecast due to API error")
+            return get_mock_forecast(pool_id, days)
             
         # Handle different response formats
         if "data" in response and isinstance(response["data"], dict):
@@ -419,7 +470,8 @@ class SolPoolClient:
                 return response
                 
             logger.warning(f"Unexpected response format from fetch_forecast: {response}")
-            return {}
+            logger.info("Falling back to mock data for fetch_forecast due to unexpected response format")
+            return get_mock_forecast(pool_id, days)
 
     async def check_health(self) -> bool:
         """
@@ -428,10 +480,19 @@ class SolPoolClient:
         Returns:
             True if the API is healthy, False otherwise
         """
+        # Only check health periodically to avoid excessive API calls
+        current_time = time.time()
+        if current_time - self.last_health_check < self.health_check_interval and self.last_health_check > 0:
+            return self.api_healthy
+            
+        self.last_health_check = current_time
+        
         try:
             response = await self._make_request("/health")
             status = response.get("status", "").lower()
-            return status in ["healthy", "success", "online", "ok"]
+            self.api_healthy = status in ["healthy", "success", "online", "ok"]
+            return self.api_healthy
         except Exception as e:
             logger.error(f"API health check failed: {e}")
+            self.api_healthy = False
             return False

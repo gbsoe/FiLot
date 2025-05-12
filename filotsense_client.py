@@ -16,9 +16,21 @@ from typing import Dict, List, Any, Optional, Tuple
 import aiohttp
 from functools import lru_cache
 
+# Import mock data functions for fallback when API is unavailable
+from api_mock_data import (
+    get_mock_sentiment_simple,
+    get_mock_prices_latest,
+    get_mock_sentiment_topics,
+    get_mock_realdata,
+    get_mock_token_sentiment_history
+)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 logger = logging.getLogger('filotsense_client')
+
+# Flag to control when to use mock data
+USE_MOCK_DATA = os.environ.get("USE_MOCK_DATA", "true").lower() in ("true", "1", "yes")
 
 # Singleton instance
 _instance = None
@@ -48,6 +60,11 @@ class FiLotSenseClient:
         self.rate_limit = 100
         self.rate_limit_window = 3600  # 1 hour in seconds
         self.request_timestamps = []
+        
+        # Track API health
+        self.api_healthy = False
+        self.last_health_check = 0
+        self.health_check_interval = 300  # Check health every 5 minutes
         
         # aiohttp session
         self._session = None
@@ -245,6 +262,11 @@ class FiLotSenseClient:
         Returns:
             Dictionary mapping token symbols to sentiment scores (-1.0 to 1.0)
         """
+        # Check if we should use mock data based on environment setting or API health
+        if USE_MOCK_DATA or not await self.check_health():
+            logger.info("Using mock data for fetch_sentiment_simple")
+            return get_mock_sentiment_simple(symbols)
+        
         symbols_str = None
         if symbols:
             symbols_str = ",".join(symbols)
@@ -256,7 +278,8 @@ class FiLotSenseClient:
         
         if "error" in response:
             logger.error(f"Error fetching simple sentiment: {response['error']}")
-            return {}
+            logger.info("Falling back to mock data for fetch_sentiment_simple due to API error")
+            return get_mock_sentiment_simple(symbols)
             
         sentiment_data = {}
         try:
@@ -274,8 +297,17 @@ class FiLotSenseClient:
                         sentiment_data[symbol] = score
                     elif isinstance(score, dict) and "score" in score:
                         sentiment_data[symbol] = score["score"]
+                        
+            # If we still don't have any data, use mock
+            if not sentiment_data:
+                logger.warning("Failed to extract sentiment data from API response")
+                logger.info("Falling back to mock data for fetch_sentiment_simple due to parsing failure")
+                return get_mock_sentiment_simple(symbols)
+                
         except Exception as e:
             logger.error(f"Error processing sentiment data: {e}")
+            logger.info("Falling back to mock data for fetch_sentiment_simple due to processing error")
+            return get_mock_sentiment_simple(symbols)
             
         return sentiment_data
 
@@ -301,6 +333,11 @@ class FiLotSenseClient:
         Returns:
             Dictionary mapping token symbols to price information
         """
+        # Check if we should use mock data based on environment setting or API health
+        if USE_MOCK_DATA or not await self.check_health():
+            logger.info("Using mock data for fetch_prices_latest")
+            return get_mock_prices_latest(symbols)
+        
         symbols_str = None
         if symbols:
             symbols_str = ",".join(symbols)
@@ -312,7 +349,8 @@ class FiLotSenseClient:
         
         if "error" in response:
             logger.error(f"Error fetching latest prices: {response['error']}")
-            return {}
+            logger.info("Falling back to mock data for fetch_prices_latest due to API error")
+            return get_mock_prices_latest(symbols)
             
         price_data = {}
         try:
@@ -322,8 +360,17 @@ class FiLotSenseClient:
             # Legacy API format
             elif "data" in response and isinstance(response["data"], dict):
                 return response["data"]
+                
+            # If we still don't have any data, use mock
+            if not price_data:
+                logger.warning("Failed to extract price data from API response")
+                logger.info("Falling back to mock data for fetch_prices_latest due to parsing failure")
+                return get_mock_prices_latest(symbols)
+                
         except Exception as e:
             logger.error(f"Error processing price data: {e}")
+            logger.info("Falling back to mock data for fetch_prices_latest due to processing error")
+            return get_mock_prices_latest(symbols)
             
         return price_data
 
@@ -341,6 +388,11 @@ class FiLotSenseClient:
         Returns:
             List of topic dictionaries with sentiment information
         """
+        # Check if we should use mock data based on environment setting or API health
+        if USE_MOCK_DATA or not await self.check_health():
+            logger.info("Using mock data for fetch_sentiment_topics")
+            return get_mock_sentiment_topics()
+        
         # Round to nearest hour to improve cache hits
         timestamp = int(time.time()) // 3600
         
@@ -348,7 +400,8 @@ class FiLotSenseClient:
         
         if "error" in response:
             logger.error(f"Error fetching sentiment topics: {response['error']}")
-            return []
+            logger.info("Falling back to mock data for fetch_sentiment_topics due to API error")
+            return get_mock_sentiment_topics()
             
         topics = []
         try:
@@ -361,8 +414,17 @@ class FiLotSenseClient:
             # Legacy format
             elif "data" in response and isinstance(response["data"], dict) and "topics" in response["data"]:
                 topics = response["data"]["topics"]
+                
+            # If we still don't have any data, use mock
+            if not topics:
+                logger.warning("Failed to extract topics from API response")
+                logger.info("Falling back to mock data for fetch_sentiment_topics due to parsing failure")
+                return get_mock_sentiment_topics()
+                
         except Exception as e:
             logger.error(f"Error processing sentiment topics: {e}")
+            logger.info("Falling back to mock data for fetch_sentiment_topics due to processing error")
+            return get_mock_sentiment_topics()
             
         return topics
 
@@ -388,6 +450,11 @@ class FiLotSenseClient:
         Returns:
             Dictionary mapping token symbols to comprehensive data
         """
+        # Check if we should use mock data based on environment setting or API health
+        if USE_MOCK_DATA or not await self.check_health():
+            logger.info("Using mock data for fetch_realdata")
+            return get_mock_realdata(symbols)
+        
         symbols_str = None
         if symbols:
             symbols_str = ",".join(symbols)
@@ -399,7 +466,8 @@ class FiLotSenseClient:
         
         if "error" in response:
             logger.error(f"Error fetching real-time data: {response['error']}")
-            return {}
+            logger.info("Falling back to mock data for fetch_realdata due to API error")
+            return get_mock_realdata(symbols)
             
         realdata = {}
         try:
@@ -409,8 +477,17 @@ class FiLotSenseClient:
             # Legacy format or direct data
             elif all(key not in ["status", "error", "message"] for key in response.keys()):
                 return response
+                
+            # If we still don't have any data, use mock
+            if not realdata:
+                logger.warning("Failed to extract real-time data from API response")
+                logger.info("Falling back to mock data for fetch_realdata due to parsing failure")
+                return get_mock_realdata(symbols)
+                
         except Exception as e:
             logger.error(f"Error processing real-time data: {e}")
+            logger.info("Falling back to mock data for fetch_realdata due to processing error")
+            return get_mock_realdata(symbols)
             
         return realdata
 
@@ -425,6 +502,11 @@ class FiLotSenseClient:
         Returns:
             List of historical sentiment data points
         """
+        # Check if we should use mock data based on environment setting or API health
+        if USE_MOCK_DATA or not await self.check_health():
+            logger.info("Using mock data for fetch_token_sentiment_history")
+            return get_mock_token_sentiment_history(symbol, days)
+        
         endpoint = f"/sentiment/history/{symbol}"
         params = {"days": min(max(1, days), 30)}  # Ensure days is between 1 and 30
         
@@ -432,7 +514,8 @@ class FiLotSenseClient:
         
         if "error" in response:
             logger.error(f"Error fetching sentiment history: {response['error']}")
-            return []
+            logger.info("Falling back to mock data for fetch_token_sentiment_history due to API error")
+            return get_mock_token_sentiment_history(symbol, days)
             
         try:
             # New API format
@@ -441,9 +524,16 @@ class FiLotSenseClient:
             # Legacy API format
             elif "data" in response and isinstance(response["data"], list):
                 return response["data"]
+                
+            # If we still don't have any data, use mock
+            logger.warning("Failed to extract sentiment history from API response")
+            logger.info("Falling back to mock data for fetch_token_sentiment_history due to parsing failure")
+            return get_mock_token_sentiment_history(symbol, days)
+                
         except Exception as e:
             logger.error(f"Error in fetch_token_sentiment_history: {e}")
-            return []
+            logger.info("Falling back to mock data for fetch_token_sentiment_history due to processing error")
+            return get_mock_token_sentiment_history(symbol, days)
             
     async def check_health(self) -> bool:
         """
@@ -452,9 +542,19 @@ class FiLotSenseClient:
         Returns:
             True if the API is healthy, False otherwise
         """
+        # Only check health periodically to avoid excessive API calls
+        current_time = time.time()
+        if current_time - self.last_health_check < self.health_check_interval and self.last_health_check > 0:
+            return self.api_healthy
+            
+        self.last_health_check = current_time
+        
         try:
             response = await self._make_request("/health")
-            return response.get("status") == "success" or response.get("status") == "online"
+            status = response.get("status", "").lower()
+            self.api_healthy = status in ["success", "online", "ok"]
+            return self.api_healthy
         except Exception as e:
             logger.error(f"API health check failed: {e}")
+            self.api_healthy = False
             return False
