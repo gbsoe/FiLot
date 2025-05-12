@@ -1532,27 +1532,35 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             )
             
         # Check if this is a button press from the persistent keyboard
-        if message_text == "💰 Invest":
+        # Using more flexible message handling to account for different button displays
+        if "invest" in message_text.lower() or message_text == "💰 Invest":
             logger.info(f"User {user.id} pressed the Invest button")
             # Start the investment flow
             await start_invest_flow(update, context)
             return
             
-        elif message_text == "🔍 Explore":
+        elif "explore" in message_text.lower() or message_text == "🔍 Explore":
             logger.info(f"User {user.id} pressed the Explore button")
             # Trigger the explore command
             context.args = []
             await explore_command(update, context)
             return
             
-        elif message_text == "👤 Account":
+        elif "account" in message_text.lower() or message_text == "👤 Account":
             logger.info(f"User {user.id} pressed the Account button")
             # Trigger the account command
             context.args = []
             await account_command(update, context)
             return
             
-        elif message_text == "⬅️ Back to Main Menu":
+        elif "position" in message_text.lower() or "my positions" in message_text.lower():
+            logger.info(f"User {user.id} asked to view positions")
+            # Show positions
+            from bot_commands import positions_command
+            await positions_command(update, context)
+            return
+            
+        elif "back" in message_text.lower() or message_text == "⬅️ Back to Main Menu":
             logger.info(f"User {user.id} pressed the Back button")
             # Handle back to main menu
             await handle_back_to_main(update, context)
@@ -1572,37 +1580,53 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 await process_risk_profile(update, context)
                 return
         
-        # Check for investment intent
-        if is_investment_intent(message_text):
-            logger.info(f"Detected investment intent from user {user.id}")
+        # Check for specific investment phrases like "I want to invest $500"
+        if "want to invest" in message_text.lower() or "invest " in message_text.lower():
+            logger.info(f"Detected direct investment intent from user {user.id}")
             
             # Extract amount if present
             amount = extract_amount(message_text)
             
-            # If amount is found, route to invest command with amount
+            # If amount is found, route to the investment flow with this amount preset
             if amount > 0:
                 logger.info(f"Extracted investment amount: ${amount}")
                 
-                # Determine profile type (default to high-risk)
-                profile = "high-risk"
-                if "stable" in message_text.lower() or "safe" in message_text.lower():
-                    profile = "stable"
+                # Store the amount in user data for the investment flow
+                if not hasattr(context, 'user_data'):
+                    context.user_data = {}
+                    
+                context.user_data['investment_amount'] = amount
                 
-                # Set up context args for invest_command
-                context.args = [profile, str(amount)]
-                await invest_command(update, context)
+                # Start investment flow with this amount
+                await start_invest_flow(update, context)
+                
+                # Skip the amount input step
+                # Updated: Let's continue to risk profile selection
+                await update.message.reply_text(
+                    "Great! Now please select your risk profile:", 
+                    reply_markup=RISK_PROFILE_KEYBOARD
+                )
+                context.user_data['state'] = STATE_AWAITING_PROFILE
                 return
             else:
-                # No amount, start the investment flow instead of just showing menu
+                # No amount, start the standard investment flow
                 await start_invest_flow(update, context)
                 return
+                
+        # Check for general investment intent (broader matching)
+        elif is_investment_intent(message_text):
+            logger.info(f"Detected general investment intent from user {user.id}")
+            
+            # Start the investment flow for guided process
+            await start_invest_flow(update, context)
+            return
         
-        # Check for position inquiry
-        if is_position_inquiry(message_text):
+        # Check for position inquiry (anyone asking about their positions)
+        if is_position_inquiry(message_text) or "my position" in message_text.lower():
             logger.info(f"Detected position inquiry from user {user.id}")
             
             # Route to positions command to show positions
-            context.args = []
+            from bot_commands import positions_command
             await positions_command(update, context)
             return
         
@@ -1764,8 +1788,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 investment_horizon=investment_horizon
             )
         
-        # Send the AI response
-        await update.message.reply_markdown(ai_response)
+        # Send the AI response with the persistent keyboard
+        await update.message.reply_markdown(
+            ai_response,
+            reply_markup=MAIN_KEYBOARD  # Add the persistent keyboard to all responses
+        )
         
         # Update the database with our query and response
         with app.app_context():
