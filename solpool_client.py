@@ -100,7 +100,7 @@ class SolPoolClient:
         while retries < max_retries:
             try:
                 if method.upper() == 'GET':
-                    async with session.get(url, params=params, timeout=10) as response:
+                    async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=10)) as response:
                         if response.status == 429:  # Rate limit exceeded
                             retry_after = int(response.headers.get('Retry-After', backoff_factor ** retries))
                             logger.warning(f"Rate limit exceeded. Retrying after {retry_after} seconds.")
@@ -121,7 +121,7 @@ class SolPoolClient:
                             
                         return await response.json()
                 else:  # POST, PUT, etc.
-                    async with session.request(method, url, params=params, json=data, timeout=10) as response:
+                    async with session.request(method, url, params=params, json=data, timeout=aiohttp.ClientTimeout(total=10)) as response:
                         if response.status == 429:  # Rate limit exceeded
                             retry_after = int(response.headers.get('Retry-After', backoff_factor ** retries))
                             logger.warning(f"Rate limit exceeded. Retrying after {retry_after} seconds.")

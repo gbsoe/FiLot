@@ -6,11 +6,12 @@ Database models for the Telegram cryptocurrency pool bot
 """
 
 import datetime
-from sqlalchemy import Column, Integer, BigInteger, String, Float, Boolean, DateTime, Text, ForeignKey, JSON
+from sqlalchemy import Column, Integer, BigInteger, String, Float, Boolean, DateTime, Text, ForeignKey, JSON, Enum
 from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 import os
+import enum
 
 # Initialize the database
 db = SQLAlchemy()
@@ -237,3 +238,86 @@ class SuspiciousURL(db.Model):
     
     def __repr__(self):
         return f"<SuspiciousURL id={self.id}, url={self.url}, category={self.category}>"
+
+# Enum for position status
+class PositionStatus(enum.Enum):
+    PENDING = "pending"       # Transaction created but not confirmed
+    ACTIVE = "active"         # Position is actively providing liquidity
+    MONITORED = "monitored"   # Position is being monitored for exit conditions
+    EXITING = "exiting"       # Exit transaction has been generated
+    COMPLETED = "completed"   # Position has been exited
+    FAILED = "failed"         # Transaction failed
+
+class CompositeSignal(db.Model):
+    """
+    CompositeSignal model representing combined signals from SolPool and FiLotSense
+    for a particular pool.
+    """
+    __tablename__ = "composite_signals"
+    
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    pool_id = Column(String(255), ForeignKey("pools.id"), nullable=False)
+    sol_score = Column(Float, nullable=False)  # SolPool prediction score (0.0-1.0)
+    sentiment_score = Column(Float, nullable=False)  # FiLotSense sentiment score (-1.0 to 1.0)
+    
+    # Composite scores for each profile type
+    profile_high = Column(Float, nullable=False)  # Combined score for high-risk profile
+    profile_stable = Column(Float, nullable=False)  # Combined score for stable profile
+    
+    # Relationships
+    pool = relationship("Pool", backref="signals")
+    
+    def __repr__(self):
+        return f"<CompositeSignal id={self.id}, pool_id={self.pool_id}, sol_score={self.sol_score}, sentiment_score={self.sentiment_score}>"
+
+class Position(db.Model):
+    """
+    Position model representing a user's investment position in a liquidity pool.
+    """
+    __tablename__ = "positions"
+    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger, ForeignKey("users.id"), nullable=False)
+    pool_id = Column(String(255), ForeignKey("pools.id"), nullable=False)
+    status = Column(String(20), default=PositionStatus.PENDING.value)
+    
+    # Investment details
+    invested_amount_usd = Column(Float, nullable=False)  # Total USD value invested
+    token_a_amount = Column(Float, nullable=False)  # Amount of token A
+    token_b_amount = Column(Float, nullable=False)  # Amount of token B
+    
+    # Transaction details
+    deposit_tx_signature = Column(String(255), nullable=True)  # Signature of deposit transaction
+    exit_tx_signature = Column(String(255), nullable=True)  # Signature of exit transaction
+    
+    # Monitored metrics
+    current_value_usd = Column(Float, nullable=True)  # Current estimated USD value
+    current_apr = Column(Float, nullable=True)  # Current APR
+    impermanent_loss = Column(Float, nullable=True)  # Estimated impermanent loss in USD
+    profit_loss = Column(Float, nullable=True)  # Estimated profit/loss in USD
+    
+    # Exit conditions
+    exit_threshold_apr = Column(Float, nullable=True)  # APR threshold for automatic exit
+    exit_threshold_sentiment = Column(Float, nullable=True)  # Sentiment threshold for automatic exit
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    exited_at = Column(DateTime, nullable=True)
+    
+    # Additional data
+    initial_composite_signal_id = Column(Integer, ForeignKey("composite_signals.id"), nullable=True)
+    exit_composite_signal_id = Column(Integer, ForeignKey("composite_signals.id"), nullable=True)
+    position_metadata = Column(JSON, nullable=True)  # Additional metadata
+    
+    # Relationships
+    user = relationship("User")
+    pool = relationship("Pool")
+    initial_signal = relationship("CompositeSignal", foreign_keys=[initial_composite_signal_id])
+    exit_signal = relationship("CompositeSignal", foreign_keys=[exit_composite_signal_id])
+    
+    def __repr__(self):
+        return f"<Position id={self.id}, user_id={self.user_id}, pool_id={self.pool_id}, status={self.status}, invested_amount_usd={self.invested_amount_usd}>"
+
+# We don't need to add positions to User manually, the backref in Position takes care of it

@@ -11,7 +11,7 @@ import logging
 import aiohttp
 import time
 import json
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, List, Union, Tuple
 from functools import lru_cache
 import asyncio
 
@@ -128,7 +128,7 @@ class FiLotSenseClient:
         while retries < max_retries:
             # Check rate limits before making request
             is_allowed, wait_time = self._check_rate_limit()
-            if not is_allowed:
+            if not is_allowed and wait_time is not None:
                 logger.warning(f"Rate limit exceeded. Waiting {wait_time:.2f} seconds before retry.")
                 await asyncio.sleep(wait_time)
                 continue
@@ -138,7 +138,7 @@ class FiLotSenseClient:
                 self.request_timestamps.append(time.time())
                 
                 if method.upper() == 'GET':
-                    async with session.get(url, params=params, timeout=10) as response:
+                    async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=10)) as response:
                         if response.status == 429:  # Rate limit exceeded
                             retry_after = int(response.headers.get('Retry-After', backoff_factor ** retries))
                             logger.warning(f"Rate limit exceeded. Retrying after {retry_after} seconds.")
@@ -159,7 +159,7 @@ class FiLotSenseClient:
                             
                         return await response.json()
                 else:  # POST, PUT, etc.
-                    async with session.request(method, url, params=params, json=data, timeout=10) as response:
+                    async with session.request(method, url, params=params, json=data, timeout=aiohttp.ClientTimeout(total=10)) as response:
                         if response.status == 429:  # Rate limit exceeded
                             retry_after = int(response.headers.get('Retry-After', backoff_factor ** retries))
                             logger.warning(f"Rate limit exceeded. Retrying after {retry_after} seconds.")
