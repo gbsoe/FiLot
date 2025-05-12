@@ -50,7 +50,7 @@ class FiLotSenseClient:
     def __init__(self):
         """Initialize the client with configuration from environment variables."""
         # Use the correct API URL, ensuring it doesn't end with a slash
-        base_url = os.environ.get("FILOTSENSE_API_URL", "https://filotsense-public-api.replit.app")
+        base_url = os.environ.get("FILOTSENSE_API_URL", "https://filotsense.replit.app/api")
         # Remove trailing slash if it exists to avoid double slash issues
         self.base_url = base_url.rstrip('/')
         
@@ -223,7 +223,11 @@ class FiLotSenseClient:
                 logger.error(f"Error fetching sentiment: {response['error']}")
                 return {}
                 
-            return response.get("sentiment", {})
+            if response.get("status") == "success":
+                return response.get("sentiment", {})
+            else:
+                logger.error(f"Unsuccessful response fetching sentiment: {response}")
+                return {}
         except Exception as e:
             logger.error(f"Error in fetch_sentiment_simple: {e}")
             return {}

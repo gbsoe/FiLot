@@ -354,30 +354,6 @@ class SolPoolClient:
         except Exception as e:
             logger.error(f"Error in fetch_forecast: {e}")
             return {}
-
-    async def fetch_forecast(self, pool_id: str, days: int = 7) -> Dict[str, Any]:
-        """
-        Fetch APR forecast for a specific pool.
-        
-        Args:
-            pool_id: ID of the pool
-            days: Number of days to forecast (1-30)
-            
-        Returns:
-            Dictionary with forecast data
-        """
-        params = {"days": days}
-        try:
-            response = await self._make_request(f"/pools/{pool_id}/forecast", params=params)
-            
-            if "error" in response:
-                logger.error(f"Error fetching forecast: {response['error']}")
-                return {}
-                
-            return response.get("forecast", {})
-        except Exception as e:
-            logger.error(f"Error in fetch_forecast: {e}")
-            return {}
             
     async def check_health(self) -> bool:
         """
@@ -388,7 +364,7 @@ class SolPoolClient:
         """
         try:
             response = await self._make_request("/health")
-            return response.get("status") == "healthy"
+            return response.get("status") == "success" or response.get("status") == "online"
         except Exception as e:
             logger.error(f"API health check failed: {e}")
             return False
