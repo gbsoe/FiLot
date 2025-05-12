@@ -7,79 +7,88 @@ from telegram.ext import ContextTypes
 
 def get_invest_menu() -> InlineKeyboardMarkup:
     """
-    Creates the inline keyboard for invest command options
+    Creates the One-Touch inline keyboard for invest command options with improved visuals
     """
     keyboard = [
         [
-            InlineKeyboardButton("High-Risk $50", callback_data="invest_high-risk_50"),
-            InlineKeyboardButton("High-Risk $100", callback_data="invest_high-risk_100")
+            InlineKeyboardButton("$50 💰", callback_data="amount_50"),
+            InlineKeyboardButton("$100 💰", callback_data="amount_100"),
+            InlineKeyboardButton("$250 💰", callback_data="amount_250")
         ],
         [
-            InlineKeyboardButton("Stable $50", callback_data="invest_stable_50"),
-            InlineKeyboardButton("Stable $100", callback_data="invest_stable_100")
+            InlineKeyboardButton("$500 💰", callback_data="amount_500"),
+            InlineKeyboardButton("$1,000 💰", callback_data="amount_1000"),
+            InlineKeyboardButton("$5,000 💰", callback_data="amount_5000")
         ],
         [
-            InlineKeyboardButton("View Positions", callback_data="menu_positions"),
-            InlineKeyboardButton("Custom Investment", callback_data="menu_custom_invest")
+            InlineKeyboardButton("👁️ View My Positions", callback_data="menu_positions"),
+            InlineKeyboardButton("✏️ Custom Amount", callback_data="amount_custom")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 def get_explore_menu() -> InlineKeyboardMarkup:
     """
-    Creates the inline keyboard for explore command options
+    Creates the One-Touch inline keyboard for explore command options with improved visuals
     """
     keyboard = [
         [
-            InlineKeyboardButton("Top Pools", callback_data="explore_pools"),
-            InlineKeyboardButton("Simulate", callback_data="explore_simulate")
+            InlineKeyboardButton("🏆 Top Pools", callback_data="explore_pools"),
+            InlineKeyboardButton("📊 Simulate Returns", callback_data="explore_simulate")
         ],
         [
-            InlineKeyboardButton("FAQ", callback_data="explore_faq"),
-            InlineKeyboardButton("Social Media", callback_data="explore_social")
+            InlineKeyboardButton("❓ FAQ & Help", callback_data="explore_faq"),
+            InlineKeyboardButton("🌐 Community", callback_data="explore_social")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 def get_account_menu() -> InlineKeyboardMarkup:
     """
-    Creates the inline keyboard for account command options
+    Creates the One-Touch inline keyboard for account command options with improved visuals
     """
     keyboard = [
         [
-            InlineKeyboardButton("Connect Wallet", callback_data="account_wallet"),
-            InlineKeyboardButton("Profile Settings", callback_data="account_profile")
+            InlineKeyboardButton("💼 Connect Wallet", callback_data="account_wallet"),
+            InlineKeyboardButton("👤 Profile Settings", callback_data="account_profile")
         ],
         [
-            InlineKeyboardButton("Subscribe", callback_data="account_subscribe"),
-            InlineKeyboardButton("Unsubscribe", callback_data="account_unsubscribe")
+            InlineKeyboardButton("🔔 Subscribe", callback_data="account_subscribe"),
+            InlineKeyboardButton("🔕 Unsubscribe", callback_data="account_unsubscribe")
         ],
         [
-            InlineKeyboardButton("Help", callback_data="account_help"),
-            InlineKeyboardButton("Status", callback_data="account_status")
+            InlineKeyboardButton("❓ Help", callback_data="account_help"),
+            InlineKeyboardButton("📊 Status", callback_data="account_status")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 def get_custom_amount_menu() -> InlineKeyboardMarkup:
     """
-    Creates the inline keyboard for custom investment amount options
+    Creates the One-Touch inline keyboard for custom investment amount options
     """
     keyboard = [
         [
-            InlineKeyboardButton("$200", callback_data="invest_high-risk_200"),
-            InlineKeyboardButton("$500", callback_data="invest_high-risk_500"),
-            InlineKeyboardButton("$1000", callback_data="invest_high-risk_1000")
+            InlineKeyboardButton("✏️ Enter Custom", callback_data="amount_enter_custom")
         ],
         [
-            InlineKeyboardButton("Back to Invest Menu", callback_data="menu_invest")
+            InlineKeyboardButton("$200 💰", callback_data="amount_200"),
+            InlineKeyboardButton("$300 💰", callback_data="amount_300"),
+            InlineKeyboardButton("$750 💰", callback_data="amount_750")
+        ],
+        [
+            InlineKeyboardButton("$2,000 💰", callback_data="amount_2000"),
+            InlineKeyboardButton("$10,000 💰", callback_data="amount_10000")
+        ],
+        [
+            InlineKeyboardButton("⬅️ Back to Invest Menu", callback_data="menu_invest")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 def get_exit_position_menu(positions) -> InlineKeyboardMarkup:
     """
-    Creates the inline keyboard for exiting positions
+    Creates the One-Touch inline keyboard for exiting positions with visual improvements
     """
     keyboard = []
     
@@ -87,13 +96,14 @@ def get_exit_position_menu(positions) -> InlineKeyboardMarkup:
     for position in positions[:5]:  # Limit to 5 positions to avoid too many buttons
         pos_id = position['id']
         token_pair = f"{position.get('token_a', 'Token A')}/{position.get('token_b', 'Token B')}"
+        # Add visual indicators for exit positions
         keyboard.append([
-            InlineKeyboardButton(f"Exit {token_pair}", callback_data=f"exit_{pos_id}")
+            InlineKeyboardButton(f"🚪 Exit {token_pair}", callback_data=f"exit_{pos_id}")
         ])
     
     # Add a back button
     keyboard.append([
-        InlineKeyboardButton("Back to Invest Menu", callback_data="menu_invest")
+        InlineKeyboardButton("⬅️ Back to Invest Menu", callback_data="menu_invest")
     ])
     
     return InlineKeyboardMarkup(keyboard)

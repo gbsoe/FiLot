@@ -11,9 +11,9 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup(
     one_time_keyboard=False
 )
 
-# Risk profile selection keyboard
+# Risk profile selection keyboard with clear visual indicators
 RISK_PROFILE_KEYBOARD = ReplyKeyboardMarkup(
-    [["High-risk", "Stable"], ["⬅️ Back to Main Menu"]],
+    [["🔴 High-risk", "🟢 Stable"], ["⬅️ Back to Main Menu"]],
     resize_keyboard=True,
     one_time_keyboard=False
 )
