@@ -314,19 +314,20 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         # Import here to avoid circular imports
         from menus import get_main_menu
         
-        # Send help message with focus on the button-based UX
+        # Send help message with focus on the enhanced One-Touch UX approach
         await update.message.reply_markdown(
-            "🤖 *FiLot Bot - New One-Command Interface*\n\n"
-            "*Just one tap to access any feature:*\n"
-            "• 💰 *Invest* - View opportunities and manage investments\n"
-            "• 🔍 *Explore* - Discover top pools and simulate returns\n"
-            "• 👤 *Account* - Connect wallet and set preferences\n\n"
-            "*The buttons remain available at all times* - no more typing commands!\n\n"
-            "*You can still use natural language:*\n"
-            "• \"I want to invest $500\" - I'll guide you through options\n"
-            "• \"Show my positions\" - I'll display your investments\n"
-            "• \"What's the best pool now?\" - I'll provide current recommendations\n\n"
-            "💡 *Pro tip:* The persistent buttons below make navigation instant!",
+            "✨ *Welcome to FiLot's One-Touch Navigation* ✨\n\n"
+            "*Our new interface requires just a single tap:*\n"
+            "• 💰 *Invest* - Quick access to investment options with preset amounts\n"
+            "• 🔍 *Explore* - Discover top pools, simulate returns, and find answers\n"
+            "• 👤 *Account* - Connect wallet, set preferences, and manage subscriptions\n\n"
+            "*The persistent buttons are always available* - no more typing commands!\n\n"
+            "*Smart Text Recognition:*\n"
+            "• \"I want to invest $500\" - Automatically recognizes your intention\n"
+            "• \"Show my positions\" - Detects portfolio requests in natural language\n"
+            "• \"What are the best pools now?\" - Understands market inquiries\n"
+            "• \"Help with my wallet\" - Intelligently routes to account features\n\n"
+            "💡 *Pro tip:* Use the colorful buttons below for the fastest experience!",
             reply_markup=get_main_menu()
         )
         
@@ -1639,27 +1640,37 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await account_command(update, context)
             return
             
-        # Fallback for people typing text similar to button names
-        elif "invest" in message_text.lower() and message_text != "💰 Invest":
-            logger.info(f"User {user.id} typed invest-related text")
+        # Enhanced intelligent text matching for One-Touch Navigation
+        # Using the improved intent recognition system to detect various ways users might
+        # express their intention without exactly pressing buttons
+        elif is_investment_intent(message_text) and message_text != "💰 Invest":
+            logger.info(f"User {user.id} typed invest-related text: {message_text}")
+            # Extract amount if present in the text for a smoother experience
+            amount = extract_amount(message_text)
+            if amount > 0:
+                logger.info(f"Extracted investment amount from text: ${amount}")
+                # Store the amount for the investment flow
+                if not hasattr(context, 'user_data'):
+                    context.user_data = {}
+                context.user_data['investment_amount'] = amount
             await start_invest_flow(update, context)
             return
             
-        elif "explore" in message_text.lower() and message_text != "🔍 Explore":
-            logger.info(f"User {user.id} typed explore-related text")
+        elif is_pool_inquiry(message_text) and message_text != "🔍 Explore":
+            logger.info(f"User {user.id} typed explore/pools-related text: {message_text}")
             context.args = []
             await explore_command(update, context)
             return
             
-        elif "account" in message_text.lower() and message_text != "👤 Account":
-            logger.info(f"User {user.id} typed account-related text")
+        elif is_wallet_inquiry(message_text) and message_text != "👤 Account":
+            logger.info(f"User {user.id} typed account/wallet-related text: {message_text}")
             context.args = []
             await account_command(update, context)
             return
             
-        elif "position" in message_text.lower() or "my positions" in message_text.lower():
-            logger.info(f"User {user.id} asked to view positions")
-            # Show positions
+        elif is_position_inquiry(message_text):
+            logger.info(f"User {user.id} asked to view positions: {message_text}")
+            # Show positions using the enhanced recognition
             from bot_commands import positions_command
             await positions_command(update, context)
             return
