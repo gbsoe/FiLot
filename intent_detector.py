@@ -4,10 +4,8 @@ These functions are used to determine user intent from natural language messages
 """
 
 import re
-import logging
-from typing import Optional, Dict, List, Tuple, Any
+from typing import Optional, List, Dict, Any
 
-logger = logging.getLogger(__name__)
 
 def is_investment_intent(text: str) -> bool:
     """
@@ -19,20 +17,28 @@ def is_investment_intent(text: str) -> bool:
     Returns:
         True if investment intent is detected, False otherwise
     """
-    intent_keywords = [
-        "invest", "buy", "purchase", "put money", "spend", "allocate", 
-        "deploying capital", "stake", "provide liquidity", "join pool",
-        "enter pool", "add liquidity", "deposit"
+    investment_keywords = [
+        r'invest\b', r'\binvest', r'buy', r'purchase', r'acquire', r'put money in',
+        r'allocate', r'deploy capital', r'add liquidity', r'deposit', r'stake',
+        r'want to invest', r'looking to invest', r'interested in investing'
     ]
     
-    text_lower = text.lower()
-    
-    for keyword in intent_keywords:
-        if keyword.lower() in text_lower:
-            logger.info(f"Detected investment intent in message: {text[:30]}...")
+    for keyword in investment_keywords:
+        if re.search(keyword, text.lower()):
             return True
     
+    # Check for amount mentions with investment context
+    amount_pattern = r'(\$\d+|\d+\s*(?:dollars|usd|usdc|usdt|sol)|\d+k)'
+    if re.search(amount_pattern, text.lower()):
+        context_keywords = [
+            'in', 'with', 'using', 'spend', 'use', 'investing', 'investment'
+        ]
+        for keyword in context_keywords:
+            if keyword in text.lower():
+                return True
+    
     return False
+
 
 def is_position_inquiry(text: str) -> bool:
     """
@@ -44,21 +50,19 @@ def is_position_inquiry(text: str) -> bool:
     Returns:
         True if position inquiry is detected, False otherwise
     """
-    inquiry_keywords = [
-        "position", "holding", "portfolio", "investment", 
-        "what do i own", "my stake", "my liquidity", 
-        "how much", "balance", "portfolio", "my pools",
-        "my investment", "current investment", "what i have"
+    position_keywords = [
+        r'my position', r'my investment', r'my portfolio', r'my holding',
+        r'how am i doing', r'current investment', r'how\'s my investment',
+        r'portfolio status', r'investment status', r'position status',
+        r'check position', r'view position', r'my balance', r'position details'
     ]
     
-    text_lower = text.lower()
-    
-    for keyword in inquiry_keywords:
-        if keyword.lower() in text_lower:
-            logger.info(f"Detected position inquiry in message: {text[:30]}...")
+    for keyword in position_keywords:
+        if re.search(keyword, text.lower()):
             return True
     
     return False
+
 
 def is_pool_inquiry(text: str) -> bool:
     """
@@ -70,20 +74,19 @@ def is_pool_inquiry(text: str) -> bool:
     Returns:
         True if pool inquiry is detected, False otherwise
     """
-    inquiry_keywords = [
-        "pools", "liquidity pools", "show pools", "best pools", 
-        "top pools", "high yield", "high apr", "high return",
-        "pool list", "available pools", "pool info", "pool data"
+    pool_keywords = [
+        r'pool\b', r'\bpool', r'liquidity pool', r'best pool', r'top pool',
+        r'recommend pool', r'which pool', r'pool stats', r'pool performance',
+        r'pool data', r'pool info', r'pool details', r'pool apr', r'pool return',
+        r'show me pool', r'list pool', r'available pool'
     ]
     
-    text_lower = text.lower()
-    
-    for keyword in inquiry_keywords:
-        if keyword.lower() in text_lower:
-            logger.info(f"Detected pool inquiry in message: {text[:30]}...")
+    for keyword in pool_keywords:
+        if re.search(keyword, text.lower()):
             return True
     
     return False
+
 
 def is_wallet_inquiry(text: str) -> bool:
     """
@@ -95,19 +98,18 @@ def is_wallet_inquiry(text: str) -> bool:
     Returns:
         True if wallet inquiry is detected, False otherwise
     """
-    inquiry_keywords = [
-        "wallet", "connect wallet", "my wallet", "wallet connection",
-        "link wallet", "add wallet", "wallet integration", "account"
+    wallet_keywords = [
+        r'wallet\b', r'\bwallet', r'connect wallet', r'wallet connect',
+        r'link wallet', r'wallet integration', r'add wallet', r'setup wallet',
+        r'my wallet', r'wallet setup', r'how to connect', r'wallet connection'
     ]
     
-    text_lower = text.lower()
-    
-    for keyword in inquiry_keywords:
-        if keyword.lower() in text_lower:
-            logger.info(f"Detected wallet inquiry in message: {text[:30]}...")
+    for keyword in wallet_keywords:
+        if re.search(keyword, text.lower()):
             return True
     
     return False
+
 
 def extract_amount(text: str) -> float:
     """
@@ -119,42 +121,38 @@ def extract_amount(text: str) -> float:
     Returns:
         The extracted amount as a float, or 0 if no amount is found
     """
-    # Look for dollar amounts like $1000 or 1000 dollars
-    dollar_pattern = r'\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)'
-    amount_pattern = r'(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)\s*(?:dollars|usd|sol)'
-    
-    # Try the dollar pattern first
-    dollar_match = re.search(dollar_pattern, text, re.IGNORECASE)
+    # Look for dollar signs
+    dollar_pattern = r'\$\s*(\d+(?:,\d+)*(?:\.\d+)?)'
+    dollar_match = re.search(dollar_pattern, text)
     if dollar_match:
-        amount_str = dollar_match.group(1)
-        # Remove commas
-        amount_str = amount_str.replace(',', '')
-        try:
-            return float(amount_str)
-        except ValueError:
-            pass
+        amount_str = dollar_match.group(1).replace(',', '')
+        return float(amount_str)
     
-    # Try the amount pattern next
-    amount_match = re.search(amount_pattern, text, re.IGNORECASE)
-    if amount_match:
-        amount_str = amount_match.group(1)
-        # Remove commas
-        amount_str = amount_str.replace(',', '')
-        try:
-            return float(amount_str)
-        except ValueError:
-            pass
+    # Look for amounts followed by currency indicators
+    currency_pattern = r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:dollars|usd|usdc|usdt|sol)'
+    currency_match = re.search(currency_pattern, text.lower())
+    if currency_match:
+        amount_str = currency_match.group(1).replace(',', '')
+        return float(amount_str)
     
-    # Number followed by the word investment
-    investment_pattern = r'(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)\s*(?:investment)'
-    investment_match = re.search(investment_pattern, text, re.IGNORECASE)
-    if investment_match:
-        amount_str = investment_match.group(1)
-        # Remove commas
-        amount_str = amount_str.replace(',', '')
-        try:
-            return float(amount_str)
-        except ValueError:
-            pass
+    # Look for k/thousand notation
+    k_pattern = r'(\d+(?:\.\d+)?)\s*k\b'
+    k_match = re.search(k_pattern, text.lower())
+    if k_match:
+        k_amount = float(k_match.group(1))
+        return k_amount * 1000
     
-    return 0.0
+    # Look for standalone numbers if they seem like they could be amounts
+    # but only in investment contexts
+    if is_investment_intent(text):
+        num_pattern = r'\b(\d+(?:,\d+)*(?:\.\d+)?)\b'
+        numbers = re.findall(num_pattern, text)
+        if numbers:
+            # Use the largest number as the amount
+            cleaned_numbers = [float(num.replace(',', '')) for num in numbers]
+            # Filter out very small numbers (likely not amounts) and very large numbers (likely not amounts)
+            valid_amounts = [num for num in cleaned_numbers if 5 <= num <= 1000000]
+            if valid_amounts:
+                return max(valid_amounts)
+    
+    return 0
