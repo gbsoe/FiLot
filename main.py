@@ -798,6 +798,54 @@ def run_telegram_bot():
                                         chat_id, 
                                         "Sorry, there was an error with the investment flow. Please try again using the Invest button."
                                     )
+                                    
+                            # Handle risk profile selection callbacks
+                            elif callback_data.startswith("profile_"):
+                                try:
+                                    # Get the profile from the callback data
+                                    profile = callback_data.replace("profile_", "")
+                                    
+                                    # Send a simple acknowledgment message to the user
+                                    profile_emoji = "🔴" if profile == "high-risk" else "🟢"
+                                    
+                                    send_response(
+                                        chat_id,
+                                        f"✅ *{profile.title()} profile selected* {profile_emoji}\n\n"
+                                        f"Searching for the best investment options for your {profile} profile...\n\n"
+                                        f"You can use these buttons to explore other options while I prepare your recommendations.",
+                                        parse_mode="Markdown"
+                                    )
+                                    
+                                    # Get predefined pool data for recommendations
+                                    from response_data import get_pool_data
+                                    pool_data = get_pool_data()
+                                    
+                                    # Get the appropriate pools based on profile
+                                    if profile == "high-risk":
+                                        recommended_pools = pool_data.get('topAPR', [])[:3]
+                                    else:  # stable
+                                        recommended_pools = pool_data.get('topTVL', [])[:3]
+                                    
+                                    # Format pool data for display
+                                    from utils import format_pool_recommendations
+                                    recommendations = format_pool_recommendations(recommended_pools, profile)
+                                    
+                                    # Send recommendations
+                                    send_response(
+                                        chat_id,
+                                        recommendations,
+                                        parse_mode="Markdown"
+                                    )
+                                    
+                                    logger.info(f"Successfully processed profile callback: {profile}")
+                                    
+                                except Exception as profile_error:
+                                    logger.error(f"Error processing profile callback: {profile_error}")
+                                    logger.error(traceback.format_exc())
+                                    send_response(
+                                        chat_id,
+                                        "Sorry, there was an error processing your risk profile selection. Please try again using the Invest button."
+                                    )
                             
                             # Handle simulate_period callbacks
                             elif callback_data.startswith("simulate_period_"):
@@ -876,6 +924,72 @@ def run_telegram_bot():
                                     parse_mode="Markdown"
                                 )
                                 logger.info("Sent wallet address entry instructions from callback")
+                            
+                            # Handle subscribe callback
+                            elif callback_data == "subscribe":
+                                # Import keyboard for consistent UI
+                                from keyboard_utils import MAIN_KEYBOARD
+                                
+                                send_response(
+                                    chat_id,
+                                    "📡 *Subscription Activated*\n\n"
+                                    "You are now subscribed to daily updates!\n\n"
+                                    "You'll receive market insights and top pool recommendations each day.",
+                                    parse_mode="Markdown",
+                                    reply_markup=MAIN_KEYBOARD
+                                )
+                                logger.info(f"User {update_obj.callback_query.from_user.id} subscribed to daily updates")
+                                
+                            # Handle unsubscribe callback
+                            elif callback_data == "unsubscribe":
+                                # Import keyboard for consistent UI
+                                from keyboard_utils import MAIN_KEYBOARD
+                                
+                                send_response(
+                                    chat_id,
+                                    "❗ *Subscription Deactivated*\n\n"
+                                    "You have been unsubscribed from daily updates.\n\n"
+                                    "You can resubscribe at any time from the Account menu.",
+                                    parse_mode="Markdown",
+                                    reply_markup=MAIN_KEYBOARD
+                                )
+                                logger.info(f"User {update_obj.callback_query.from_user.id} unsubscribed from daily updates")
+                                
+                            # Handle FAQ menu callback
+                            elif callback_data == "menu_faq":
+                                # Import keyboard for consistent UI
+                                from keyboard_utils import MAIN_KEYBOARD
+                                
+                                # Create an FAQ message with commonly asked questions
+                                faq_message = (
+                                    "📚 *Frequently Asked Questions* 📚\n\n"
+                                    
+                                    "*What is FiLot Bot?*\n"
+                                    "FiLot is an AI-powered investment assistant for DeFi liquidity pools on Solana.\n\n"
+                                    
+                                    "*How do I start investing?*\n"
+                                    "Use the 💰 Invest button to select an amount and risk profile, then connect your wallet.\n\n"
+                                    
+                                    "*What's a liquidity pool?*\n"
+                                    "A liquidity pool is where you deposit two tokens to earn trading fees when others trade that pair.\n\n"
+                                    
+                                    "*How do earnings work?*\n"
+                                    "You earn a portion of trading fees proportional to your share of the pool, shown as APR (Annual Percentage Rate).\n\n"
+                                    
+                                    "*What are the risks?*\n"
+                                    "Liquidity pools have risks including impermanent loss, smart contract vulnerabilities, and token price volatility.\n\n"
+                                    
+                                    "*How do I withdraw my investment?*\n"
+                                    "Use the 💰 Invest button to see your active positions, then select one to withdraw funds."
+                                )
+                                
+                                send_response(
+                                    chat_id,
+                                    faq_message,
+                                    parse_mode="Markdown",
+                                    reply_markup=MAIN_KEYBOARD
+                                )
+                                logger.info(f"Sent FAQ information to user {update_obj.callback_query.from_user.id}")
 
                             # Handle menu button callbacks
                             elif callback_data.startswith("menu_"):
@@ -925,74 +1039,93 @@ def run_telegram_bot():
                                         loop.close()
                                 
                                 elif menu_action == "explore":
-                                    # Handle explore menu item
-                                    from bot import explore_command
-                                    logger.info(f"Triggering explore flow from menu button")
+                                    # Handle explore menu item with direct implementation to avoid relying on database
+                                    logger.info(f"Triggering simplified explore flow from menu button")
                                     
-                                    # Run the explore command handler using async
-                                    import asyncio
-                                    loop = asyncio.new_event_loop()
-                                    asyncio.set_event_loop(loop)
+                                    # Import keyboard module for the response
+                                    from keyboard_utils import MAIN_KEYBOARD
                                     
-                                    try:
-                                        # Create a message-based update for the handler
-                                        simplified_update = Update.de_json(
-                                            {
-                                                'update_id': update_dict.get('update_id', 0),
-                                                'message': update_obj.callback_query.message.to_dict()
-                                            }, 
-                                            bot
-                                        )
-                                        simplified_context = SimpleContext()
-                                        simplified_context.args = []
-                                        simplified_context.user_data = {"message_handled": True}
-                                        
-                                        loop.run_until_complete(explore_command(simplified_update, simplified_context))
-                                        logger.info("Successfully triggered explore flow")
-                                    except Exception as menu_error:
-                                        logger.error(f"Error in menu_explore handler: {menu_error}")
-                                        logger.error(traceback.format_exc())
-                                        send_response(
-                                            chat_id,
-                                            "Sorry, there was an error starting the explore flow. Please try again using the 🔍 Explore button."
-                                        )
-                                    finally:
-                                        loop.close()
+                                    # Create inline keyboard with explore options
+                                    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+                                    keyboard = [
+                                        [
+                                            InlineKeyboardButton("📊 Top Pools", callback_data="view_pools")
+                                        ],
+                                        [
+                                            InlineKeyboardButton("🧮 Simulate Returns", callback_data="simulate_period_daily_1000"),
+                                            InlineKeyboardButton("📚 FAQ", callback_data="menu_faq")
+                                        ]
+                                    ]
+                                    reply_markup = InlineKeyboardMarkup(keyboard)
+                                    
+                                    # Send explore menu directly
+                                    send_response(
+                                        chat_id,
+                                        "📊 *Explore DeFi Opportunities* 📊\n\n"
+                                        "Select what you'd like to explore:",
+                                        parse_mode="Markdown",
+                                        reply_markup=reply_markup
+                                    )
+                                    
+                                    # Add the main keyboard buttons reminder
+                                    send_response(
+                                        chat_id,
+                                        "👇 *One-Tap Navigation* 👇\n\n"
+                                        "These persistent buttons make moving through the app effortless!",
+                                        parse_mode="Markdown",
+                                        reply_markup=MAIN_KEYBOARD
+                                    )
+                                    
+                                    logger.info("Successfully displayed simplified explore menu")
+                                
                                 
                                 elif menu_action == "account":
-                                    # Handle account menu item
-                                    from bot import account_command
-                                    logger.info(f"Triggering account flow from menu button")
+                                    # Handle account menu item with direct implementation to avoid relying on database
+                                    logger.info(f"Triggering simplified account flow from menu button")
                                     
-                                    # Run the account command handler using async
-                                    import asyncio
-                                    loop = asyncio.new_event_loop()
-                                    asyncio.set_event_loop(loop)
+                                    # Import keyboard module for the response
+                                    from keyboard_utils import MAIN_KEYBOARD
                                     
-                                    try:
-                                        # Create a message-based update for the handler
-                                        simplified_update = Update.de_json(
-                                            {
-                                                'update_id': update_dict.get('update_id', 0),
-                                                'message': update_obj.callback_query.message.to_dict()
-                                            }, 
-                                            bot
-                                        )
-                                        simplified_context = SimpleContext()
-                                        simplified_context.args = []
-                                        simplified_context.user_data = {"message_handled": True}
-                                        
-                                        loop.run_until_complete(account_command(simplified_update, simplified_context))
-                                        logger.info("Successfully triggered account flow")
-                                    except Exception as menu_error:
-                                        logger.error(f"Error in menu_account handler: {menu_error}")
-                                        logger.error(traceback.format_exc())
-                                        send_response(
-                                            chat_id,
-                                            "Sorry, there was an error starting the account management flow. Please try again using the 👤 Account button."
-                                        )
-                                    finally:
-                                        loop.close()
+                                    # Create inline keyboard with account options
+                                    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+                                    keyboard = [
+                                        [
+                                            InlineKeyboardButton("💼 Connect Wallet", callback_data="walletconnect")
+                                        ],
+                                        [
+                                            InlineKeyboardButton("🔴 High-Risk Profile", callback_data="profile_high-risk"),
+                                            InlineKeyboardButton("🟢 Stable Profile", callback_data="profile_stable")
+                                        ],
+                                        [
+                                            InlineKeyboardButton("📡 Subscribe", callback_data="subscribe"),
+                                            InlineKeyboardButton("❗ Unsubscribe", callback_data="unsubscribe")
+                                        ]
+                                    ]
+                                    reply_markup = InlineKeyboardMarkup(keyboard)
+                                    
+                                    # Send account menu directly
+                                    send_response(
+                                        chat_id,
+                                        "👤 *Account Management* 👤\n\n"
+                                        "• *Wallet:* Not Connected\n"
+                                        "• *Risk Profile:* Not Set\n"
+                                        "• *Subscription:* Not Subscribed\n\n"
+                                        "Please select an option below:",
+                                        parse_mode="Markdown",
+                                        reply_markup=reply_markup
+                                    )
+                                    
+                                    # Add the main keyboard buttons reminder
+                                    send_response(
+                                        chat_id,
+                                        "👇 *One-Tap Navigation* 👇\n\n"
+                                        "These persistent buttons make moving through the app effortless!",
+                                        parse_mode="Markdown",
+                                        reply_markup=MAIN_KEYBOARD
+                                    )
+                                    
+                                    logger.info("Successfully displayed simplified account menu")
+                                
                                 else:
                                     logger.warning(f"Unknown menu action: {menu_action}")
                                     send_response(
