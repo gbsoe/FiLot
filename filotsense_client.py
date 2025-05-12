@@ -265,8 +265,12 @@ class FiLotSenseClient:
             if "error" in response:
                 logger.error(f"Error fetching prices: {response['error']}")
                 return {}
-                
-            return response.get("prices", {})
+            
+            if response.get("status") == "success":
+                return response.get("data", {})
+            else:
+                logger.error(f"Unsuccessful response fetching prices: {response}")
+                return {}
         except Exception as e:
             logger.error(f"Error in fetch_prices_latest: {e}")
             return {}
@@ -293,8 +297,12 @@ class FiLotSenseClient:
             if "error" in response:
                 logger.error(f"Error fetching sentiment topics: {response['error']}")
                 return []
-                
-            return response.get("topics", [])
+            
+            if response.get("status") == "success":
+                return response.get("data", [])
+            else:
+                logger.error(f"Unsuccessful response fetching sentiment topics: {response}")
+                return []
         except Exception as e:
             logger.error(f"Error in fetch_sentiment_topics: {e}")
             return []
@@ -332,8 +340,12 @@ class FiLotSenseClient:
             if "error" in response:
                 logger.error(f"Error fetching realdata: {response['error']}")
                 return {}
-                
-            return response.get("data", {})
+            
+            if response.get("status") == "success":
+                return response.get("data", {})
+            else:
+                logger.error(f"Unsuccessful response fetching realdata: {response}")
+                return {}
         except Exception as e:
             logger.error(f"Error in fetch_realdata: {e}")
             return {}
@@ -356,8 +368,12 @@ class FiLotSenseClient:
             if "error" in response:
                 logger.error(f"Error fetching sentiment history: {response['error']}")
                 return []
-                
-            return response.get("history", [])
+            
+            if response.get("status") == "success":
+                return response.get("data", [])
+            else:
+                logger.error(f"Unsuccessful response fetching sentiment history: {response}")
+                return []
         except Exception as e:
             logger.error(f"Error in fetch_token_sentiment_history: {e}")
             return []
@@ -371,7 +387,7 @@ class FiLotSenseClient:
         """
         try:
             response = await self._make_request("/health")
-            return response.get("status") == "online"
+            return response.get("status") == "success" or response.get("status") == "online"
         except Exception as e:
             logger.error(f"API health check failed: {e}")
             return False
