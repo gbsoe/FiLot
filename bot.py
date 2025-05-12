@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 
 # Import local modules
 import db_utils
-from models import User, Pool, UserQuery, db
+from models import User, Pool, UserQuery, CompositeSignal, Position, PositionStatus, db
 from question_detector import get_predefined_response, is_question
 from raydium_client import get_client
 from utils import format_pool_info, format_simulation_results, format_daily_update
@@ -32,9 +32,24 @@ from walletconnect_utils import (
 )
 from anthropic_service import AnthropicAI
 
+# Import agentic components
+from orchestrator import get_orchestrator
+from scheduler import init_scheduler
+from bot_commands import (
+    recommend_command,
+    execute_command,
+    positions_command,
+    exit_command,
+    handle_agentic_callback_query,
+    handle_position_alert
+)
+
 # Initialize AI service
 anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
 ai_advisor = AnthropicAI(api_key=anthropic_api_key)
+
+# Initialize orchestrator and scheduler
+orchestrator = get_orchestrator()
 
 # Load environment variables
 load_dotenv()
@@ -1538,7 +1553,7 @@ def create_application():
     # Create the Application
     application = Application.builder().token(token).build()
     
-    # Register command handlers
+    # Register existing command handlers
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("info", info_command))
@@ -1553,11 +1568,23 @@ def create_application():
     application.add_handler(CommandHandler("faq", faq_command))
     application.add_handler(CommandHandler("social", social_command))
     
-    # Register callback query handler
+    # Register agentic command handlers
+    application.add_handler(CommandHandler("recommend", recommend_command))
+    application.add_handler(CommandHandler("execute", execute_command))
+    application.add_handler(CommandHandler("positions", positions_command))
+    application.add_handler(CommandHandler("exit", exit_command))
+    
+    # Register callback query handlers
+    # We use separate handlers for standard and agentic callbacks to avoid conflicts
+    application.add_handler(CallbackQueryHandler(handle_agentic_callback_query, pattern="^(execute_|exit_|confirm_|ignore_)"))
     application.add_handler(CallbackQueryHandler(handle_callback_query))
     
     # Register message handler for non-command messages
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    
+    # Initialize scheduler and register alert callback
+    scheduler = init_scheduler()
+    scheduler.register_alert_callback(handle_position_alert)
     
     # Register error handler
     application.add_error_handler(error_handler)

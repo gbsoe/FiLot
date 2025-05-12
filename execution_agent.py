@@ -614,12 +614,17 @@ class ExecutionAgent:
             )
             
             # Store transaction data with the position
-            position.position_metadata = {
+            updated_metadata = {}
+            if position.position_metadata:
+                updated_metadata = position.position_metadata.copy()
+            
+            updated_metadata.update({
                 "exit_transaction_data": transaction_data,
                 "exit_serialized_transaction": transaction.get("serialized_transaction", ""),
-                "exit_expires_at": (datetime.now() + timedelta(minutes=30)).isoformat(),
-                **position.position_metadata if position.position_metadata else {}
-            }
+                "exit_expires_at": (datetime.now() + timedelta(minutes=30)).isoformat()
+            })
+            
+            position.position_metadata = updated_metadata
             db.session.commit()
             
             return {
