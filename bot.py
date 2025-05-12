@@ -334,8 +334,9 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         from keyboard_utils import MAIN_KEYBOARD
         
         # Send persistent keyboard buttons
-        await update.message.reply_text(
-            "Just tap a button below to quickly access features:",
+        await update.message.reply_markdown(
+            "👇 *These buttons stay available at all times* 👇\n\n"
+            "One tap gets you anywhere in the app!",
             reply_markup=MAIN_KEYBOARD
         )
     except Exception as e:
@@ -405,15 +406,17 @@ async def account_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await message.reply_markdown(response, reply_markup=get_account_menu())
         
         # Also ensure the persistent keyboard is shown
-        await message.reply_text(
-            "Use these buttons to navigate quickly:",
+        await message.reply_markdown(
+            "👇 *Quick Navigation Buttons* 👇\n\n"
+            "These persistent buttons allow one-tap access to all features!",
             reply_markup=MAIN_KEYBOARD
         )
         
     except Exception as e:
         logger.error(f"Error in account_command: {e}", exc_info=True)
-        await update.message.reply_text(
-            "Sorry, an error occurred while processing your request. Please try again later.",
+        await update.message.reply_markdown(
+            "Sorry, an error occurred while processing your request.\n\n"
+            "Please use the buttons below to continue:",
             reply_markup=MAIN_KEYBOARD  # Ensure keyboard is shown even in error case
         )
 
@@ -443,16 +446,16 @@ async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         # No arguments: Show menu
         if not args:
             # First show the explore menu with inline buttons
-            await message.reply_text(
+            await message.reply_markdown(
                 "📊 *Explore DeFi Opportunities* 📊\n\n"
-                "Select an option to explore:",
-                parse_mode="Markdown",
+                "Select what you'd like to explore:",
                 reply_markup=get_explore_menu()
             )
             
             # Then ensure the persistent keyboard is shown
-            await message.reply_text(
-                "Or use these quick buttons to navigate:",
+            await message.reply_markdown(
+                "👇 *One-Tap Navigation* 👇\n\n"
+                "These persistent buttons make moving through the app effortless!",
                 reply_markup=MAIN_KEYBOARD
             )
             return
@@ -507,18 +510,17 @@ async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         # Invalid option
         else:
             # First show the error with inline buttons
-            await message.reply_text(
-                "Invalid option. Available explore options are:\n"
-                "• pools - View top-performing pools\n"
-                "• simulate - Calculate potential returns\n"
-                "• faq - Frequently asked questions\n"
-                "• social - Our social media links",
+            await message.reply_markdown(
+                "❗ *Option not recognized*\n\n"
+                "Try using the buttons below instead - our new one-command interface "
+                "makes navigation much simpler!",
                 reply_markup=get_explore_menu()
             )
             
             # Then ensure the persistent keyboard is shown
-            await message.reply_text(
-                "Or use these quick buttons to navigate:",
+            await message.reply_markdown(
+                "👇 *One-Tap Access* 👇\n\n"
+                "These persistent buttons are always available for quick navigation!",
                 reply_markup=MAIN_KEYBOARD
             )
             
