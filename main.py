@@ -752,6 +752,53 @@ def run_telegram_bot():
                                         "Sorry, there was an error processing your investment amount. Please try again using /simulate [amount]."
                                     )
 
+                            # Handle amount selection callbacks
+                            elif callback_data.startswith("amount_"):
+                                try:
+                                    # Import the proper handler from investment_flow
+                                    from investment_flow import process_invest_amount_callback
+                                    
+                                    # Need to create a simplified update wrapper for the callback handler
+                                    from telegram import Update
+                                    from telegram.ext import Application
+                                    
+                                    # Create an event loop for async operations
+                                    import asyncio
+                                    loop = asyncio.new_event_loop()
+                                    asyncio.set_event_loop(loop)
+                                    
+                                    try:
+                                        # Get the bot from the global application 
+                                        bot = Application.get_instance().bot
+                                        
+                                        # Create a proper Update object
+                                        proper_update = Update.de_json(update_dict, bot)
+                                        
+                                        # Create a simple context
+                                        simplified_context = SimpleContext()
+                                        simplified_context.user_data = {}
+                                        
+                                        # Run the amount callback handler
+                                        loop.run_until_complete(process_invest_amount_callback(proper_update, simplified_context, callback_data))
+                                        
+                                        logger.info(f"Successfully processed amount callback: {callback_data}")
+                                    except Exception as e:
+                                        logger.error(f"Error in amount_ callback handler: {e}")
+                                        logger.error(traceback.format_exc())
+                                        send_response(
+                                            chat_id,
+                                            "Sorry, there was an error processing your investment amount. Please try again using the Invest button."
+                                        )
+                                    finally:
+                                        loop.close()
+                                except Exception as amount_cb_error:
+                                    logger.error(f"Fatal error in amount callback handler: {amount_cb_error}")
+                                    logger.error(traceback.format_exc())
+                                    send_response(
+                                        chat_id, 
+                                        "Sorry, there was an error with the investment flow. Please try again using the Invest button."
+                                    )
+                            
                             # Handle simulate_period callbacks
                             elif callback_data.startswith("simulate_period_"):
                                 try:
