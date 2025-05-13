@@ -874,6 +874,107 @@ def run_telegram_bot():
                                         "Sorry, there was an error processing your risk profile selection. Please try again using the Invest button."
                                     )
                             
+                            # Handle explore callback menu items
+                            elif callback_data.startswith("explore_"):
+                                # Extract the explore action
+                                explore_action = callback_data.replace("explore_", "")
+                                
+                                if explore_action == "pools" or callback_data == "view_pools":
+                                    try:
+                                        # Send a loading message
+                                        loading_message_resp = send_response(
+                                            chat_id,
+                                            "🔍 *Fetching Pool Opportunities*\n\n"
+                                            "Please wait while I gather the latest data on available liquidity pools...",
+                                            parse_mode="Markdown"
+                                        )
+                                        
+                                        # Get predefined pool data
+                                        from response_data import get_pool_data as get_predefined_pool_data
+                                        
+                                        # Get predefined pool data directly as dictionaries
+                                        predefined_data = get_predefined_pool_data()
+                                        
+                                        # Process top APR pools from the predefined data
+                                        pool_list = predefined_data.get('topAPR', [])
+                                        
+                                        if not pool_list:
+                                            send_response(
+                                                chat_id,
+                                                "Sorry, I couldn't retrieve pool data at the moment. Please try again later."
+                                            )
+                                            return
+                                            
+                                        # Format pool data for display
+                                        from utils import format_pool_info
+                                        formatted_info = format_pool_info(pool_list)
+                                        
+                                        # Send the formatted pool data
+                                        send_response(
+                                            chat_id,
+                                            formatted_info
+                                        )
+                                        
+                                        logger.info(f"Sent pool info response for explore_pools callback")
+                                    except Exception as e:
+                                        logger.error(f"Error fetching pool data via callback: {e}")
+                                        logger.error(traceback.format_exc())
+                                        send_response(
+                                            chat_id,
+                                            "Sorry, an error occurred while retrieving pool data. Please try again later."
+                                        )
+                                
+                                elif explore_action == "simulate":
+                                    # Show simulation options menu
+                                    from menus import get_simulate_menu
+                                    send_response(
+                                        chat_id,
+                                        "💰 *Simulate Investment Returns* 💰\n\n"
+                                        "Select an amount to simulate or enter a custom amount using:\n"
+                                        "`/explore simulate <amount>`",
+                                        parse_mode="Markdown",
+                                        reply_markup=get_simulate_menu()
+                                    )
+                                    logger.info("Sent simulate menu via explore_simulate callback")
+                                
+                                elif explore_action == "faq":
+                                    # Show FAQ information
+                                    from keyboard_utils import MAIN_KEYBOARD
+                                    send_response(
+                                        chat_id,
+                                        "❓ *Frequently Asked Questions* ❓\n\n"
+                                        "**What is a liquidity pool?**\n"
+                                        "A liquidity pool is a collection of funds locked in a smart contract, used to facilitate decentralized trading.\n\n"
+                                        "**How do I earn rewards?**\n"
+                                        "You earn a portion of the trading fees when people trade using the pool you've invested in.\n\n"
+                                        "**What are impermanent loss risks?**\n"
+                                        "If token prices in your pool change significantly, you might earn less than if you'd just held the tokens.\n\n"
+                                        "**How do I withdraw my funds?**\n"
+                                        "Use the 'View My Positions' option in the Invest menu to see and manage your investments.\n\n"
+                                        "**What's APR?**\n"
+                                        "Annual Percentage Rate - the yearly return you can expect based on current trading activity.",
+                                        parse_mode="Markdown",
+                                        reply_markup=MAIN_KEYBOARD
+                                    )
+                                    logger.info("Sent FAQ info via explore_faq callback")
+                                
+                                elif explore_action == "social":
+                                    # Show community/social information
+                                    from keyboard_utils import MAIN_KEYBOARD
+                                    send_response(
+                                        chat_id,
+                                        "🌐 *Join Our Community* 🌐\n\n"
+                                        "Stay updated and connect with other DeFi enthusiasts:\n\n"
+                                        "• Telegram Group: [t.me/FilotCommunity](https://t.me/FilotCommunity)\n"
+                                        "• Twitter: [@FilotFinance](https://twitter.com/FilotFinance)\n"
+                                        "• Discord: [discord.gg/filot](https://discord.gg/filot)\n"
+                                        "• Website: [filot.finance](https://filot.finance)\n\n"
+                                        "Got questions? Ask directly in our community channels!",
+                                        parse_mode="Markdown",
+                                        reply_markup=MAIN_KEYBOARD
+                                    )
+                                    logger.info("Sent social info via explore_social callback")
+                            
                             # Handle simulate_period callbacks
                             elif callback_data.startswith("simulate_period_"):
                                 try:
@@ -1069,21 +1170,9 @@ def run_telegram_bot():
                                     # Handle explore menu item with direct implementation to avoid relying on database
                                     logger.info(f"Triggering simplified explore flow from menu button")
                                     
-                                    # Import keyboard module for the response
-                                    from keyboard_utils import MAIN_KEYBOARD
-                                    
-                                    # Create inline keyboard with explore options
-                                    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-                                    keyboard = [
-                                        [
-                                            InlineKeyboardButton("📊 Top Pools", callback_data="view_pools")
-                                        ],
-                                        [
-                                            InlineKeyboardButton("🧮 Simulate Returns", callback_data="simulate_period_daily_1000"),
-                                            InlineKeyboardButton("📚 FAQ", callback_data="menu_faq")
-                                        ]
-                                    ]
-                                    reply_markup = InlineKeyboardMarkup(keyboard)
+                                    # Import from menus to ensure consistency with the rest of the application
+                                    from menus import get_explore_menu
+                                    reply_markup = get_explore_menu()
                                     
                                     # Send explore menu directly
                                     send_response(
