@@ -1082,6 +1082,94 @@ def run_telegram_bot():
                                         reply_markup=MAIN_KEYBOARD
                                     )
                             
+                            # Handle simulation amount buttons (simulate_100, simulate_500, etc.)
+                            elif callback_data.startswith("simulate_"):
+                                try:
+                                    # Extract the amount from the callback data
+                                    amount_str = callback_data.replace("simulate_", "")
+                                    
+                                    # Handle custom amount option
+                                    if amount_str == "custom":
+                                        send_response(
+                                            chat_id,
+                                            "To simulate with a custom amount, please use the command format:\n"
+                                            "`/explore simulate <amount>`\n\n"
+                                            "For example: `/explore simulate 2500`",
+                                            parse_mode="Markdown"
+                                        )
+                                        logger.info("Sent custom simulation instructions")
+                                        return
+                                    
+                                    # Convert amount to float
+                                    try:
+                                        amount = float(amount_str)
+                                    except ValueError:
+                                        send_response(
+                                            chat_id,
+                                            "Invalid amount for simulation. Please select from the menu options or use:"
+                                            "\n`/explore simulate <amount>`",
+                                            parse_mode="Markdown"
+                                        )
+                                        return
+                                    
+                                    # Send a loading message
+                                    loading_message_resp = send_response(
+                                        chat_id,
+                                        "💰 *Calculating Potential Returns*\n\n"
+                                        "Please wait while I run the investment simulation...",
+                                        parse_mode="Markdown"
+                                    )
+                                    
+                                    # Get top performing pool data for simulation
+                                    from response_data import get_pool_data as get_predefined_pool_data
+                                    
+                                    # Get predefined pool data directly as dictionaries
+                                    predefined_data = get_predefined_pool_data()
+                                    
+                                    # Process top performing pools from the predefined data
+                                    # Use bestPerformance as these should be the highest APR pools
+                                    pool_list = predefined_data.get('bestPerformance', [])
+                                    
+                                    if not pool_list:
+                                        send_response(
+                                            chat_id,
+                                            "Sorry, I couldn't retrieve pool data for simulation. Please try again later."
+                                        )
+                                        return
+                                    
+                                    # Format the simulation results
+                                    from utils import format_simulation_results
+                                    formatted_simulation = format_simulation_results(pool_list, amount)
+                                    
+                                    # Add wallet connection options
+                                    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+                                    keyboard = [
+                                        [
+                                            InlineKeyboardButton("Connect Wallet (Address)", callback_data="enter_address"),
+                                            InlineKeyboardButton("Connect Wallet (QR Code)", callback_data="walletconnect")
+                                        ],
+                                        [
+                                            InlineKeyboardButton("⬅️ Back to Explore", callback_data="menu_explore")
+                                        ]
+                                    ]
+                                    wallet_markup = InlineKeyboardMarkup(keyboard)
+                                    
+                                    # Send the simulation results
+                                    send_response(
+                                        chat_id,
+                                        formatted_simulation,
+                                        reply_markup=wallet_markup
+                                    )
+                                    
+                                    logger.info(f"Sent simulation response for amount ${amount:.2f}")
+                                except Exception as e:
+                                    logger.error(f"Error in simulation button handler: {e}")
+                                    logger.error(traceback.format_exc())
+                                    send_response(
+                                        chat_id,
+                                        "Sorry, an error occurred while calculating the simulation. Please try again later."
+                                    )
+                            
                             # Handle direct command buttons from explore menu
                             elif callback_data == "direct_command_faq":
                                 try:
