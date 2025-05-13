@@ -1315,17 +1315,19 @@ async def faq_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         faq_text = """
 ❓ *Frequently Asked Questions*
 
-*What does this bot do?*
-It helps track crypto earnings from AI-optimized liquidity pools and provides info on FiLot.
+*What is FiLot?*
+FiLot is your AI-powered crypto investment advisor. It helps you discover and invest in the best liquidity pools with real-time data.
 
-*How do I earn with liquidity pools?*
-Contribute crypto to earn trading fees. FiLot aims to find high-yield, safer pools.
+*How does pool investment work?*
+You provide liquidity to a pool (e.g., SOL/USDC) and earn fees from trades.
 
-*Is it risky?*
-All investments have risk. FiLot focuses on stable pools (like SOL-USDC) and uses AI to manage risk, but losses are possible.
+*How do I start investing?*
+1. Connect your wallet using /account
+2. Choose an investment amount with /invest
+3. Select a pool and confirm your investment
 
-*What's Impermanent Loss (IL)?*
-Value changes in your deposited tokens compared to just holding them. AI aims to minimize this by selecting suitable pools.
+*What are the risks?*
+Liquidity pools can have impermanent loss if token prices change significantly.
 
 *What's APR?*
 Annual Percentage Rate - estimated yearly return. Pool APRs can be high (10-200%+) but fluctuate.
@@ -1337,7 +1339,7 @@ Use /subscribe for automatic news. Use /unsubscribe to stop.
 It estimates earnings based on recent APRs: Earnings = Investment * (APR/100) * Time.
 
 *When is FiLot launching?*
-Coming soon! Use /subscribe for announcements.
+FiLot is currently in beta mode. The full launch will be available soon with one-click investment features.
 
 *How do I ask specific questions?*
 Use /ask Your question here... for product details, or just type general questions.
@@ -1345,8 +1347,16 @@ Use /ask Your question here... for product details, or just type general questio
 Use /help to see all available commands!
 """
         
-        # Send the FAQ message
-        await update.message.reply_markdown(faq_text)
+        # Create back button keyboard
+        keyboard = [
+            [
+                InlineKeyboardButton("⬅️ Back to Main Menu", callback_data="menu_main")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        # Send the FAQ message with back button
+        await update.message.reply_markdown(faq_text, reply_markup=reply_markup)
         
         logger.info(f"Sent FAQ to user {user.id}")
         
@@ -1372,25 +1382,31 @@ async def social_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         
         # Format the social media content with emojis and links
         social_text = """
-🤝 *Connect With Us!*
+🌐 *Join Our Community* 🌐
 
-Stay updated and join the community on our official channels:
+Connect with fellow investors and get the latest updates:
 
-🐦 X (Twitter): [@CrazyRichLA](https://x.com/crazyrichla)
-📸 Instagram: [@CrazyRichLA](https://www.instagram.com/crazyrichla)
-🌐 Website: [CrazyRichLA](https://crazyrichla.replit.app/)
+• Telegram Group: @FilotCommunity
+• Discord: discord.gg/filot
+• Twitter: @FilotFinance
 
-Follow us for the latest news and launch announcements!
+Share your experiences and learn from others!
+
+⚡️ For technical support, email: support@filot.finance
 """
         
-        # Create inline keyboard for the social links
+        # Create inline keyboard with social links and back button
         keyboard = [
             [
-                InlineKeyboardButton("Twitter 🐦", url="https://x.com/crazyrichla"),
-                InlineKeyboardButton("Instagram 📸", url="https://www.instagram.com/crazyrichla")
+                InlineKeyboardButton("🌐 Website", url="https://filot.finance"),
+                InlineKeyboardButton("𝕏 Twitter", url="https://twitter.com/filotfinance")
             ],
             [
-                InlineKeyboardButton("Website 🌐", url="https://crazyrichla.replit.app/")
+                InlineKeyboardButton("💬 Telegram", url="https://t.me/filotcommunity"),
+                InlineKeyboardButton("📱 Discord", url="https://discord.gg/filot")
+            ],
+            [
+                InlineKeyboardButton("⬅️ Back to Main Menu", callback_data="menu_main")
             ]
         ]
         
@@ -1398,7 +1414,7 @@ Follow us for the latest news and launch announcements!
         await update.message.reply_markdown(
             social_text,
             reply_markup=InlineKeyboardMarkup(keyboard),
-            disable_web_page_preview=True  # Disable preview to avoid showing Twitter/IG previews
+            disable_web_page_preview=True  # Disable preview to avoid showing preview images
         )
         
         logger.info(f"Sent social media links to user {user.id}")
