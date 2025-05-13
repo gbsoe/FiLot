@@ -1187,9 +1187,9 @@ def run_telegram_bot():
                                 )
                                 logger.info("Sent investment simulator menu")
                                 
-                            # Handle explore_faq callback (FAQ & Help button)
-                            elif callback_data == "explore_faq":
-                                logger.info("Handling FAQ button click - callback_data: explore_faq")
+                            # Handle show_faq callback (FAQ & Help button from explore menu)
+                            elif callback_data == "show_faq":
+                                logger.info("Handling FAQ button click - callback_data: show_faq")
                                 faq_text = (
                                     "❓ *Frequently Asked Questions* ❓\n\n"
                                     "*What is FiLot?*\n"
@@ -1223,9 +1223,9 @@ def run_telegram_bot():
                                 )
                                 logger.info(f"Sent FAQ response via direct handler: {response}")
                                 
-                            # Handle explore_social callback (Community button)
-                            elif callback_data == "explore_social":
-                                logger.info("Handling Social/Community button click - callback_data: explore_social")
+                            # Handle show_community callback (Community button from explore menu)
+                            elif callback_data == "show_community":
+                                logger.info("Handling Social/Community button click - callback_data: show_community")
                                 community_text = (
                                     "🌐 *Join Our Community* 🌐\n\n"
                                     "Connect with fellow investors and get the latest updates:\n\n"
@@ -1261,6 +1261,107 @@ def run_telegram_bot():
                                     reply_markup=social_keyboard
                                 )
                                 logger.info(f"Sent community links via direct handler: {response}")
+                                
+                            # Keep old handlers for backward compatibility
+                            elif callback_data == "explore_faq":
+                                logger.info("Handling legacy FAQ button click - redirecting")
+                                # Redirect to the new handler by re-processing with new callback data
+                                try:
+                                    requests.post(
+                                        f"{base_url}/answerCallbackQuery", 
+                                        json={
+                                            "callback_query_id": query_id,
+                                            "text": "Processing FAQ request..."
+                                        }
+                                    )
+                                except Exception:
+                                    pass
+                                
+                                # Handle like the new button
+                                faq_text = (
+                                    "❓ *Frequently Asked Questions* ❓\n\n"
+                                    "*What is FiLot?*\n"
+                                    "FiLot is your AI-powered crypto investment advisor. It helps you discover and "
+                                    "invest in the best liquidity pools with real-time data.\n\n"
+                                    "*How does pool investment work?*\n"
+                                    "You provide liquidity to a pool (e.g., SOL/USDC) and earn fees from trades.\n\n"
+                                    "*How do I start investing?*\n"
+                                    "1. Connect your wallet using /account\n"
+                                    "2. Choose an investment amount with /invest\n"
+                                    "3. Select a pool to invest in\n\n"
+                                    "*What are the risks?*\n"
+                                    "Crypto investments include risks like impermanent loss and market volatility.\n\n"
+                                    "*Need more help?*\n"
+                                    "Visit our website or join our community for support."
+                                )
+                                
+                                # Add a back button to help user navigate
+                                back_keyboard = {
+                                    "inline_keyboard": [
+                                        [{"text": "⬅️ Back to Explore Menu", "callback_data": "menu_explore"}]
+                                    ]
+                                }
+                                
+                                # Send response with additional logging
+                                response = send_response(
+                                    chat_id,
+                                    faq_text,
+                                    parse_mode="Markdown",
+                                    reply_markup=back_keyboard
+                                )
+                                logger.info(f"Sent FAQ response via legacy handler: {response}")
+                            
+                            # Handle legacy social callback
+                            elif callback_data == "explore_social":
+                                logger.info("Handling legacy Social button click - redirecting")
+                                # Redirect to the new handler by re-processing with new callback data
+                                try:
+                                    requests.post(
+                                        f"{base_url}/answerCallbackQuery", 
+                                        json={
+                                            "callback_query_id": query_id,
+                                            "text": "Processing community request..."
+                                        }
+                                    )
+                                except Exception:
+                                    pass
+                                
+                                # Handle like the new button
+                                community_text = (
+                                    "🌐 *Join Our Community* 🌐\n\n"
+                                    "Connect with fellow investors and get the latest updates:\n\n"
+                                    "• Telegram Group: @FilotCommunity\n"
+                                    "• Discord: discord.gg/filot\n"
+                                    "• Twitter: @FilotFinance\n\n"
+                                    "Share your experiences and learn from others!\n\n"
+                                    "⚡️ For technical support, email: support@filot.finance"
+                                )
+                                
+                                # Create social media buttons
+                                social_keyboard = {
+                                    "inline_keyboard": [
+                                        [
+                                            {"text": "🌐 Website", "url": "https://filot.finance"},
+                                            {"text": "𝕏 Twitter", "url": "https://twitter.com/filotfinance"}
+                                        ],
+                                        [
+                                            {"text": "💬 Telegram", "url": "https://t.me/filotcommunity"},
+                                            {"text": "📱 Discord", "url": "https://discord.gg/filot"}
+                                        ],
+                                        [
+                                            {"text": "⬅️ Back to Explore Menu", "callback_data": "menu_explore"}
+                                        ]
+                                    ]
+                                }
+                                
+                                # Send response with additional logging
+                                response = send_response(
+                                    chat_id,
+                                    community_text,
+                                    parse_mode="Markdown",
+                                    reply_markup=social_keyboard
+                                )
+                                logger.info(f"Sent community links via legacy handler: {response}")
                             
                             # Handle enter_address callback
                             elif callback_data == "enter_address":

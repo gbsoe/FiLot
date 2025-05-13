@@ -2117,6 +2117,71 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             )
             return
             
+        # Explicitly handle the new callback patterns for the FAQ and Community buttons
+        elif callback_data == "show_faq":
+            logger.info(f"Handling show_faq callback button from user {user.id}")
+            
+            # Show FAQ information with back button
+            faq_text = (
+                "❓ *Frequently Asked Questions* ❓\n\n"
+                "*What is FiLot?*\n"
+                "FiLot is your AI-powered crypto investment advisor. It helps you discover and "
+                "invest in the best liquidity pools with real-time data.\n\n"
+                "*How does pool investment work?*\n"
+                "You provide liquidity to a pool (e.g., SOL/USDC) and earn fees from trades.\n\n"
+                "*How do I start investing?*\n"
+                "1. Connect your wallet using /account\n"
+                "2. Choose an investment amount with /invest\n"
+                "3. Select a pool and confirm your investment\n\n"
+                "*What are the risks?*\n"
+                "Liquidity pools can have impermanent loss if token prices change significantly.\n\n"
+                "Our system monitors market conditions and can suggest optimal entry and exit points to maximize returns."
+            )
+            
+            # Create back button keyboard
+            keyboard = [
+                [
+                    InlineKeyboardButton("⬅️ Back to Explore Menu", callback_data="menu_explore")
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await query.message.reply_markdown(faq_text, reply_markup=reply_markup)
+            return
+            
+        elif callback_data == "show_community":
+            logger.info(f"Handling show_community callback button from user {user.id}")
+            
+            # Show social media information
+            community_text = (
+                "🌐 *Join Our Community* 🌐\n\n"
+                "Connect with fellow investors and get the latest updates:\n\n"
+                "• Telegram Group: @FilotCommunity\n"
+                "• Discord: discord.gg/filot\n"
+                "• Twitter: @FilotFinance\n\n"
+                "Share your experiences and learn from others!\n\n"
+                "⚡️ For technical support, email: support@filot.finance"
+            )
+            
+            # Create social media buttons with back button
+            keyboard = [
+                [
+                    InlineKeyboardButton("🌐 Website", url="https://filot.finance"),
+                    InlineKeyboardButton("𝕏 Twitter", url="https://twitter.com/filotfinance")
+                ],
+                [
+                    InlineKeyboardButton("💬 Telegram", url="https://t.me/filotcommunity"),
+                    InlineKeyboardButton("📱 Discord", url="https://discord.gg/filot")
+                ],
+                [
+                    InlineKeyboardButton("⬅️ Back to Explore Menu", callback_data="menu_explore")
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await query.message.reply_markdown(community_text, reply_markup=reply_markup)
+            return
+            
         elif callback_data == "menu_account":
             # Show account menu - Import at use to avoid circular imports
             from menus import get_account_menu

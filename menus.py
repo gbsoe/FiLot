@@ -31,14 +31,15 @@ def get_explore_menu() -> InlineKeyboardMarkup:
     """
     Creates the One-Touch inline keyboard for explore command options with improved visuals
     """
+    # Using more specific button types to ensure proper callback handling
     keyboard = [
         [
             InlineKeyboardButton("🏆 Top Pools", callback_data="explore_pools"),
             InlineKeyboardButton("📊 Simulate Returns", callback_data="explore_simulate")
         ],
         [
-            InlineKeyboardButton("❓ FAQ & Help", callback_data="explore_faq"),
-            InlineKeyboardButton("🌐 Community", callback_data="explore_social")
+            InlineKeyboardButton("❓ FAQ & Help", callback_data="show_faq"),
+            InlineKeyboardButton("🌐 Community", callback_data="show_community")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
