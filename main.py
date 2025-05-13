@@ -1071,6 +1071,50 @@ def run_telegram_bot():
                                         reply_markup=MAIN_KEYBOARD
                                     )
                             
+                            # Handle direct command buttons from explore menu
+                            elif callback_data == "direct_command_faq":
+                                try:
+                                    # Use the bot's faq_command handler directly
+                                    from bot import faq_command
+                                    import asyncio
+                                    
+                                    # Create and manage our own event loop
+                                    loop = asyncio.new_event_loop()
+                                    asyncio.set_event_loop(loop)
+                                    
+                                    # Run the command in this event loop
+                                    loop.run_until_complete(faq_command(update_obj, context))
+                                    logger.info(f"Successfully processed FAQ button for chat_id: {chat_id}")
+                                except Exception as e:
+                                    logger.error(f"Error in direct_command_faq callback: {e}")
+                                    logger.error(traceback.format_exc())
+                                    send_response(
+                                        chat_id,
+                                        "Sorry, an error occurred while displaying the FAQ. Please try typing /faq directly."
+                                    )
+                            
+                            # Handle social/community button
+                            elif callback_data == "direct_command_social":
+                                try:
+                                    # Use the bot's social_command handler directly
+                                    from bot import social_command
+                                    import asyncio
+                                    
+                                    # Create and manage our own event loop
+                                    loop = asyncio.new_event_loop()
+                                    asyncio.set_event_loop(loop)
+                                    
+                                    # Run the command in this event loop
+                                    loop.run_until_complete(social_command(update_obj, context))
+                                    logger.info(f"Successfully processed Community button for chat_id: {chat_id}")
+                                except Exception as e:
+                                    logger.error(f"Error in direct_command_social callback: {e}")
+                                    logger.error(traceback.format_exc())
+                                    send_response(
+                                        chat_id,
+                                        "Sorry, an error occurred while displaying the community information. Please try typing /social directly."
+                                    )
+                            
                             # Handle simulate_period callbacks
                             elif callback_data.startswith("simulate_period_"):
                                 try:
