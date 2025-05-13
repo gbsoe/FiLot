@@ -245,7 +245,7 @@ def run_telegram_bot():
         def handle_update(update_dict):
             from app import app
             import threading
-            from telegram import Bot
+            from telegram import Bot, Update
 
             try:
                 # Create a bot instance to use with de_json
@@ -294,9 +294,19 @@ def run_telegram_bot():
                         if parse_mode:
                             params["parse_mode"] = parse_mode
 
+                        # If no custom reply markup is provided, use the MAIN_KEYBOARD
+                        # for error messages or regular text responses
                         if reply_markup:
                             # Direct use of the dictionary
                             params["reply_markup"] = json.dumps(reply_markup)
+                        else:
+                            # Import here to avoid circular imports
+                            try:
+                                from keyboard_utils import MAIN_KEYBOARD_DICT
+                                # Apply the persistent keyboard to all messages without custom markup
+                                params["reply_markup"] = json.dumps(MAIN_KEYBOARD_DICT)
+                            except Exception as kb_error:
+                                logger.error(f"Failed to import MAIN_KEYBOARD_DICT: {kb_error}")
                             
                         # Add message tracking ID if provided
                         if message_id:
@@ -1265,19 +1275,13 @@ def run_telegram_bot():
                         # Import the keyboard helper
                         from keyboard_utils import MAIN_KEYBOARD, get_main_menu_inline
                         
-                        # First show error message with inline buttons
+                        # Show error message with persistent keyboard directly
+                        # This eliminates the redundant second message
                         send_response(
                             chat_id,
                             "❗ *Sorry, something went wrong*\n\n"
-                            "Please select an option to continue:",
+                            "Please use the buttons below to continue:",
                             parse_mode="Markdown",
-                            reply_markup=get_main_menu_inline()
-                        )
-                        
-                        # Also ensure persistent keyboard is shown
-                        send_response(
-                            chat_id,
-                            "Or use these persistent buttons for navigation:",
                             reply_markup=MAIN_KEYBOARD
                         )
                 except Exception as inner_e:

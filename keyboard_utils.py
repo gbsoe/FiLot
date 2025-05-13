@@ -12,6 +12,13 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup(
     one_time_keyboard=False
 )
 
+# JSON-serializable dictionary version of MAIN_KEYBOARD for use with the Telegram API
+MAIN_KEYBOARD_DICT = {
+    "keyboard": [["💰 Invest"], ["🔍 Explore", "👤 Account"]],
+    "resize_keyboard": True,
+    "one_time_keyboard": False
+}
+
 # Inline version of the main keyboard for embedding in messages
 def get_main_menu_inline() -> InlineKeyboardMarkup:
     """

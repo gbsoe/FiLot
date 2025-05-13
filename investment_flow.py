@@ -471,17 +471,11 @@ async def handle_back_to_main(update: Update, context: ContextTypes.DEFAULT_TYPE
     from menus import get_main_menu
     
     # Show main menu options with One-Touch Navigation emphasis
+    # Apply the persistent keyboard directly to the message
     await message.reply_markdown(
         "🏠 *Back to Main Menu*\n\n"
-        "Use our One-Touch Navigation to continue your journey. "
-        "Just tap any button below to instantly access features!",
-        reply_markup=get_main_menu()
-    )
-    
-    # Also ensure the persistent keyboard is visible
-    await message.reply_markdown(
-        "👇 *Quick Access Buttons* 👇\n\n"
-        "These persistent buttons are always available for one-tap navigation!",
+        "Use our One-Touch Navigation to continue your journey.\n"
+        "The buttons below provide quick access to all features!",
         reply_markup=MAIN_KEYBOARD
     )
 

@@ -33,7 +33,10 @@ from investment_flow import (
     process_invest_amount, process_risk_profile, confirm_investment,
     get_top_pools_for_profile
 )
-from keyboard_utils import MAIN_KEYBOARD, RISK_PROFILE_KEYBOARD, BACK_KEYBOARD
+from keyboard_utils import (
+    MAIN_KEYBOARD, RISK_PROFILE_KEYBOARD, BACK_KEYBOARD, 
+    INVEST_INLINE, get_invest_confirmation_keyboard, get_main_menu_inline
+)
 from walletconnect_utils import (
     create_walletconnect_session, 
     check_walletconnect_session, 
@@ -63,12 +66,7 @@ from menus import (
     get_custom_amount_menu,
     get_simulate_menu,
     get_exit_position_menu,
-    get_main_menu,
-    is_investment_intent,
-    is_position_inquiry,
-    is_pool_inquiry,
-    is_wallet_inquiry,
-    extract_amount
+    get_main_menu
 )
 
 # Import keyboard utilities for persistent keyboards
@@ -522,6 +520,8 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     3. Profile and amount: Shows recommended pools to invest the specified amount
     """
     try:
+        # Import keyboard utilities
+        from keyboard_utils import MAIN_KEYBOARD
         user = update.effective_user
         message = update.effective_message
         
@@ -573,20 +573,20 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             result = await orchestrator.get_positions(user.id)
             
             if not result.get("success", False):
+                # Import the proper keyboard
+                from keyboard_utils import MAIN_KEYBOARD
+                
                 await message.reply_text(
                     f"❌ Sorry, I couldn't retrieve your positions at this time.\n\n"
                     f"Error: {result.get('error', 'Unknown error')}",
-                    reply_markup=get_invest_menu()
+                    reply_markup=MAIN_KEYBOARD
                 )
                 return
                 
             positions = result.get("positions", [])
             
             if not positions:
-                # Import keyboard utilities
-                from keyboard_utils import MAIN_KEYBOARD
-                from menus import get_invest_menu
-                
+                # Use the already imported MAIN_KEYBOARD
                 await message.reply_markdown(
                     "📈 *No Active Positions*\n\n"
                     "You don't have any active investments yet.\n\n"
@@ -668,7 +668,7 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 f"I couldn't generate investment recommendations right now.\n"
                 f"Error: {result.get('error', 'Unknown error')}\n\n"
                 f"Please try again using the buttons below:",
-                reply_markup=get_invest_menu()
+                reply_markup=MAIN_KEYBOARD
             )
             
             # Persistent keyboard will already be shown with the menu
@@ -682,7 +682,7 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await message.reply_text(
                 "❌ Sorry, I couldn't find any suitable pools matching your profile.\n\n"
                 "Please try again later when market conditions improve.",
-                reply_markup=get_invest_menu()
+                reply_markup=MAIN_KEYBOARD
             )
             return
             
@@ -754,19 +754,17 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 f"With our One-Touch interface, just select an investment amount using the buttons below. "
                 f"No need to type commands!"
             )
+            # Import required menu correctly
+            from menus import get_invest_menu
             reply_markup = get_invest_menu()
             
-            # After sending the inline menu, also ensure the persistent keyboard is shown
-            from keyboard_utils import MAIN_KEYBOARD
-            # We'll add this keyboard after sending the main message
+            # The persistent keyboard is already integrated into the response
         
         # Send response
         await message.reply_markdown(response, reply_markup=reply_markup)
         
-        # Add the persistent keyboard without a separate message
-        if amount is None:
-            # Just make sure MAIN_KEYBOARD is applied to the message
-            pass
+        # The persistent keyboard is already included in the reply via MAIN_KEYBOARD
+        # No need for additional keyboard messages
         
     except Exception as e:
         logger.error(f"Error in invest_command: {e}", exc_info=True)
@@ -2090,22 +2088,26 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             
         # Handle menu navigation
         elif callback_data == "menu_invest":
-            # Show invest menu
+            # Show invest menu - Import at use to avoid circular imports
+            from menus import get_invest_menu
             await query.message.edit_reply_markup(reply_markup=get_invest_menu())
             return
             
         elif callback_data == "menu_explore":
-            # Show explore menu
+            # Show explore menu - Import at use to avoid circular imports
+            from menus import get_explore_menu
             await query.message.edit_reply_markup(reply_markup=get_explore_menu())
             return
             
         elif callback_data == "menu_account":
-            # Show account menu
+            # Show account menu - Import at use to avoid circular imports
+            from menus import get_account_menu
             await query.message.edit_reply_markup(reply_markup=get_account_menu())
             return
             
         elif callback_data == "menu_main":
-            # Show main menu
+            # Show main menu - Import at use to avoid circular imports
+            from menus import get_main_menu
             await query.message.edit_reply_markup(reply_markup=get_main_menu())
             return
             
