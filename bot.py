@@ -273,10 +273,10 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         
         logger.info(f"Sending welcome message to user {user.id}")
         
-        # Import our new inline main menu
-        from keyboard_utils import get_main_menu_inline
+        # Import keyboard utilities
+        from keyboard_utils import MAIN_KEYBOARD, get_main_menu_inline
         
-        # First, send the welcome message with inline buttons
+        # Send a single welcome message with persistent keyboard
         await update.message.reply_markdown(
             f"👋 Welcome to FiLot, {user.first_name}!\n\n"
             "I'm your AI-powered investment assistant for cryptocurrency liquidity pools. "
@@ -286,15 +286,6 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             "• Tap 🔍 *Explore* to discover top pools and simulate returns\n"
             "• Tap 👤 *Account* to connect wallet and set preferences\n\n"
             "I can also answer any questions about cryptocurrencies and help guide your investment decisions!",
-            reply_markup=get_main_menu_inline()
-        )
-        
-        # Then, provide the persistent keyboard for easier access
-        from keyboard_utils import MAIN_KEYBOARD
-        await update.message.reply_markdown(
-            "👇 *Just tap the buttons below* 👇\n\n"
-            "I've added these persistent buttons that stay available at all times!\n"
-            "This makes navigating much easier - just one tap to access any feature!",
             reply_markup=MAIN_KEYBOARD
         )
     except Exception as e:
@@ -314,8 +305,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             user = update.effective_user
             db_utils.log_user_activity(user.id, "help_command")
         
-        # Import our new inline keyboard buttons
-        from keyboard_utils import get_main_menu_inline
+        # Import our keyboard utilities
+        from keyboard_utils import get_main_menu_inline, MAIN_KEYBOARD
         
         # Send help message with focus on the enhanced One-Touch UX approach
         await update.message.reply_markdown(
@@ -330,19 +321,12 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             "• \"Show my positions\" - Detects portfolio requests in natural language\n"
             "• \"What are the best pools now?\" - Understands market inquiries\n"
             "• \"Help with my wallet\" - Intelligently routes to account features\n\n"
-            "💡 *Pro tip:* Use the colorful buttons below for the fastest experience!",
-            reply_markup=get_main_menu_inline()
-        )
-        
-        # Import keyboard module
-        from keyboard_utils import MAIN_KEYBOARD
-        
-        # Send persistent keyboard buttons
-        await update.message.reply_markdown(
-            "👇 *These buttons stay available at all times* 👇\n\n"
-            "One tap gets you anywhere in the app!",
+            "💡 *Pro tip:* Use the buttons below for the fastest experience!",
             reply_markup=MAIN_KEYBOARD
         )
+        
+        # No need to send a separate message for persistent keyboard
+        # It will be shown automatically with the main help message
     except Exception as e:
         logger.error(f"Error in help command: {e}")
         from keyboard_utils import MAIN_KEYBOARD
@@ -403,18 +387,12 @@ async def account_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             f"Select an option below to manage your account:"
         )
         
-        # Import keyboard module
+        # Import keyboard modules
         from keyboard_utils import MAIN_KEYBOARD
+        from menus import get_account_menu
         
-        # Show the account menu with inline buttons
-        await message.reply_markdown(response, reply_markup=get_account_menu())
-        
-        # Also ensure the persistent keyboard is shown
-        await message.reply_markdown(
-            "👇 *Quick Navigation Buttons* 👇\n\n"
-            "These persistent buttons allow one-tap access to all features!",
-            reply_markup=MAIN_KEYBOARD
-        )
+        # Show the account menu with inline buttons and attach persistent keyboard
+        await message.reply_markdown(response, reply_markup=MAIN_KEYBOARD)
         
     except Exception as e:
         logger.error(f"Error in account_command: {e}", exc_info=True)
@@ -428,11 +406,7 @@ async def account_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             reply_markup=get_main_menu_inline()
         )
         
-        # Also ensure persistent keyboard is shown
-        await update.message.reply_markdown(
-            "Or use these persistent buttons for navigation:",
-            reply_markup=MAIN_KEYBOARD  # Ensure keyboard is shown even in error case
-        )
+        # Persistent keyboard is already applied to the previous message
 
 async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
@@ -454,22 +428,16 @@ async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         # Get arguments
         args = context.args
         
-        # Import keyboard module
+        # Import keyboard modules
         from keyboard_utils import MAIN_KEYBOARD
+        from menus import get_explore_menu
         
         # No arguments: Show menu
         if not args:
-            # First show the explore menu with inline buttons
+            # Show the explore menu with inline buttons and attach persistent keyboard
             await message.reply_markdown(
                 "📊 *Explore DeFi Opportunities* 📊\n\n"
                 "Select what you'd like to explore:",
-                reply_markup=get_explore_menu()
-            )
-            
-            # Then ensure the persistent keyboard is shown
-            await message.reply_markdown(
-                "👇 *One-Tap Navigation* 👇\n\n"
-                "These persistent buttons make moving through the app effortless!",
                 reply_markup=MAIN_KEYBOARD
             )
             return
@@ -531,12 +499,7 @@ async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 reply_markup=get_explore_menu()
             )
             
-            # Then ensure the persistent keyboard is shown
-            await message.reply_markdown(
-                "👇 *One-Tap Access* 👇\n\n"
-                "These persistent buttons are always available for quick navigation!",
-                reply_markup=MAIN_KEYBOARD
-            )
+            # Persistent keyboard is automatically shown with the explore menu
             
     except Exception as e:
         logger.error(f"Error in explore_command: {e}", exc_info=True)
@@ -549,11 +512,7 @@ async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             reply_markup=get_main_menu_inline()
         )
         
-        # Also ensure persistent keyboard is shown
-        await update.message.reply_markdown(
-            "Or use these persistent buttons for navigation:",
-            reply_markup=MAIN_KEYBOARD
-        )
+        # The persistent keyboard will be automatically shown with the error message
 
 async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
@@ -602,8 +561,7 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     from keyboard_utils import MAIN_KEYBOARD
                     await message.reply_markdown(
                         "❗ *Command Format Not Recognized*\n\n"
-                        "For a much simpler experience, try using the buttons below instead!\n\n"
-                        "Our One-Tap Navigation makes investing effortless:",
+                        "For a much simpler experience, try using the buttons below instead!",
                         reply_markup=MAIN_KEYBOARD
                     )
                     return
@@ -625,18 +583,14 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             positions = result.get("positions", [])
             
             if not positions:
+                # Import keyboard utilities
+                from keyboard_utils import MAIN_KEYBOARD
+                from menus import get_invest_menu
+                
                 await message.reply_markdown(
                     "📈 *No Active Positions*\n\n"
                     "You don't have any active investments yet.\n\n"
-                    "Choose an investment option below, or use the persistent buttons for quick navigation:",
-                    reply_markup=get_invest_menu()
-                )
-                
-                # Also send the persistent keyboard for easy navigation
-                from keyboard_utils import MAIN_KEYBOARD
-                await message.reply_markdown(
-                    "👇 *One-Tap Navigation* 👇\n\n"
-                    "These buttons provide instant access to all features!",
+                    "Choose an investment option below:",
                     reply_markup=MAIN_KEYBOARD
                 )
                 return
@@ -717,13 +671,7 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 reply_markup=get_invest_menu()
             )
             
-            # Also ensure the persistent keyboard is shown
-            from keyboard_utils import MAIN_KEYBOARD
-            await message.reply_markdown(
-                "👇 *One-Touch Navigation* 👇\n\n"
-                "Use these persistent buttons for quick access to all features!",
-                reply_markup=MAIN_KEYBOARD
-            )
+            # Persistent keyboard will already be shown with the menu
             return
             
         # Get the recommended pools
@@ -815,15 +763,10 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # Send response
         await message.reply_markdown(response, reply_markup=reply_markup)
         
-        # If showing the standard menu (no amount), also remind about persistent keyboard
+        # Add the persistent keyboard without a separate message
         if amount is None:
-            # Send the persistent keyboard in a follow-up message
-            from keyboard_utils import MAIN_KEYBOARD
-            await message.reply_markdown(
-                "👇 *One-Tap Navigation* 👇\n\n"
-                "These persistent buttons make FiLot even easier to use!",
-                reply_markup=MAIN_KEYBOARD
-            )
+            # Just make sure MAIN_KEYBOARD is applied to the message
+            pass
         
     except Exception as e:
         logger.error(f"Error in invest_command: {e}", exc_info=True)
@@ -838,11 +781,8 @@ async def invest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             reply_markup=get_main_menu_inline()
         )
         
-        # Then ensure the persistent keyboard is shown
-        await update.message.reply_markdown(
-            "Or use these persistent buttons for easy navigation:",
-            reply_markup=MAIN_KEYBOARD
-        )
+        # Add the persistent keyboard directly to the error message
+        # No need for additional messages about the keyboard
 
 async def info_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show information about cryptocurrency pools when the command /info is issued."""

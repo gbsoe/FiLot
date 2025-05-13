@@ -1084,7 +1084,14 @@ def run_telegram_bot():
                                         reply_markup=reply_markup
                                     )
                                     
-                                    # No need to send additional messages about the keyboard
+                                    # Add the main keyboard buttons reminder
+                                    send_response(
+                                        chat_id,
+                                        "👇 *One-Tap Navigation* 👇\n\n"
+                                        "These persistent buttons make moving through the app effortless!",
+                                        parse_mode="Markdown",
+                                        reply_markup=MAIN_KEYBOARD
+                                    )
                                     
                                     logger.info("Successfully displayed simplified explore menu")
                                 
@@ -1125,7 +1132,14 @@ def run_telegram_bot():
                                         reply_markup=reply_markup
                                     )
                                     
-                                    # No need to send additional messages about the keyboard
+                                    # Add the main keyboard buttons reminder
+                                    send_response(
+                                        chat_id,
+                                        "👇 *One-Tap Navigation* 👇\n\n"
+                                        "These persistent buttons make moving through the app effortless!",
+                                        parse_mode="Markdown",
+                                        reply_markup=MAIN_KEYBOARD
+                                    )
                                     
                                     logger.info("Successfully displayed simplified account menu")
                                 
