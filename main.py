@@ -984,6 +984,16 @@ def run_telegram_bot():
                                     logger.info("Redirecting account_status to status handler")
                                     callback_data = "status"
                                     # Continue to the status handler below
+                                
+                                else:
+                                    # Handle unknown account action
+                                    logger.warning(f"Unknown account action: {account_action}")
+                                    from keyboard_utils import MAIN_KEYBOARD
+                                    send_response(
+                                        chat_id,
+                                        "Sorry, that account option is not available yet. Please try another option from the Account menu.",
+                                        reply_markup=MAIN_KEYBOARD
+                                    )
                             
                             # Handle explore callback menu items
                             elif callback_data.startswith("explore_"):
@@ -1085,6 +1095,16 @@ def run_telegram_bot():
                                         reply_markup=MAIN_KEYBOARD
                                     )
                                     logger.info("Sent social info via explore_social callback")
+                                
+                                else:
+                                    # Handle unknown explore action
+                                    logger.warning(f"Unknown explore action: {explore_action}")
+                                    from keyboard_utils import MAIN_KEYBOARD
+                                    send_response(
+                                        chat_id,
+                                        "Sorry, that explore option is not available yet. Please try another option from the Explore menu.",
+                                        reply_markup=MAIN_KEYBOARD
+                                    )
                             
                             # Handle simulate_period callbacks
                             elif callback_data.startswith("simulate_period_"):
@@ -1330,8 +1350,8 @@ def run_telegram_bot():
                                 )
                                 logger.info(f"User {update_obj.callback_query.from_user.id} checked system status")
                             
-                            # Handle FAQ menu callback
-                            elif callback_data == "menu_faq":
+                            # Handle FAQ menu callback 
+                            elif callback_data == "menu_faq" or (callback_data.startswith("menu_") and menu_action == "faq"):
                                 # Import keyboard for consistent UI
                                 from keyboard_utils import MAIN_KEYBOARD
                                 
@@ -1435,6 +1455,42 @@ def run_telegram_bot():
                                     
                                     logger.info("Successfully displayed simplified explore menu")
                                 
+                                
+                                elif menu_action == "positions":
+                                    # Handle positions menu item - View user's positions
+                                    logger.info(f"Triggering positions view from menu button")
+                                    
+                                    # Run the positions command handler using async and event loop
+                                    import asyncio
+                                    from bot_commands import positions_command
+                                    
+                                    loop = asyncio.new_event_loop()
+                                    asyncio.set_event_loop(loop)
+                                    
+                                    try:
+                                        # Create a simplified update object for the handler
+                                        simplified_update = Update.de_json(
+                                            {
+                                                'update_id': update_dict.get('update_id', 0),
+                                                'message': update_obj.callback_query.message.to_dict()
+                                            }, 
+                                            bot
+                                        )
+                                        simplified_context = SimpleContext()
+                                        simplified_context.user_data = {"message_handled": True}
+                                        
+                                        # Run the positions command handler
+                                        loop.run_until_complete(positions_command(simplified_update, simplified_context))
+                                        logger.info("Successfully displayed user positions")
+                                    except Exception as positions_error:
+                                        logger.error(f"Error in menu_positions handler: {positions_error}")
+                                        logger.error(traceback.format_exc())
+                                        send_response(
+                                            chat_id,
+                                            "Sorry, there was an error retrieving your positions. Please try again later."
+                                        )
+                                    finally:
+                                        loop.close()
                                 
                                 elif menu_action == "account":
                                     # Handle account menu item with direct implementation to avoid relying on database

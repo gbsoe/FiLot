@@ -1603,9 +1603,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             
         elif message_text == "🔍 Explore":
             logger.info(f"User {user.id} pressed the Explore button")
-            # Trigger the explore command
-            context.args = []
-            await explore_command(update, context)
+            
+            # Import directly to ensure consistency with main.py
+            from menus import get_explore_menu
+            
+            # Show the explore menu with options
+            await update.message.reply_markdown(
+                "📊 *Explore DeFi Opportunities* 📊\n\n"
+                "Select what you'd like to explore:",
+                reply_markup=get_explore_menu()
+            )
             return
             
         elif message_text == "👤 Account":
@@ -2100,13 +2107,89 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         elif callback_data == "menu_explore":
             # Show explore menu - Import at use to avoid circular imports
             from menus import get_explore_menu
-            await query.message.edit_reply_markup(reply_markup=get_explore_menu())
+            
+            # Updated to match main.py behavior and display full message rather than just edit buttons
+            await query.message.edit_text(
+                "📊 *Explore DeFi Opportunities* 📊\n\n"
+                "Select what you'd like to explore:",
+                reply_markup=get_explore_menu(),
+                parse_mode="Markdown"
+            )
             return
             
         elif callback_data == "menu_account":
             # Show account menu - Import at use to avoid circular imports
             from menus import get_account_menu
-            await query.message.edit_reply_markup(reply_markup=get_account_menu())
+            
+            # Updated to match main.py behavior and display full message
+            await query.message.edit_text(
+                "👤 *Your Account* 👤\n\n"
+                "Manage your personal settings and wallet connections:",
+                reply_markup=get_account_menu(),
+                parse_mode="Markdown"
+            )
+            return
+        
+        # Handle account menu options
+        elif callback_data.startswith("account_"):
+            # Extract the account action
+            account_action = callback_data.replace("account_", "")
+            
+            if account_action == "wallet":
+                # Redirect to walletconnect handler
+                logger.info("Redirecting account_wallet to walletconnect handler")
+                # Create a new context.args with empty list for the walletconnect command
+                context.args = []
+                await walletconnect_command(update, context)
+                
+            elif account_action == "profile":
+                # Show profile options
+                logger.info("Showing profile options from account_profile")
+                await query.message.reply_markdown(
+                    "👤 *Risk Profile Settings* 👤\n\n"
+                    "Select your investment risk profile:\n\n"
+                    "🔴 *High Risk*: More volatile pools with higher potential returns\n\n"
+                    "🟢 *Stable*: Lower volatility pools with more consistent returns\n\n"
+                    "Your profile determines which pools are recommended to you.",
+                    reply_markup=RISK_PROFILE_KEYBOARD
+                )
+                
+            elif account_action == "subscribe":
+                # Redirect to subscribe handler
+                logger.info("Redirecting account_subscribe to subscribe handler")
+                await subscribe_command(update, context)
+                
+            elif account_action == "unsubscribe":
+                # Redirect to unsubscribe handler
+                logger.info("Redirecting account_unsubscribe to unsubscribe handler")
+                await unsubscribe_command(update, context)
+                
+            elif account_action == "help":
+                # Show help information
+                logger.info("Showing help from account_help")
+                await query.message.reply_markdown(
+                    "❓ *Help & Support* ❓\n\n"
+                    "• Use the persistent buttons at the bottom of the chat to access the main functions\n"
+                    "• /invest - View and manage your investments\n"
+                    "• /explore - Discover new pools and DeFi opportunities\n"
+                    "• /account - Manage your wallet and settings\n\n"
+                    "For more assistance, contact our support team at support@filot.finance."
+                )
+                
+            elif account_action == "status":
+                # Redirect to status handler
+                logger.info("Redirecting account_status to status handler")
+                await status_command(update, context)
+                
+            else:
+                # Handle unknown account action
+                logger.warning(f"Unknown account action: {account_action}")
+                from keyboard_utils import MAIN_KEYBOARD
+                await query.message.reply_text(
+                    "Sorry, that account option is not available yet. Please try another option from the Account menu.",
+                    reply_markup=MAIN_KEYBOARD
+                )
+            
             return
             
         elif callback_data == "menu_main":
@@ -2298,106 +2381,118 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                 "Example: `/wallet 5YourWalletAddressHere12345`"
             )
             
-        elif callback_data == "view_pools" or callback_data == "explore_pools":
-            # Send a confirmation message that we're fetching pool information
-            loading_message = await query.message.reply_markdown(
-                "🔍 *Fetching Pool Opportunities*\n\n"
-                "Please wait while I gather the latest data on available liquidity pools..."
-            )
+        # Handle explore menu options with standardized approach
+        elif callback_data == "view_pools" or callback_data.startswith("explore_"):
+            # Extract the explore action for standardized handling
+            explore_action = ""
             
-            try:
-                # Import at function level to avoid circular imports
-                from response_data import get_pool_data as get_predefined_pool_data
+            if callback_data.startswith("explore_"):
+                explore_action = callback_data.replace("explore_", "")
+            elif callback_data == "view_pools":
+                explore_action = "pools"
                 
-                # Get predefined pool data directly as dictionaries
-                predefined_data = get_predefined_pool_data()
+            logger.info(f"Processing explore action: {explore_action}")
                 
-                # Process top APR pools from the predefined data
-                pool_list = predefined_data.get('topAPR', [])
-                
-                if not pool_list:
-                    await loading_message.reply_text(
-                        "Sorry, I couldn't retrieve pool data at the moment. Please try again later."
-                    )
-                    return
-                    
-                formatted_info = format_pool_info(pool_list)
-                # Use regular reply_text to avoid markdown formatting issues
-                await loading_message.reply_text(formatted_info)
-                logger.info(f"Sent pool info response for {callback_data} callback")
-            except Exception as e:
-                logger.error(f"Error fetching pool data via callback: {e}")
-                await loading_message.reply_text(
-                    "Sorry, an error occurred while retrieving pool data. Please try again later."
+            # Handle different explore actions
+            if explore_action == "pools":
+                # Send a confirmation message that we're fetching pool information
+                loading_message = await query.message.reply_markdown(
+                    "🔍 *Fetching Pool Opportunities*\n\n"
+                    "Please wait while I gather the latest data on available liquidity pools..."
                 )
-            
-        elif callback_data == "explore_simulate":
-            # Show simulation options
-            from menus import get_simulate_menu
-            await query.message.reply_markdown(
-                "💰 *Simulate Investment Returns* 💰\n\n"
-                "Select an amount to simulate or enter a custom amount using:\n"
-                "`/explore simulate <amount>`",
-                reply_markup=get_simulate_menu()
-            )
-            
-        elif callback_data == "explore_faq":
-            # Show FAQ information
-            await query.message.reply_markdown(
-                "❓ *Frequently Asked Questions* ❓\n\n"
-                "**What is a liquidity pool?**\n"
-                "A liquidity pool is a collection of funds locked in a smart contract, used to facilitate decentralized trading.\n\n"
-                "**How do I earn rewards?**\n"
-                "By providing your tokens to a liquidity pool, you earn a portion of the trading fees generated by the pool.\n\n"
-                "**What is APR?**\n" 
-                "Annual Percentage Rate represents your estimated yearly return from providing liquidity to a pool.\n\n"
-                "**How is my investment protected?**\n"
-                "Our system monitors market conditions and can suggest optimal entry and exit points to maximize returns."
-            )
-            
-        elif callback_data == "explore_social":
-            # Show social media information
-            keyboard = [
-                [
-                    InlineKeyboardButton("🌐 Website", url="https://filot.finance"),
-                    InlineKeyboardButton("𝕏 Twitter", url="https://twitter.com/filotfinance")
-                ],
-                [
-                    InlineKeyboardButton("💬 Telegram", url="https://t.me/filotcommunity"),
-                    InlineKeyboardButton("📝 Blog", url="https://filot.medium.com")
-                ]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await query.message.reply_markdown(
-                "🌐 *FiLot Community* 🌐\n\n"
-                "Join our growing community on these platforms:",
-                reply_markup=reply_markup
-            )
-            
-            try:
-                # Import at function level to avoid circular imports
-                from response_data import get_pool_data as get_predefined_pool_data
                 
-                # Get predefined pool data directly as dictionaries
-                predefined_data = get_predefined_pool_data()
-                
-                # Process top APR pools from the predefined data
-                pool_list = predefined_data.get('topAPR', [])
-                
-                if not pool_list:
-                    await loading_message.reply_text(
-                        "Sorry, I couldn't retrieve pool data at the moment. Please try again later."
-                    )
-                    return
+                try:
+                    # Import at function level to avoid circular imports
+                    from response_data import get_pool_data as get_predefined_pool_data
                     
-                formatted_info = format_pool_info(pool_list)
-                # Use regular reply_text to avoid markdown formatting issues
-                await loading_message.reply_text(formatted_info)
-                logger.info(f"Sent pool info response for {callback_data} callback")
-            except Exception as e:
-                logger.error(f"Error fetching pool data via callback: {e}")
-                await loading_message.reply_text(
-                    "Sorry, an error occurred while retrieving pool data. Please try again later."
+                    # Get predefined pool data directly as dictionaries
+                    predefined_data = get_predefined_pool_data()
+                    
+                    # Process top APR pools from the predefined data
+                    pool_list = predefined_data.get('topAPR', [])
+                    
+                    if not pool_list:
+                        await loading_message.reply_text(
+                            "Sorry, I couldn't retrieve pool data at the moment. Please try again later."
+                        )
+                        return
+                        
+                    formatted_info = format_pool_info(pool_list)
+                    # Use regular reply_text to avoid markdown formatting issues
+                    await loading_message.reply_text(formatted_info)
+                    logger.info(f"Sent pool info response for {callback_data} callback")
+                except Exception as e:
+                    logger.error(f"Error fetching pool data via callback: {e}")
+                    await loading_message.reply_text(
+                        "Sorry, an error occurred while retrieving pool data. Please try again later."
+                    )
+                
+            elif explore_action == "simulate":
+                # Show investment simulation options
+                # Import at function level to avoid circular imports
+                from menus import get_invest_menu
+                
+                # Updated to match main.py implementation
+                await query.message.reply_markdown(
+                    "💰 *Investment Return Simulator* 💰\n\n"
+                    "Choose an investment amount to simulate potential returns "
+                    "based on current APRs and liquidity pool data:\n\n"
+                    "_This is a simulation only and not financial advice._",
+                    reply_markup=get_invest_menu()
+                )
+                
+            elif explore_action == "faq":
+                # Show FAQ information with updated text from main.py
+                faq_text = (
+                    "❓ *Frequently Asked Questions* ❓\n\n"
+                    "*What is FiLot?*\n"
+                    "FiLot is your AI-powered crypto investment advisor. It helps you discover and "
+                    "invest in the best liquidity pools with real-time data.\n\n"
+                    "*How does pool investment work?*\n"
+                    "You provide liquidity to a pool (e.g., SOL/USDC) and earn fees from trades.\n\n"
+                    "*How do I start investing?*\n"
+                    "1. Connect your wallet using /account\n"
+                    "2. Choose an investment amount with /invest\n"
+                    "3. Select a pool and confirm your investment\n\n"
+                    "*What are the risks?*\n"
+                    "Liquidity pools can have impermanent loss if token prices change significantly.\n\n"
+                    "Our system monitors market conditions and can suggest optimal entry and exit points to maximize returns."
+                )
+                await query.message.reply_markdown(faq_text)
+                
+            elif explore_action == "social":
+                # Show social media information with updated text from main.py
+                community_text = (
+                    "🌐 *Join Our Community* 🌐\n\n"
+                    "Connect with fellow investors and get the latest updates:\n\n"
+                    "• Telegram Group: @FilotCommunity\n"
+                    "• Discord: discord.gg/filot\n"
+                    "• Twitter: @FilotFinance\n\n"
+                    "Share your experiences and learn from others!\n\n"
+                    "⚡️ For technical support, email: support@filot.finance"
+                )
+                
+                # Create social media buttons
+                keyboard = [
+                    [
+                        InlineKeyboardButton("🌐 Website", url="https://filot.finance"),
+                        InlineKeyboardButton("𝕏 Twitter", url="https://twitter.com/filotfinance")
+                    ],
+                    [
+                        InlineKeyboardButton("💬 Telegram", url="https://t.me/filotcommunity"),
+                        InlineKeyboardButton("📱 Discord", url="https://discord.gg/filot")
+                    ]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                await query.message.reply_markdown(community_text, reply_markup=reply_markup)
+                
+            else:
+                # Handle unknown explore action
+                logger.warning(f"Unknown explore action: {explore_action}")
+                from keyboard_utils import MAIN_KEYBOARD
+                await query.message.reply_text(
+                    "Sorry, that option is not available yet. Please try another option from the Explore menu.",
+                    reply_markup=MAIN_KEYBOARD
                 )
             
         elif callback_data.startswith("wallet_connect_"):
