@@ -2130,11 +2130,13 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             )
             return
         
-        # Handle account menu options
+        # Handle account menu options with standardized approach
         elif callback_data.startswith("account_"):
-            # Extract the account action
+            # Extract the account action for standardized handling
             account_action = callback_data.replace("account_", "")
+            logger.info(f"Processing account action: {account_action}")
             
+            # Handle different account actions
             if account_action == "wallet":
                 # Redirect to walletconnect handler
                 logger.info("Redirecting account_wallet to walletconnect handler")
@@ -2495,25 +2497,52 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                     reply_markup=MAIN_KEYBOARD
                 )
             
-        elif callback_data.startswith("wallet_connect_"):
-            # Extract amount from callback data
-            amount = float(callback_data.replace("wallet_connect_", ""))
+        # Handle investment-related actions with standardized approach
+        elif callback_data.startswith("invest_") or callback_data.startswith("amount_") or callback_data.startswith("wallet_connect_"):
+            # Determine the investment action type
+            invest_action = ""
             
-            await query.message.reply_markdown(
-                f"💼 *Connect Wallet to Invest ${amount:,.2f}*\n\n"
-                "To proceed with this investment, please connect your wallet.\n\n"
-                "Use /wallet to connect your wallet address, or use /walletconnect for a QR code connection."
-            )
+            if callback_data.startswith("invest_"):
+                invest_action = callback_data.replace("invest_", "")
+                logger.info(f"Processing invest action: {invest_action}")
+            elif callback_data.startswith("amount_"):
+                invest_action = "amount"
+                logger.info(f"Processing investment amount selection: {callback_data}")
+            elif callback_data.startswith("wallet_connect_"):
+                invest_action = "wallet_connect"
+                logger.info(f"Processing wallet connect for investment: {callback_data}")
             
-        # Handle amount selection buttons from the new one-command invest flow
-        elif callback_data.startswith("amount_"):
-            # Import the proper handler from investment_flow
-            from investment_flow import process_invest_amount_callback
+            # Handle different investment actions
+            if invest_action == "wallet_connect" or callback_data.startswith("wallet_connect_"):
+                # Extract amount from callback data
+                amount = float(callback_data.replace("wallet_connect_", ""))
+                
+                await query.message.reply_markdown(
+                    f"💼 *Connect Wallet to Invest ${amount:,.2f}*\n\n"
+                    "To proceed with this investment, please connect your wallet.\n\n"
+                    "Use /wallet to connect your wallet address, or use /walletconnect for a QR code connection."
+                )
+            
+            elif invest_action == "amount" or callback_data.startswith("amount_"):
+                # Import the proper handler from investment_flow
+                from investment_flow import process_invest_amount_callback
 
-            # Let the specialized handler in investment_flow.py handle this
-            await process_invest_amount_callback(update, context, callback_data)
-            
+                # Let the specialized handler in investment_flow.py handle this
+                await process_invest_amount_callback(update, context, callback_data)
+                
+            # Add other investment action handlers as needed
+            else:
+                # Handle unknown investment action
+                logger.warning(f"Unknown investment action: {invest_action}")
+                from keyboard_utils import MAIN_KEYBOARD
+                await query.message.reply_text(
+                    "Sorry, that investment option is not available yet. Please try another option.",
+                    reply_markup=MAIN_KEYBOARD
+                )
+        
         else:
+            # Fallback for unrecognized callbacks
+            logger.warning(f"Unrecognized callback data: {callback_data}")
             await query.message.reply_text(
                 "Sorry, I couldn't process that action. Please try again."
             )
