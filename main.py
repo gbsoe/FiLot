@@ -1093,8 +1093,8 @@ def run_telegram_bot():
                                         send_response(
                                             chat_id,
                                             "To simulate with a custom amount, please use the command format:\n"
-                                            "`/explore simulate <amount>`\n\n"
-                                            "For example: `/explore simulate 2500`",
+                                            "`/simulate <amount>`\n\n"
+                                            "For example: `/simulate 2500`",
                                             parse_mode="Markdown"
                                         )
                                         logger.info("Sent custom simulation instructions")
@@ -1107,7 +1107,7 @@ def run_telegram_bot():
                                         send_response(
                                             chat_id,
                                             "Invalid amount for simulation. Please select from the menu options or use:"
-                                            "\n`/explore simulate <amount>`",
+                                            "\n`/simulate <amount>`",
                                             parse_mode="Markdown"
                                         )
                                         return
@@ -1120,8 +1120,10 @@ def run_telegram_bot():
                                         parse_mode="Markdown"
                                     )
                                     
-                                    # Get top performing pool data for simulation
+                                    # We'll implement a simplified simulation response directly
+                                    # Get predefined pool data for simulation
                                     from response_data import get_pool_data as get_predefined_pool_data
+                                    from utils import format_simulation_results
                                     
                                     # Get predefined pool data directly as dictionaries
                                     predefined_data = get_predefined_pool_data()
@@ -1138,7 +1140,6 @@ def run_telegram_bot():
                                         return
                                     
                                     # Format the simulation results
-                                    from utils import format_simulation_results
                                     formatted_simulation = format_simulation_results(pool_list, amount)
                                     
                                     # Add wallet connection options
@@ -1161,7 +1162,7 @@ def run_telegram_bot():
                                         reply_markup=wallet_markup
                                     )
                                     
-                                    logger.info(f"Sent simulation response for amount ${amount:.2f}")
+                                    logger.info(f"Processed simulation button for amount ${amount:.2f}")
                                 except Exception as e:
                                     logger.error(f"Error in simulation button handler: {e}")
                                     logger.error(traceback.format_exc())

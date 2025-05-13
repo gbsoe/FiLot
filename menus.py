@@ -129,22 +129,22 @@ def get_main_menu() -> InlineKeyboardMarkup:
 def get_simulate_menu() -> InlineKeyboardMarkup:
     """
     Creates the One-Touch inline keyboard for simulation amount options with visual improvements
+    Matches the exact format seen in the user's screenshot
     """
     keyboard = [
         [
-            InlineKeyboardButton("$100 💵", callback_data="simulate_100"),
-            InlineKeyboardButton("$500 💵", callback_data="simulate_500")
+            InlineKeyboardButton("$50 💰", callback_data="simulate_50"),
+            InlineKeyboardButton("$100 💰", callback_data="simulate_100"),
+            InlineKeyboardButton("$250 💰", callback_data="simulate_250")
         ],
         [
-            InlineKeyboardButton("$1,000 💵", callback_data="simulate_1000"),
-            InlineKeyboardButton("$5,000 💵", callback_data="simulate_5000")
+            InlineKeyboardButton("$500 💰", callback_data="simulate_500"),
+            InlineKeyboardButton("$1,000 💰", callback_data="simulate_1000"),
+            InlineKeyboardButton("$5,000 💰", callback_data="simulate_5000")
         ],
         [
-            InlineKeyboardButton("$10,000 💵", callback_data="simulate_10000"),
-            InlineKeyboardButton("✏️ Custom", callback_data="simulate_custom")
-        ],
-        [
-            InlineKeyboardButton("⬅️ Back to Explore", callback_data="menu_explore")
+            InlineKeyboardButton("👁️ View My Positions", callback_data="menu_positions"),
+            InlineKeyboardButton("✏️ Custom Amount", callback_data="simulate_custom")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
