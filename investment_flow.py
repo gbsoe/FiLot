@@ -230,11 +230,35 @@ async def process_risk_profile(update: Update, context: ContextTypes.DEFAULT_TYP
         from models import db
         db.session.commit()
     
-    # Send confirmation with a more engaging message emphasizing one-command UX
+    # Prepare detailed profile message - matching the callback handler for consistency
+    if profile == "high-risk":
+        profile_message = (
+            f"🔴 *High-Risk Profile Selected*\n\n"
+            f"Your investment recommendations will now focus on:\n"
+            f"• Higher APR opportunities\n"
+            f"• Newer pools with growth potential\n"
+            f"• More volatile but potentially rewarding options\n\n"
+            f"_Note: Higher returns come with increased risk_"
+        )
+    else:  # stable
+        profile_message = (
+            f"🟢 *Stable Profile Selected*\n\n"
+            f"Your investment recommendations will now focus on:\n"
+            f"• Established, reliable pools\n"
+            f"• Lower volatility options\n"
+            f"• More consistent but potentially lower APR\n\n"
+            f"_Note: Stability typically means more moderate returns_"
+        )
+        
+    # Send the detailed profile message
     await message.reply_markdown(
-        f"✅ *Risk Profile Selected: {profile.title()}* {profile_emoji}\n\n"
-        f"With our One-Touch interface, I'll now find the best pools for your {profile} investment style.\n\n"
-        f"💡 *Calculating optimal investment options...*"
+        profile_message,
+        reply_markup=MAIN_KEYBOARD
+    )
+    
+    # Send a follow-up message about calculating options
+    await message.reply_markdown(
+        f"💡 *Calculating optimal investment options for your {profile} profile...*"
     )
     
     # Get top pool recommendations for this profile
@@ -308,7 +332,7 @@ async def get_top_pools_for_profile(profile: str, amount: float) -> List[Dict[st
         # Return empty list on error
         return []
 
-def format_pool_recommendations(pools: List[Dict[str, Any]], profile: str, amount: float) -> str:
+def format_pool_recommendations(pools: List[Dict[str, Any]], profile: str, amount: float = 100) -> str:
     """
     Format pool recommendations for display
     
