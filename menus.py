@@ -38,8 +38,8 @@ def get_explore_menu() -> InlineKeyboardMarkup:
             InlineKeyboardButton("📊 Simulate Returns", callback_data="explore_simulate")
         ],
         [
-            InlineKeyboardButton("❓ FAQ & Help", callback_data="show_faq"),
-            InlineKeyboardButton("🌐 Community", callback_data="show_community")
+            InlineKeyboardButton("❓ FAQ & Help", url="https://t.me/your_bot_username?start=faq"),
+            InlineKeyboardButton("🌐 Community", url="https://t.me/your_bot_username?start=community")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)

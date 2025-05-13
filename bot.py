@@ -430,15 +430,36 @@ async def explore_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         from keyboard_utils import MAIN_KEYBOARD
         from menus import get_explore_menu
         
-        # No arguments: Show menu
+        # No arguments: Show menu with direct command instructions
         if not args:
             # Show the explore menu with inline buttons from get_explore_menu()
             # and attach persistent keyboard via reply_markup
             explore_menu = get_explore_menu()
+            
+            # Also include direct commands for FAQ and Community since those buttons are problematic
             await message.reply_markdown(
                 "📊 *Explore DeFi Opportunities* 📊\n\n"
-                "Select what you'd like to explore:",
+                "Select what you'd like to explore:\n\n"
+                "• For *FAQ & Help*: Type `/explore faq`\n"
+                "• For *Community*: Type `/explore social`\n"
+                "• For *Top Pools*: Use the Top Pools button below\n"
+                "• For *Simulations*: Use the Simulate Returns button below",
                 reply_markup=explore_menu
+            )
+            
+            # Send a follow-up message with direct command buttons for better UX
+            keyboard = [
+                [
+                    InlineKeyboardButton("❓ See FAQ & Help", callback_data="direct_command_faq"),
+                    InlineKeyboardButton("🌐 Join Community", callback_data="direct_command_social")
+                ]
+            ]
+            inline_keyboard = InlineKeyboardMarkup(keyboard)
+            
+            await message.reply_markdown(
+                "*Quick Access Commands:*\n\n"
+                "Use these reliable buttons for direct access:",
+                reply_markup=inline_keyboard
             )
             
             # Persistent keyboard will be shown automatically by main.py
@@ -2117,69 +2138,27 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             )
             return
             
-        # Explicitly handle the new callback patterns for the FAQ and Community buttons
-        elif callback_data == "show_faq":
-            logger.info(f"Handling show_faq callback button from user {user.id}")
+        # NEW DIRECT COMMAND APPROACH - Explicitly handle the specialized direct command buttons
+        elif callback_data == "direct_command_faq":
+            logger.info(f"Handling DIRECT FAQ command button from user {user.id}")
             
-            # Show FAQ information with back button
-            faq_text = (
-                "❓ *Frequently Asked Questions* ❓\n\n"
-                "*What is FiLot?*\n"
-                "FiLot is your AI-powered crypto investment advisor. It helps you discover and "
-                "invest in the best liquidity pools with real-time data.\n\n"
-                "*How does pool investment work?*\n"
-                "You provide liquidity to a pool (e.g., SOL/USDC) and earn fees from trades.\n\n"
-                "*How do I start investing?*\n"
-                "1. Connect your wallet using /account\n"
-                "2. Choose an investment amount with /invest\n"
-                "3. Select a pool and confirm your investment\n\n"
-                "*What are the risks?*\n"
-                "Liquidity pools can have impermanent loss if token prices change significantly.\n\n"
-                "Our system monitors market conditions and can suggest optimal entry and exit points to maximize returns."
-            )
+            # Create a simplified context for running the faq_command
+            simplified_context = ContextTypes.DEFAULT_TYPE()
+            simplified_context.args = []
             
-            # Create back button keyboard
-            keyboard = [
-                [
-                    InlineKeyboardButton("⬅️ Back to Explore Menu", callback_data="menu_explore")
-                ]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            await query.message.reply_markdown(faq_text, reply_markup=reply_markup)
+            # Directly run the faq_command with the current update
+            await faq_command(update, simplified_context)
             return
             
-        elif callback_data == "show_community":
-            logger.info(f"Handling show_community callback button from user {user.id}")
+        elif callback_data == "direct_command_social":
+            logger.info(f"Handling DIRECT COMMUNITY command button from user {user.id}")
             
-            # Show social media information
-            community_text = (
-                "🌐 *Join Our Community* 🌐\n\n"
-                "Connect with fellow investors and get the latest updates:\n\n"
-                "• Telegram Group: @FilotCommunity\n"
-                "• Discord: discord.gg/filot\n"
-                "• Twitter: @FilotFinance\n\n"
-                "Share your experiences and learn from others!\n\n"
-                "⚡️ For technical support, email: support@filot.finance"
-            )
+            # Create a simplified context for running the social_command
+            simplified_context = ContextTypes.DEFAULT_TYPE()
+            simplified_context.args = []
             
-            # Create social media buttons with back button
-            keyboard = [
-                [
-                    InlineKeyboardButton("🌐 Website", url="https://filot.finance"),
-                    InlineKeyboardButton("𝕏 Twitter", url="https://twitter.com/filotfinance")
-                ],
-                [
-                    InlineKeyboardButton("💬 Telegram", url="https://t.me/filotcommunity"),
-                    InlineKeyboardButton("📱 Discord", url="https://discord.gg/filot")
-                ],
-                [
-                    InlineKeyboardButton("⬅️ Back to Explore Menu", callback_data="menu_explore")
-                ]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            await query.message.reply_markdown(community_text, reply_markup=reply_markup)
+            # Directly run the social_command with the current update  
+            await social_command(update, simplified_context)
             return
             
         elif callback_data == "menu_account":
@@ -2650,6 +2629,14 @@ def create_application():
     application.add_handler(CommandHandler("profile", profile_command))
     application.add_handler(CommandHandler("faq", faq_command))
     application.add_handler(CommandHandler("social", social_command))
+    
+    # Register our dedicated command button handlers from the new module as a fallback
+    try:
+        from command_buttons import register_handlers
+        register_handlers(application)
+        logger.info("Registered dedicated command button handlers for FAQ and Community")
+    except Exception as e:
+        logger.error(f"Failed to register command button handlers: {e}")
     
     # Register agentic command handlers
     application.add_handler(CommandHandler("recommend", recommend_command))

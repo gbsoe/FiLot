@@ -1058,9 +1058,8 @@ def run_telegram_bot():
                                     )
                                     logger.info("Sent simulate menu via explore_simulate callback")
                                 
-                                # These handlers for explore_faq and explore_social have been removed
-                                # because they conflict with the direct handlers below.
-                                # The direct handlers should now catch all explore_faq and explore_social callbacks.
+                                # New approach: Direct handlers as part of main.py
+                                # Note: The faq_handler.py module is no longer used
                                 
                                 else:
                                     # Handle unknown explore action
