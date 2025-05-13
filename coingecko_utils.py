@@ -17,6 +17,20 @@ logger = logging.getLogger(__name__)
 # CoinGecko API Base URL
 COINGECKO_API_BASE = "https://api.coingecko.com/api/v3"
 
+# API accessibility check
+def is_api_accessible() -> bool:
+    """Check if the CoinGecko API is accessible.
+    
+    Returns:
+        bool: True if the API is accessible, False otherwise
+    """
+    try:
+        # Use the ping endpoint which is lightweight
+        response = requests.get(f"{COINGECKO_API_BASE}/ping", timeout=5)
+        return response.status_code == 200
+    except Exception:
+        return False
+
 # Rate limiting parameters
 MIN_REQUEST_INTERVAL = 6.0  # At least 6 seconds between requests (10 per minute max for free tier)
 last_request_time = 0

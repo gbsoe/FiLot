@@ -17,6 +17,7 @@ import json
 import requests
 import sqlite3
 from collections import deque
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Update DATABASE_URL in os.environ to use SQLite
@@ -183,7 +184,10 @@ def run_telegram_bot():
 
         # Create a bot instance directly
         bot = Bot(token=bot_token)
-        logger.info("Created Telegram bot instance")
+        # Set the global bot instance
+        import globals
+        globals.set_bot(bot)
+        logger.info("Created Telegram bot instance and set global reference")
         
         # Send a debug message to verify bot functionality
         try:
@@ -796,7 +800,8 @@ def run_telegram_bot():
                                     
                                     try:
                                         # Get the bot from the global application 
-                                        bot = Application.get_instance().bot
+                                        # Access the bot instance directly
+                                        from globals import bot
                                         
                                         # Create a proper Update object
                                         proper_update = Update.de_json(update_dict, bot)
@@ -1081,26 +1086,118 @@ def run_telegram_bot():
                                 wc_thread.start()
                                 logger.info(f"Started WalletConnect sequence from callback for user {user_id}")
 
-                            # Handle view_pools callback
-                            elif callback_data == "view_pools":
-                                # Get predefined pool data
-                                from response_data import get_pool_data as get_predefined_pool_data
-
-                                # Process top APR pools from the predefined data
-                                predefined_data = get_predefined_pool_data()
-                                pool_list = predefined_data.get('topAPR', [])
-
-                                if not pool_list:
+                            # Handle explore_pools callback (from Top Pools button)
+                            elif callback_data == "explore_pools" or callback_data == "view_pools":
+                                # Send a loading message first
+                                loading_message = send_response(
+                                    chat_id,
+                                    "📊 Fetching Pool Opportunities... Please wait..."
+                                )
+                                
+                                try:
+                                    # Get predefined pool data with enhanced error handling
+                                    from response_data import get_pool_data as get_predefined_pool_data
+                                    
+                                    # Process pools from the predefined data
+                                    predefined_data = get_predefined_pool_data()
+                                    pool_list = predefined_data.get('topAPR', [])
+                                    stable_pools = predefined_data.get('topStable', [])
+                                    
+                                    logger.info(f"Retrieved {len(pool_list)} top APR pools and {len(stable_pools)} stable pools")
+    
+                                    if not pool_list:
+                                        send_response(
+                                            chat_id,
+                                            "Sorry, I couldn't retrieve pool data at the moment. Please try again later."
+                                        )
+                                    else:
+                                        # Use our new robust formatter
+                                        from pool_formatter import format_pool_data
+                                        formatted_info = format_pool_data(pool_list, stable_pools)
+                                        
+                                        # Try to edit the loading message
+                                        try:
+                                            bot.edit_message_text(
+                                                chat_id=chat_id,
+                                                message_id=loading_message.message_id,
+                                                text=formatted_info,
+                                                parse_mode="Markdown"
+                                            )
+                                        except Exception as edit_error:
+                                            # If editing fails, send a new message
+                                            logger.error(f"Error editing message: {edit_error}")
+                                            send_response(
+                                                chat_id,
+                                                formatted_info,
+                                                parse_mode="Markdown"
+                                            )
+                                        
+                                        logger.info("Sent pool opportunities response from button callback")
+                                except Exception as e:
+                                    logger.error(f"Error processing pools: {e}")
                                     send_response(
                                         chat_id,
-                                        "Sorry, I couldn't retrieve pool data at the moment. Please try again later."
+                                        "Sorry, there was an error retrieving pool data. Please try again later."
                                     )
-                                else:
-                                    # Import at function level to avoid circular imports
-                                    from utils import format_pool_info
-                                    formatted_info = format_pool_info(pool_list)
-                                    send_response(chat_id, formatted_info)
-                                    logger.info("Sent pool opportunities response from button callback")
+                                    
+                            # Handle explore_simulate callback (Simulate Returns button)
+                            elif callback_data == "explore_simulate":
+                                # Import at function level to avoid circular imports
+                                from menus import get_invest_menu
+                                
+                                send_response(
+                                    chat_id,
+                                    "💰 *Investment Return Simulator* 💰\n\n"
+                                    "Choose an investment amount to simulate potential returns "
+                                    "based on current APRs and liquidity pool data:\n\n"
+                                    "_This is a simulation only and not financial advice._",
+                                    parse_mode="Markdown",
+                                    reply_markup=get_invest_menu()
+                                )
+                                logger.info("Sent investment simulator menu")
+                                
+                            # Handle explore_faq callback (FAQ & Help button)
+                            elif callback_data == "explore_faq":
+                                faq_text = (
+                                    "❓ *Frequently Asked Questions* ❓\n\n"
+                                    "*What is FiLot?*\n"
+                                    "FiLot is your AI-powered crypto investment advisor. It helps you discover and "
+                                    "invest in the best liquidity pools with real-time data.\n\n"
+                                    "*How does pool investment work?*\n"
+                                    "You provide liquidity to a pool (e.g., SOL/USDC) and earn fees from trades.\n\n"
+                                    "*How do I start investing?*\n"
+                                    "1. Connect your wallet using /account\n"
+                                    "2. Choose an investment amount with /invest\n"
+                                    "3. Select a pool to invest in\n\n"
+                                    "*What are the risks?*\n"
+                                    "Crypto investments include risks like impermanent loss and market volatility.\n\n"
+                                    "*Need more help?*\n"
+                                    "Visit our website or join our community for support."
+                                )
+                                send_response(
+                                    chat_id,
+                                    faq_text,
+                                    parse_mode="Markdown"
+                                )
+                                logger.info("Sent FAQ response")
+                                
+                            # Handle explore_social callback (Community button)
+                            elif callback_data == "explore_social":
+                                community_text = (
+                                    "🌐 *Join Our Community* 🌐\n\n"
+                                    "Connect with fellow investors and get the latest updates:\n\n"
+                                    "• Telegram Group: @FilotCommunity\n"
+                                    "• Discord: discord.gg/filot\n"
+                                    "• Twitter: @FilotFinance\n\n"
+                                    "Share your experiences and learn from others!\n\n"
+                                    "⚡️ For technical support, email: support@filot.finance"
+                                )
+                                send_response(
+                                    chat_id,
+                                    community_text,
+                                    parse_mode="Markdown"
+                                )
+                                logger.info("Sent community links")
 
                             # Handle enter_address callback
                             elif callback_data == "enter_address":
@@ -1144,6 +1241,83 @@ def run_telegram_bot():
                                 )
                                 logger.info(f"User {update_obj.callback_query.from_user.id} unsubscribed from daily updates")
                                 
+                            # Handle profile selection callbacks
+                            elif callback_data.startswith("profile_"):
+                                profile_type = callback_data.replace("profile_", "")
+                                
+                                # Import keyboard for consistent UI
+                                from keyboard_utils import MAIN_KEYBOARD
+                                
+                                if profile_type == "high-risk":
+                                    profile_message = (
+                                        "🔴 *High-Risk Profile Selected*\n\n"
+                                        "Your investment recommendations will now focus on:\n"
+                                        "• Higher APR opportunities\n"
+                                        "• Newer pools with growth potential\n"
+                                        "• More volatile but potentially rewarding options\n\n"
+                                        "_Note: Higher returns come with increased risk_"
+                                    )
+                                elif profile_type == "stable":
+                                    profile_message = (
+                                        "🟢 *Stable Profile Selected*\n\n"
+                                        "Your investment recommendations will now focus on:\n"
+                                        "• Established, reliable pools\n"
+                                        "• Lower volatility options\n"
+                                        "• More consistent but potentially lower APR\n\n"
+                                        "_Note: Stability typically means more moderate returns_"
+                                    )
+                                else:
+                                    profile_message = "Invalid profile type selected."
+                                
+                                send_response(
+                                    chat_id,
+                                    profile_message,
+                                    parse_mode="Markdown",
+                                    reply_markup=MAIN_KEYBOARD
+                                )
+                                logger.info(f"User {update_obj.callback_query.from_user.id} selected {profile_type} profile")
+                            
+                            # Handle status callback    
+                            elif callback_data == "status":
+                                # Import keyboard for consistent UI
+                                from keyboard_utils import MAIN_KEYBOARD
+                                
+                                # Get real system status data if possible
+                                try:
+                                    from coingecko_utils import is_api_accessible
+                                    from raydium_client import get_client
+                                    
+                                    # Check various services
+                                    coingecko_status = "✅ Connected" if is_api_accessible() else "❌ Disconnected"
+                                    
+                                    # Try to get a Raydium client and check connection
+                                    raydium_client = get_client()
+                                    raydium_status = "✅ Connected" if raydium_client else "❌ Disconnected"
+                                    
+                                except Exception:
+                                    coingecko_status = "⚠️ Status Unknown"
+                                    raydium_status = "⚠️ Status Unknown"
+                                
+                                status_message = (
+                                    "📊 *System Status* 📊\n\n"
+                                    "✅ Bot: Operational\n"
+                                    f"CoinGecko: {coingecko_status}\n"
+                                    f"Raydium API: {raydium_status}\n\n"
+                                    f"Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                                    "If you're experiencing issues, please try:\n"
+                                    "1. Restarting the conversation with /start\n"
+                                    "2. Checking your internet connection\n"
+                                    "3. Contacting support if problems persist"
+                                )
+                                
+                                send_response(
+                                    chat_id,
+                                    status_message,
+                                    parse_mode="Markdown",
+                                    reply_markup=MAIN_KEYBOARD
+                                )
+                                logger.info(f"User {update_obj.callback_query.from_user.id} checked system status")
+                            
                             # Handle FAQ menu callback
                             elif callback_data == "menu_faq":
                                 # Import keyboard for consistent UI
@@ -1186,7 +1360,8 @@ def run_telegram_bot():
                                 from telegram.ext import Application
                                 
                                 # Get the bot from the global application
-                                bot = Application.get_instance().bot  
+                                # Access the bot instance directly
+                                from globals import bot  
                                 
                                 menu_action = callback_data.replace("menu_", "")
                                 

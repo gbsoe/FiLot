@@ -460,12 +460,8 @@ async def check_walletconnect_session(session_id: str) -> Dict[str, Any]:
             except Exception as db_error:
                 if cursor:
                     cursor.close()
-                # SQLite connection doesn't have a 'closed' attribute
-                if conn:
-                    try:
-                        conn.close()
-                    except Exception as close_error:
-                        logger.error(f"Error closing connection: {close_error}")
+                if conn and conn.closed == 0:
+                    conn.close()
                 raise db_error
             
     except Exception as e:
@@ -544,12 +540,8 @@ async def kill_walletconnect_session(session_id: str) -> Dict[str, Any]:
                 
             except Exception as db_error:
                 logger.error(f"Database error while killing session: {db_error}", exc_info=True)
-                # SQLite connection doesn't have a 'closed' attribute
-                if conn:
-                    try:
-                        conn.close()
-                    except Exception as close_error:
-                        logger.error(f"Error closing connection: {close_error}")
+                if conn and conn.closed == 0:
+                    conn.close()
                 return {
                     "success": True,
                     "message": "Session considered terminated (database error)",
@@ -639,12 +631,8 @@ async def get_user_walletconnect_sessions(telegram_user_id: int) -> Dict[str, An
                 
             except Exception as db_error:
                 logger.error(f"Database error while getting user sessions: {db_error}", exc_info=True)
-                # SQLite connection doesn't have a 'closed' attribute
-                if conn:
-                    try:
-                        conn.close()
-                    except Exception as close_error:
-                        logger.error(f"Error closing connection: {close_error}")
+                if conn and conn.closed == 0:
+                    conn.close()
                 return {
                     "success": True,
                     "telegram_user_id": telegram_user_id,
