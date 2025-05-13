@@ -1058,43 +1058,9 @@ def run_telegram_bot():
                                     )
                                     logger.info("Sent simulate menu via explore_simulate callback")
                                 
-                                elif explore_action == "faq":
-                                    # Show FAQ information
-                                    from keyboard_utils import MAIN_KEYBOARD
-                                    send_response(
-                                        chat_id,
-                                        "❓ *Frequently Asked Questions* ❓\n\n"
-                                        "**What is a liquidity pool?**\n"
-                                        "A liquidity pool is a collection of funds locked in a smart contract, used to facilitate decentralized trading.\n\n"
-                                        "**How do I earn rewards?**\n"
-                                        "You earn a portion of the trading fees when people trade using the pool you've invested in.\n\n"
-                                        "**What are impermanent loss risks?**\n"
-                                        "If token prices in your pool change significantly, you might earn less than if you'd just held the tokens.\n\n"
-                                        "**How do I withdraw my funds?**\n"
-                                        "Use the 'View My Positions' option in the Invest menu to see and manage your investments.\n\n"
-                                        "**What's APR?**\n"
-                                        "Annual Percentage Rate - the yearly return you can expect based on current trading activity.",
-                                        parse_mode="Markdown",
-                                        reply_markup=MAIN_KEYBOARD
-                                    )
-                                    logger.info("Sent FAQ info via explore_faq callback")
-                                
-                                elif explore_action == "social":
-                                    # Show community/social information
-                                    from keyboard_utils import MAIN_KEYBOARD
-                                    send_response(
-                                        chat_id,
-                                        "🌐 *Join Our Community* 🌐\n\n"
-                                        "Stay updated and connect with other DeFi enthusiasts:\n\n"
-                                        "• Telegram Group: [t.me/FilotCommunity](https://t.me/FilotCommunity)\n"
-                                        "• Twitter: [@FilotFinance](https://twitter.com/FilotFinance)\n"
-                                        "• Discord: [discord.gg/filot](https://discord.gg/filot)\n"
-                                        "• Website: [filot.finance](https://filot.finance)\n\n"
-                                        "Got questions? Ask directly in our community channels!",
-                                        parse_mode="Markdown",
-                                        reply_markup=MAIN_KEYBOARD
-                                    )
-                                    logger.info("Sent social info via explore_social callback")
+                                # These handlers for explore_faq and explore_social have been removed
+                                # because they conflict with the direct handlers below.
+                                # The direct handlers should now catch all explore_faq and explore_social callbacks.
                                 
                                 else:
                                     # Handle unknown explore action
