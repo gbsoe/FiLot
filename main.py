@@ -748,7 +748,8 @@ def run_telegram_bot():
                     navigational_callbacks = ["explore_pools", "explore_simulate", "back_to_explore", 
                                              "menu_explore", "menu_invest", "menu_account", 
                                              "simulate_50", "simulate_100", "simulate_250", 
-                                             "simulate_500", "simulate_1000", "simulate_5000"]
+                                             "simulate_500", "simulate_1000", "simulate_5000",
+                                             "walletconnect", "profile_high-risk", "profile_stable"]
                     
                     if callback_data in navigational_callbacks:
                         # These buttons should always work, don't skip based on content
