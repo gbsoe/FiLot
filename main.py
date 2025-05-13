@@ -742,8 +742,8 @@ def run_telegram_bot():
                     # Mark both IDs as processed
                     is_message_processed(chat_id, query_track_id)
                     is_message_processed(chat_id, data_track_id)
-
-                    logger.info(f"Processing callback data: {callback_data}")
+                    
+                    logger.info(f"Processing callback data: {callback_data} from chat_id: {chat_id}")
 
                     # Immediate acknowledgment to stop the loading indicator
                     try:
@@ -1189,6 +1189,7 @@ def run_telegram_bot():
                                 
                             # Handle explore_faq callback (FAQ & Help button)
                             elif callback_data == "explore_faq":
+                                logger.info("Handling FAQ button click - callback_data: explore_faq")
                                 faq_text = (
                                     "❓ *Frequently Asked Questions* ❓\n\n"
                                     "*What is FiLot?*\n"
@@ -1205,15 +1206,26 @@ def run_telegram_bot():
                                     "*Need more help?*\n"
                                     "Visit our website or join our community for support."
                                 )
-                                send_response(
+                                
+                                # Add a back button to help user navigate
+                                back_keyboard = {
+                                    "inline_keyboard": [
+                                        [{"text": "⬅️ Back to Explore Menu", "callback_data": "menu_explore"}]
+                                    ]
+                                }
+                                
+                                # Send response with additional logging
+                                response = send_response(
                                     chat_id,
                                     faq_text,
-                                    parse_mode="Markdown"
+                                    parse_mode="Markdown",
+                                    reply_markup=back_keyboard
                                 )
-                                logger.info("Sent FAQ response via direct handler")
+                                logger.info(f"Sent FAQ response via direct handler: {response}")
                                 
                             # Handle explore_social callback (Community button)
                             elif callback_data == "explore_social":
+                                logger.info("Handling Social/Community button click - callback_data: explore_social")
                                 community_text = (
                                     "🌐 *Join Our Community* 🌐\n\n"
                                     "Connect with fellow investors and get the latest updates:\n\n"
@@ -1234,17 +1246,21 @@ def run_telegram_bot():
                                         [
                                             {"text": "💬 Telegram", "url": "https://t.me/filotcommunity"},
                                             {"text": "📱 Discord", "url": "https://discord.gg/filot"}
+                                        ],
+                                        [
+                                            {"text": "⬅️ Back to Explore Menu", "callback_data": "menu_explore"}
                                         ]
                                     ]
                                 }
                                 
-                                send_response(
+                                # Send response with additional logging
+                                response = send_response(
                                     chat_id,
                                     community_text,
                                     parse_mode="Markdown",
                                     reply_markup=social_keyboard
                                 )
-                                logger.info("Sent community links via direct handler")
+                                logger.info(f"Sent community links via direct handler: {response}")
                             
                             # Handle enter_address callback
                             elif callback_data == "enter_address":
