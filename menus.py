@@ -49,16 +49,19 @@ def get_account_menu() -> InlineKeyboardMarkup:
     """
     keyboard = [
         [
-            InlineKeyboardButton("💼 Connect Wallet", callback_data="account_wallet"),
-            InlineKeyboardButton("👤 Profile Settings", callback_data="account_profile")
+            InlineKeyboardButton("💼 Connect Wallet", callback_data="walletconnect")
         ],
         [
-            InlineKeyboardButton("🔔 Subscribe", callback_data="account_subscribe"),
-            InlineKeyboardButton("🔕 Unsubscribe", callback_data="account_unsubscribe")
+            InlineKeyboardButton("🔴 High-Risk Profile", callback_data="profile_high-risk"),
+            InlineKeyboardButton("🟢 Stable Profile", callback_data="profile_stable")
         ],
         [
-            InlineKeyboardButton("❓ Help", callback_data="account_help"),
-            InlineKeyboardButton("📊 Status", callback_data="account_status")
+            InlineKeyboardButton("🔔 Subscribe", callback_data="subscribe"),
+            InlineKeyboardButton("🔕 Unsubscribe", callback_data="unsubscribe")
+        ],
+        [
+            InlineKeyboardButton("❓ Help", callback_data="menu_faq"),
+            InlineKeyboardButton("📊 Status", callback_data="status")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)

@@ -874,6 +874,67 @@ def run_telegram_bot():
                                         "Sorry, there was an error processing your risk profile selection. Please try again using the Invest button."
                                     )
                             
+                            # Handle account callback menu items
+                            elif callback_data.startswith("account_"):
+                                # Extract the account action
+                                account_action = callback_data.replace("account_", "")
+                                
+                                if account_action == "wallet":
+                                    # Redirect to walletconnect handler
+                                    logger.info("Redirecting account_wallet to walletconnect handler")
+                                    callback_data = "walletconnect"
+                                    # Continue to the walletconnect handler below
+                                
+                                elif account_action == "profile":
+                                    # Show profile options
+                                    logger.info("Showing profile options from account_profile")
+                                    send_response(
+                                        chat_id,
+                                        "👤 *Risk Profile Settings* 👤\n\n"
+                                        "Select your investment risk profile:\n\n"
+                                        "🔴 *High Risk*: More volatile pools with higher potential returns\n\n"
+                                        "🟢 *Stable*: Lower risk pools with more consistent returns",
+                                        parse_mode="Markdown",
+                                        reply_markup={"inline_keyboard": [
+                                            [{"text": "🔴 High-Risk Profile", "callback_data": "profile_high-risk"}],
+                                            [{"text": "🟢 Stable Profile", "callback_data": "profile_stable"}]
+                                        ]}
+                                    )
+                                    return
+                                    
+                                elif account_action == "subscribe":
+                                    # Redirect to subscribe handler
+                                    logger.info("Redirecting account_subscribe to subscribe handler")
+                                    callback_data = "subscribe"
+                                    # Continue to the subscribe handler below
+                                    
+                                elif account_action == "unsubscribe":
+                                    # Redirect to unsubscribe handler
+                                    logger.info("Redirecting account_unsubscribe to unsubscribe handler")
+                                    callback_data = "unsubscribe"
+                                    # Continue to the unsubscribe handler below
+                                    
+                                elif account_action == "help":
+                                    # Show help information
+                                    logger.info("Showing help from account_help")
+                                    send_response(
+                                        chat_id,
+                                        "❓ *Help & Support* ❓\n\n"
+                                        "• Use the persistent buttons at the bottom of the chat to access the main functions\n"
+                                        "• /invest - View and manage your investments\n"
+                                        "• /explore - Browse available pools and simulate returns\n"
+                                        "• /account - Manage your wallet and preferences\n\n"
+                                        "Need more help? Contact our support team at support@filot.finance",
+                                        parse_mode="Markdown"
+                                    )
+                                    return
+                                    
+                                elif account_action == "status":
+                                    # Redirect to status handler
+                                    logger.info("Redirecting account_status to status handler")
+                                    callback_data = "status"
+                                    # Continue to the status handler below
+                            
                             # Handle explore callback menu items
                             elif callback_data.startswith("explore_"):
                                 # Extract the explore action
@@ -1192,34 +1253,18 @@ def run_telegram_bot():
                                     # Handle account menu item with direct implementation to avoid relying on database
                                     logger.info(f"Triggering simplified account flow from menu button")
                                     
-                                    # Import keyboard module for the response
-                                    from keyboard_utils import MAIN_KEYBOARD
-                                    
-                                    # Create inline keyboard with account options
-                                    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-                                    keyboard = [
-                                        [
-                                            InlineKeyboardButton("💼 Connect Wallet", callback_data="walletconnect")
-                                        ],
-                                        [
-                                            InlineKeyboardButton("🔴 High-Risk Profile", callback_data="profile_high-risk"),
-                                            InlineKeyboardButton("🟢 Stable Profile", callback_data="profile_stable")
-                                        ],
-                                        [
-                                            InlineKeyboardButton("📡 Subscribe", callback_data="subscribe"),
-                                            InlineKeyboardButton("❗ Unsubscribe", callback_data="unsubscribe")
-                                        ]
-                                    ]
-                                    reply_markup = InlineKeyboardMarkup(keyboard)
+                                    # Import account menu from menus.py for consistency
+                                    from menus import get_account_menu
+                                    reply_markup = get_account_menu()
                                     
                                     # Send account menu directly
                                     send_response(
                                         chat_id,
-                                        "👤 *Account Management* 👤\n\n"
-                                        "• *Wallet:* Not Connected\n"
-                                        "• *Risk Profile:* Not Set\n"
-                                        "• *Subscription:* Not Subscribed\n\n"
-                                        "Please select an option below:",
+                                        "👤 *Your Account* 👤\n\n"
+                                        "Wallet: ❌ Not Connected\n"
+                                        "Risk Profile: Moderate\n"
+                                        "Daily Updates: ❌ Not Subscribed\n\n"
+                                        "Select an option below to manage your account:",
                                         parse_mode="Markdown",
                                         reply_markup=reply_markup
                                     )
