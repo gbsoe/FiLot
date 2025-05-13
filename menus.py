@@ -31,19 +31,14 @@ def get_explore_menu() -> InlineKeyboardMarkup:
     """
     Creates the One-Touch inline keyboard for explore command options with improved visuals
     
-    Note: The FAQ and Community buttons use direct_command callbacks which are handled
-    directly in main.py rather than going through the bot command handlers. This prevents
-    conflicts between multiple bot instances and ensures consistent responses.
+    Note: Removed FAQ and Community buttons as they were causing issues.
+    Only keeping the top row of buttons that are working properly.
     """
     # Using more specific button types to ensure proper callback handling
     keyboard = [
         [
             InlineKeyboardButton("🏆 Top Pools", callback_data="explore_pools"),
             InlineKeyboardButton("📊 Simulate Returns", callback_data="explore_simulate")
-        ],
-        [
-            InlineKeyboardButton("❓ FAQ & Help", callback_data="direct_command_faq"),
-            InlineKeyboardButton("🌐 Community", callback_data="direct_command_social")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
