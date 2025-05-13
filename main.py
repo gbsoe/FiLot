@@ -301,8 +301,19 @@ def run_telegram_bot():
                         # If no custom reply markup is provided, use the MAIN_KEYBOARD
                         # for error messages or regular text responses
                         if reply_markup:
-                            # Direct use of the dictionary
-                            params["reply_markup"] = json.dumps(reply_markup)
+                            # Handle different types of reply_markup objects
+                            if hasattr(reply_markup, 'to_dict'):
+                                # This is a telegram.ReplyMarkup object (like InlineKeyboardMarkup)
+                                params["reply_markup"] = json.dumps(reply_markup.to_dict())
+                            elif isinstance(reply_markup, dict):
+                                # Already a dictionary
+                                params["reply_markup"] = json.dumps(reply_markup)
+                            else:
+                                # Try our best to convert it
+                                try:
+                                    params["reply_markup"] = json.dumps(reply_markup)
+                                except Exception as markup_error:
+                                    logger.error(f"Failed to serialize reply_markup: {markup_error}")
                         else:
                             # Import here to avoid circular imports
                             try:
