@@ -837,14 +837,59 @@ def run_telegram_bot():
                                     # Get the profile from the callback data
                                     profile = callback_data.replace("profile_", "")
                                     
-                                    # Send a simple acknowledgment message to the user
+                                    # Import main keyboard for consistent UI
+                                    from keyboard_utils import MAIN_KEYBOARD
+                                    
+                                    # Prepare detailed profile message
                                     profile_emoji = "🔴" if profile == "high-risk" else "🟢"
                                     
+                                    if profile == "high-risk":
+                                        profile_message = (
+                                            f"🔴 *High-Risk Profile Selected*\n\n"
+                                            f"Your investment recommendations will now focus on:\n"
+                                            f"• Higher APR opportunities\n"
+                                            f"• Newer pools with growth potential\n"
+                                            f"• More volatile but potentially rewarding options\n\n"
+                                            f"_Note: Higher returns come with increased risk_"
+                                        )
+                                    else:  # stable
+                                        profile_message = (
+                                            f"🟢 *Stable Profile Selected*\n\n"
+                                            f"Your investment recommendations will now focus on:\n"
+                                            f"• Established, reliable pools\n"
+                                            f"• Lower volatility options\n"
+                                            f"• More consistent but potentially lower APR\n\n"
+                                            f"_Note: Stability typically means more moderate returns_"
+                                        )
+                                    
+                                    # Send the profile confirmation message
                                     send_response(
                                         chat_id,
-                                        f"✅ *{profile.title()} profile selected* {profile_emoji}\n\n"
-                                        f"Searching for the best investment options for your {profile} profile...\n\n"
-                                        f"You can use these buttons to explore other options while I prepare your recommendations.",
+                                        profile_message,
+                                        parse_mode="Markdown",
+                                        reply_markup=MAIN_KEYBOARD
+                                    )
+                                    
+                                    # Log profile selection
+                                    logger.info(f"User {update_obj.callback_query.from_user.id} selected {profile} profile")
+                                    
+                                    # Store user profile preference in database
+                                    try:
+                                        from app import app
+                                        with app.app_context():
+                                            import db_utils
+                                            db_user = db_utils.get_or_create_user(update_obj.callback_query.from_user.id)
+                                            db_user.risk_profile = profile
+                                            from models import db
+                                            db.session.commit()
+                                            logger.info(f"Saved {profile} profile for user {update_obj.callback_query.from_user.id} to database")
+                                    except Exception as e:
+                                        logger.error(f"Failed to save profile to database: {e}")
+                                        
+                                    # Now load investment recommendations for this profile
+                                    send_response(
+                                        chat_id,
+                                        f"Searching for the best investment options for your {profile} profile...",
                                         parse_mode="Markdown"
                                     )
                                     
@@ -1241,41 +1286,8 @@ def run_telegram_bot():
                                 )
                                 logger.info(f"User {update_obj.callback_query.from_user.id} unsubscribed from daily updates")
                                 
-                            # Handle profile selection callbacks
-                            elif callback_data.startswith("profile_"):
-                                profile_type = callback_data.replace("profile_", "")
-                                
-                                # Import keyboard for consistent UI
-                                from keyboard_utils import MAIN_KEYBOARD
-                                
-                                if profile_type == "high-risk":
-                                    profile_message = (
-                                        "🔴 *High-Risk Profile Selected*\n\n"
-                                        "Your investment recommendations will now focus on:\n"
-                                        "• Higher APR opportunities\n"
-                                        "• Newer pools with growth potential\n"
-                                        "• More volatile but potentially rewarding options\n\n"
-                                        "_Note: Higher returns come with increased risk_"
-                                    )
-                                elif profile_type == "stable":
-                                    profile_message = (
-                                        "🟢 *Stable Profile Selected*\n\n"
-                                        "Your investment recommendations will now focus on:\n"
-                                        "• Established, reliable pools\n"
-                                        "• Lower volatility options\n"
-                                        "• More consistent but potentially lower APR\n\n"
-                                        "_Note: Stability typically means more moderate returns_"
-                                    )
-                                else:
-                                    profile_message = "Invalid profile type selected."
-                                
-                                send_response(
-                                    chat_id,
-                                    profile_message,
-                                    parse_mode="Markdown",
-                                    reply_markup=MAIN_KEYBOARD
-                                )
-                                logger.info(f"User {update_obj.callback_query.from_user.id} selected {profile_type} profile")
+                            # NOTE: Profile selection callbacks are handled by the earlier handler
+                            # This duplicate handler is removed to fix the conflict
                             
                             # Handle status callback    
                             elif callback_data == "status":
