@@ -151,14 +151,24 @@ def route_callback(callback_data: str, handler_context: Dict[str, Any]) -> Optio
             return {"error": "Invalid wallet connect format"}
     
     # ---------- Simulation Actions ----------
-    elif callback_data.startswith("simulate_period_"):
+    elif callback_data.startswith("simulate_"):
         try:
-            parts = callback_data.split("_")
-            period = parts[2]  # daily, weekly, monthly, yearly
-            amount = float(parts[3]) if len(parts) > 3 else 1000.0
-            return handle_simulation(period, amount, handler_context)
+            if callback_data.startswith("simulate_period_"):
+                # Handle period-specific simulations
+                parts = callback_data.split("_")
+                period = parts[2]  # daily, weekly, monthly, yearly
+                amount = float(parts[3]) if len(parts) > 3 else 1000.0
+                return handle_simulation(period, amount, handler_context)
+            elif callback_data == "simulate_custom":
+                # Handle custom amount simulation request
+                return handle_custom_simulation(handler_context)
+            else:
+                # Handle direct amount simulations (e.g., simulate_100, simulate_500)
+                amount_str = callback_data.replace("simulate_", "")
+                amount = float(amount_str)
+                return handle_simulation("default", amount, handler_context)
         except (IndexError, ValueError):
-            logger.error(f"Invalid simulate_period callback format: {callback_data}")
+            logger.error(f"Invalid simulation callback format: {callback_data}")
             return {"error": "Invalid simulation format"}
     
     # ---------- Unknown Action ----------
@@ -250,5 +260,13 @@ def handle_simulation(period: str, amount: float, context: Dict[str, Any]) -> Di
         "action": "simulate",
         "period": period,
         "amount": amount,
+        "chat_id": context.get("chat_id")
+    }
+    
+def handle_custom_simulation(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle custom amount simulation request."""
+    logger.info(f"Would request custom simulation amount")
+    return {
+        "action": "custom_simulation",
         "chat_id": context.get("chat_id")
     }
