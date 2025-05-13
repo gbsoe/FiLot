@@ -1859,14 +1859,20 @@ Share your experiences and learn from others!
                     msg_content_id = f"msg_content_{chat_id}_{hashlib.md5(message_text.encode()).hexdigest()[:8]}"
                     
                     # Check if we've already processed this message using any tracking method
-                    if is_message_processed(chat_id, msg_track_id) or is_message_processed(chat_id, msg_content_id):
+                    # Special handling for menu items to allow them to be pressed multiple times
+                    if message_text in ["🔍 Explore", "💰 Invest", "👤 Account"]:
+                        # These menu buttons should always work, don't skip
+                        # Just mark the message ID as processed to avoid duplicates in very quick succession
+                        is_message_processed(chat_id, msg_track_id)
+                        logger.info(f"Menu button pressed: {message_text} - allowing repeated presses")
+                    elif is_message_processed(chat_id, msg_track_id) or is_message_processed(chat_id, msg_content_id):
                         logger.info(f"Skipping already processed message {message_id}: {message_text[:30]}...")
                         # Skip further processing for this message
                         return
-                        
-                    # Mark both IDs as processed
-                    is_message_processed(chat_id, msg_track_id)
-                    is_message_processed(chat_id, msg_content_id)
+                    else:
+                        # Mark both IDs as processed for non-menu messages
+                        is_message_processed(chat_id, msg_track_id)
+                        is_message_processed(chat_id, msg_content_id)
 
                     # For question detection and predefined answers
                     with app.app_context():
