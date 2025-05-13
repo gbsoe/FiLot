@@ -1311,35 +1311,31 @@ async def faq_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             user = update.effective_user
             db_utils.log_user_activity(user.id, "faq_command")
         
-        # Format the FAQ content with emojis and clear sections
+        # Get the fixed responses for FAQ content
+        from fixed_responses import get_fixed_responses
+        responses = get_fixed_responses()
+        
+        # Combine relevant educational content from fixed responses
+        educational_content = [
+            "*What is FiLot?*\n" + responses.get("what is filot", "FiLot is your AI-powered crypto investment advisor.").split("\n\n")[0],
+            "*How does pool investment work?*\n" + responses.get("what is liquidity pool", "You provide liquidity to a pool and earn fees from trades.").split("\n\n")[0],
+            "*What are the risks?*\n" + responses.get("impermanent loss", "Liquidity pools can have impermanent loss if token prices change significantly.").split("\n\n")[0],
+            "*What's APR?*\n" + responses.get("what is apr", "Annual Percentage Rate - estimated yearly return. Pool APRs can be high (10-200%+) but fluctuate.").split("\n\n")[0],
+            "*How do I start investing?*\n" + responses.get("how to use filot", "1. Connect your wallet\n2. Choose an investment amount\n3. Select a pool").split("\n\n")[0],
+            "*When is FiLot launching?*\n" + responses.get("when does filot launch", "FiLot is currently in beta mode. The full launch will be available soon with one-click investment features.")
+        ]
+        
+        # Create the complete FAQ message
         faq_text = """
 ❓ *Frequently Asked Questions*
 
-*What is FiLot?*
-FiLot is your AI-powered crypto investment advisor. It helps you discover and invest in the best liquidity pools with real-time data.
-
-*How does pool investment work?*
-You provide liquidity to a pool (e.g., SOL/USDC) and earn fees from trades.
-
-*How do I start investing?*
-1. Connect your wallet using /account
-2. Choose an investment amount with /invest
-3. Select a pool and confirm your investment
-
-*What are the risks?*
-Liquidity pools can have impermanent loss if token prices change significantly.
-
-*What's APR?*
-Annual Percentage Rate - estimated yearly return. Pool APRs can be high (10-200%+) but fluctuate.
+""" + "\n\n".join(educational_content) + """
 
 *How do updates work?*
 Use /subscribe for automatic news. Use /unsubscribe to stop.
 
 *How does /simulate work?*
 It estimates earnings based on recent APRs: Earnings = Investment * (APR/100) * Time.
-
-*When is FiLot launching?*
-FiLot is currently in beta mode. The full launch will be available soon with one-click investment features.
 
 *How do I ask specific questions?*
 Use /ask Your question here... for product details, or just type general questions.

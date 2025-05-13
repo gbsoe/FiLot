@@ -30,6 +30,10 @@ def get_invest_menu() -> InlineKeyboardMarkup:
 def get_explore_menu() -> InlineKeyboardMarkup:
     """
     Creates the One-Touch inline keyboard for explore command options with improved visuals
+    
+    Note: The FAQ and Community buttons use direct_command callbacks which are handled
+    directly in main.py rather than going through the bot command handlers. This prevents
+    conflicts between multiple bot instances and ensures consistent responses.
     """
     # Using more specific button types to ensure proper callback handling
     keyboard = [

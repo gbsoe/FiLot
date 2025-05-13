@@ -1074,16 +1074,52 @@ def run_telegram_bot():
                             # Handle direct command buttons from explore menu
                             elif callback_data == "direct_command_faq":
                                 try:
-                                    # Use the bot's faq_command handler directly
-                                    from bot import faq_command
-                                    import asyncio
+                                    # Get the fixed responses for FAQ content
+                                    from fixed_responses import get_fixed_responses
+                                    responses = get_fixed_responses()
                                     
-                                    # Create and manage our own event loop
-                                    loop = asyncio.new_event_loop()
-                                    asyncio.set_event_loop(loop)
+                                    # Combine relevant educational content from fixed responses
+                                    educational_content = [
+                                        "*What is FiLot?*\n" + responses.get("what is filot", "FiLot is your AI-powered crypto investment advisor.").split("\n\n")[0],
+                                        "*How does pool investment work?*\n" + responses.get("what is liquidity pool", "You provide liquidity to a pool and earn fees from trades.").split("\n\n")[0],
+                                        "*What are the risks?*\n" + responses.get("impermanent loss", "Liquidity pools can have impermanent loss if token prices change significantly.").split("\n\n")[0],
+                                        "*What's APR?*\n" + responses.get("what is apr", "Annual Percentage Rate - estimated yearly return. Pool APRs can be high (10-200%+) but fluctuate.").split("\n\n")[0],
+                                        "*How do I start investing?*\n" + responses.get("how to use filot", "1. Connect your wallet\n2. Choose an investment amount\n3. Select a pool").split("\n\n")[0]
+                                    ]
                                     
-                                    # Run the command in this event loop
-                                    loop.run_until_complete(faq_command(update_obj, context))
+                                    # Create the complete FAQ message
+                                    faq_text = """
+❓ *Frequently Asked Questions*
+
+""" + "\n\n".join(educational_content) + """
+
+*How do updates work?*
+Use /subscribe for automatic news. Use /unsubscribe to stop.
+
+*How does /simulate work?*
+It estimates earnings based on recent APRs: Earnings = Investment * (APR/100) * Time.
+
+*How do I ask specific questions?*
+Just type your question and I'll do my best to answer it!
+
+Use /help to see all available commands!
+"""
+                                    
+                                    # Create back button keyboard
+                                    keyboard = [
+                                        [
+                                            InlineKeyboardButton("⬅️ Back to Explore", callback_data="menu_explore")
+                                        ]
+                                    ]
+                                    reply_markup = InlineKeyboardMarkup(keyboard)
+                                    
+                                    # Send the FAQ message with back button
+                                    send_response(
+                                        chat_id,
+                                        faq_text,
+                                        reply_markup=reply_markup,
+                                        parse_mode="Markdown"
+                                    )
                                     logger.info(f"Successfully processed FAQ button for chat_id: {chat_id}")
                                 except Exception as e:
                                     logger.error(f"Error in direct_command_faq callback: {e}")
@@ -1096,16 +1132,43 @@ def run_telegram_bot():
                             # Handle social/community button
                             elif callback_data == "direct_command_social":
                                 try:
-                                    # Use the bot's social_command handler directly
-                                    from bot import social_command
-                                    import asyncio
+                                    # Format the social media content with emojis and links
+                                    social_text = """
+🌐 *Join Our Community* 🌐
+
+Connect with fellow investors and get the latest updates:
+
+• Telegram Group: @FilotCommunity
+• Discord: discord.gg/filot
+• Twitter: @FilotFinance
+
+Share your experiences and learn from others!
+
+⚡️ For technical support, email: support@filot.finance
+"""
                                     
-                                    # Create and manage our own event loop
-                                    loop = asyncio.new_event_loop()
-                                    asyncio.set_event_loop(loop)
+                                    # Create inline keyboard with social links and back button
+                                    keyboard = [
+                                        [
+                                            InlineKeyboardButton("🌐 Website", url="https://filot.finance"),
+                                            InlineKeyboardButton("𝕏 Twitter", url="https://twitter.com/filotfinance")
+                                        ],
+                                        [
+                                            InlineKeyboardButton("💬 Telegram", url="https://t.me/filotcommunity"),
+                                            InlineKeyboardButton("📱 Discord", url="https://discord.gg/filot")
+                                        ],
+                                        [
+                                            InlineKeyboardButton("⬅️ Back to Explore", callback_data="menu_explore")
+                                        ]
+                                    ]
                                     
-                                    # Run the command in this event loop
-                                    loop.run_until_complete(social_command(update_obj, context))
+                                    # Send the social media message with inline buttons
+                                    send_response(
+                                        chat_id,
+                                        social_text,
+                                        reply_markup=InlineKeyboardMarkup(keyboard),
+                                        parse_mode="Markdown"
+                                    )
                                     logger.info(f"Successfully processed Community button for chat_id: {chat_id}")
                                 except Exception as e:
                                     logger.error(f"Error in direct_command_social callback: {e}")
