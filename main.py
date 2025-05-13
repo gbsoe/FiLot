@@ -744,15 +744,25 @@ def run_telegram_bot():
                     query_track_id = f"cb_{query_id}"
                     data_track_id = f"cb_data_{chat_id}_{hashlib.md5(callback_data.encode()).hexdigest()[:8]}"
                     
-                    # Check if we've already processed this callback using any of our tracking methods
-                    if is_message_processed(chat_id, query_track_id) or is_message_processed(chat_id, data_track_id):
+                    # Special handling for navigation buttons to allow them to be pressed multiple times
+                    navigational_callbacks = ["explore_pools", "explore_simulate", "back_to_explore", 
+                                             "menu_explore", "menu_invest", "menu_account", 
+                                             "simulate_50", "simulate_100", "simulate_250", 
+                                             "simulate_500", "simulate_1000", "simulate_5000"]
+                    
+                    if callback_data in navigational_callbacks:
+                        # These buttons should always work, don't skip based on content
+                        # Just mark the callback ID as processed to avoid duplicates in very quick succession
+                        is_message_processed(chat_id, query_track_id)
+                        logger.info(f"Navigation button pressed: {callback_data} - allowing repeated presses")
+                    elif is_message_processed(chat_id, query_track_id) or is_message_processed(chat_id, data_track_id):
                         logger.info(f"Skipping already processed callback query {query_id} with data {callback_data}")
                         # Skip further processing for this callback
                         return
-                        
-                    # Mark both IDs as processed
-                    is_message_processed(chat_id, query_track_id)
-                    is_message_processed(chat_id, data_track_id)
+                    else:
+                        # Mark both IDs as processed for non-navigation buttons
+                        is_message_processed(chat_id, query_track_id)
+                        is_message_processed(chat_id, data_track_id)
                     
                     logger.info(f"Processing callback data: {callback_data} from chat_id: {chat_id}")
 

@@ -145,6 +145,9 @@ def get_simulate_menu() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton("👁️ View My Positions", callback_data="menu_positions"),
             InlineKeyboardButton("✏️ Custom Amount", callback_data="simulate_custom")
+        ],
+        [
+            InlineKeyboardButton("⬅️ Back to Explore", callback_data="back_to_explore")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
