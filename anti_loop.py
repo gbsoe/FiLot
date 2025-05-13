@@ -83,6 +83,20 @@ def is_message_looping(chat_id: int, message_text: Optional[str] = None,
         
         # 3. Check callback if provided
         if callback_id:
+            # Whitelist for navigation buttons that should bypass anti-loop protection
+            # These buttons are exempt from loop detection because they're used for core navigation
+            navigation_buttons = ['menu_explore', 'menu_invest', 'menu_account', 'back_to_explore', 'explore_simulate']
+            
+            # Get callback data if available (for additional checks)
+            callback_data = None
+            if message_text and isinstance(message_text, str):
+                callback_data = message_text
+            
+            # Skip looping check for navigation buttons
+            if callback_data and any(callback_data == nav_btn for nav_btn in navigation_buttons):
+                logger.info(f"Navigation button pressed: {callback_data} - bypassing anti-loop protection")
+                return False
+            
             callback_key = f"{chat_id}_{callback_id}"
             
             # Check if we've seen this callback recently

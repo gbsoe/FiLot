@@ -1322,6 +1322,25 @@ Share your experiences and learn from others!
                                         "Sorry, there was an error calculating your returns. Please try again using /simulate [amount]."
                                     )
 
+                            # Handle the "Back to Explore" button specifically
+                            elif callback_data == "back_to_explore":
+                                logger.info(f"Processing Back to Explore button press")
+                                
+                                # Import the explore menu
+                                from menus import get_explore_menu
+                                reply_markup = get_explore_menu()
+                                
+                                # Show the explore menu
+                                send_response(
+                                    chat_id,
+                                    "📊 *Explore DeFi Opportunities* 📊\n\n"
+                                    "Select what you'd like to explore:",
+                                    parse_mode="Markdown",
+                                    reply_markup=reply_markup
+                                )
+                                
+                                logger.info("Successfully returned to explore menu via back button")
+                                
                             # Handle walletconnect callback
                             elif callback_data == "walletconnect":
                                 # Launch the walletconnect sequence in a separate thread
