@@ -1,14 +1,18 @@
 # FiLot: Agentic AI Investment Advisor
 
-FiLot is a cutting-edge Telegram bot designed to revolutionize cryptocurrency investment experiences through intelligent, user-friendly technologies. It serves as an agentic AI-powered system that analyzes liquidity pools, recommends optimal investments, and can execute trades securely with varying levels of automation.
+FiLot is a cutting-edge Telegram bot designed to revolutionize cryptocurrency investment experiences through intelligent, user-friendly technologies. Regulated by the Dubai Financial Services Authority (DFSA), FiLot serves as an agentic AI-powered system that analyzes liquidity pools, recommends optimal investments, and can execute trades securely with varying levels of automation. 
+
+With our new simplified One-Command interface and persistent navigation buttons, investing in cryptocurrency has never been more accessible. FiLot specializes in providing access to Raydium liquidity pools on the Solana blockchain, offering institutional-grade investment opportunities with advanced security features and AI-driven recommendations.
 
 ## Core Features
 
 - **Data-Driven Insights**: Real-time data ingestion from Raydium and external sources
 - **Advanced AI Models**: Financial analysis and personalized recommendations
-- **User-Friendly Interface**: Intuitive Telegram interactions and commands
+- **One-Command Interface**: Simplified, button-driven navigation for enhanced user experience
+- **Persistent Button Navigation**: Consistent and reliable button functionality throughout the app
 - **Secure Wallet Integration**: WalletConnect protocol support for safe transactions
 - **Personalized Risk Management**: Customized strategies based on user profiles
+- **DFSA Regulation**: Institutional-grade security standards and regulatory compliance
 
 ## Project Structure
 
@@ -22,15 +26,29 @@ FiLot is a cutting-edge Telegram bot designed to revolutionize cryptocurrency in
 
 ### Key Files
 
-- `main.py`: Application entry point
-- `bot.py`: Telegram bot command handlers and logic
-- `app.py`: Flask web application
-- `models.py`: SQLAlchemy database models
+**Core Infrastructure:**
+- `main.py`: Application entry point and initialization
+- `bot.py`: Telegram bot command handlers and core logic
+- `app.py`: Flask web application for admin interface
+- `models.py`: SQLAlchemy database models for data persistence
+
+**Navigation System:**
+- `menus.py`: Persistent menu system for One-Command interface
+- `keyboard_utils.py`: Button generation and navigation handlers
+- `callback_handler.py`: Callback processing for button interactions
+- `anti_loop.py`: Prevention of message and button loop issues
+
+**API Integration:**
 - `raydium_client.py`: Integration with Raydium API for pool data
-- `ai_service.py`: DeepSeek AI integration
-- `anthropic_service.py`: Anthropic Claude AI integration
-- `db_utils.py`: Database utility functions
+- `solpool_client.py`: Solana pool interaction and monitoring
+- `filotsense_client.py`: Market sentiment and analytics
 - `coingecko_utils.py`: Token price retrieval utilities
+
+**AI Services:**
+- `ai_service.py`: DeepSeek AI integration for analysis
+- `anthropic_service.py`: Anthropic Claude AI for financial advice
+- `intent_detector.py`: User message intent classification
+- `recommendation_agent.py`: Investment recommendation engine
 
 ## Installation and Setup
 
@@ -73,17 +91,45 @@ SOLANA_RPC_URL=your_solana_rpc_url
    python main.py
    ```
 
-## Bot Commands
+## One-Command Interface
 
-- `/start`: Introduction to the bot
-- `/help`: List available commands
-- `/info`: Show current pool information
-- `/simulate [amount]`: Simulate investment returns
-- `/subscribe`: Subscribe to daily updates
-- `/unsubscribe`: Unsubscribe from updates
-- `/profile`: Set risk profile and preferences
-- `/wallet`: Connect and manage wallet
-- `/walletconnect`: Connect wallet via WalletConnect
+FiLot features a simplified One-Command interface with persistent buttons for easier navigation:
+
+### Primary Commands
+- `/start`: Introduction to the bot and main navigation menu
+- `/help`: List available commands and buttons
+- `/explore`: Access pool information, simulations, and FAQ
+- `/account`: Manage wallet, profile settings, and subscriptions
+- `/invest`: View recommended pools and investment opportunities
+
+### Navigation Features
+- **Persistent Buttons**: Consistent navigation throughout the experience
+- **Back Navigation**: Easy return to previous menus
+- **Context-Aware Options**: Relevant buttons based on current position
+- **Simplified Flows**: Streamlined investment process with fewer steps
+
+### User Experience Improvements
+- **Reduced Command Complexity**: No need to remember specific commands or syntax
+- **Error Prevention**: Guided navigation eliminates common input errors
+- **Consistent UI**: Uniform button layout and standardized responses
+- **Progressive Disclosure**: Information presented in manageable, sequential steps
+- **Mobile-Optimized**: Designed specifically for comfortable mobile device usage
+
+Commands can also be entered manually, but the button-based interface provides a more intuitive experience.
+
+## Understanding Liquidity Pools
+
+Liquidity pools are a simple way to earn rewards from your cryptocurrency holdings. Here's how they work:
+
+- **What is a Liquidity Pool?** A shared collection of funds that allows traders to buy and sell cryptocurrencies more efficiently.
+
+- **How Do You Benefit?** By adding your tokens to these pools, you earn fees generated when others trade using the pool.
+
+- **Why Raydium Pools?** Raydium is a leading platform on the Solana blockchain known for its speed, low fees, and security.
+
+- **Risk Management:** FiLot helps you understand the risks and rewards of each pool before investing.
+
+- **You Maintain Control:** Your tokens remain in your control at all times. FiLot never takes custody of your assets.
 
 ## Development Roadmap
 
@@ -95,23 +141,34 @@ See the [Development Roadmap](FiLot_Development_Roadmap.md) for detailed informa
 - [Agentic Investment Technical Specification](FiLot_Agentic_Investment_Technical_Spec.md): Technical details of the agentic investment system
 - [Implementation Plan](FiLot_Implementation_Plan.md): Phased approach to implementing agentic capabilities
 
-## Security
+## Security, Privacy, and Regulatory Compliance
 
-FiLot implements comprehensive security measures:
+FiLot implements comprehensive security and privacy measures:
 
-- Non-custodial architecture (users maintain control of funds)
-- WalletConnect for secure wallet integration
-- Read-only wallet access by default
-- Transaction limits and verification
-- Comprehensive logging and monitoring
+### Security Features
+- **DFSA Regulation**: Regulated by the Dubai Financial Services Authority for institutional-grade trust
+- **Non-custodial Architecture**: Users maintain complete control of their funds at all times
+- **WalletConnect Integration**: Secure wallet connectivity without exposing private keys
+- **Read-only Access Mode**: Default conservative approach to wallet connections
+- **Transaction Limits**: Customizable limits with verification requirements
+- **Comprehensive Monitoring**: Advanced logging and real-time monitoring
+- **Transparent Operations**: Clear view of all transactions and investment activities
+
+### Privacy Protection
+- **Minimal Data Collection**: We only collect essential information needed for service operation
+- **No Personal Information**: No requirement for government IDs or sensitive personal information
+- **Transparent Data Usage**: Clear information about how user data is used
+- **Data Encryption**: All user data is encrypted at rest and in transit
+- **Right to Be Forgotten**: Users can request complete removal of their data
 
 ## Contact Information
 
 - Product Owner: george@justhodl.la
+- Telegram Bot: https://t.me/Fi_lotbot
 - Telegram Channel: https://t.me/CrazyRichLAToken
-- Telegram Bot: https://t.me/crazyrichlabot
-- Instagram: https://www.instagram.com/crazyrichla
 - X/Twitter: https://x.com/crazyrichla
+- Instagram: https://www.instagram.com/crazyrichla
+- Email Support: support@filot.finance
 
 ## License
 
