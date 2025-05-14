@@ -3,6 +3,7 @@ Utility functions for formatting pool data in the Telegram cryptocurrency bot
 """
 
 import logging
+import random  # Required for the mock data function
 from typing import List, Dict, Any, Optional, Tuple
 
 # Configure logging
@@ -159,7 +160,20 @@ async def get_top_pools(limit: int = 5, profile: Optional[str] = None, min_tvl: 
     from api_mock_data import get_mock_pools
     
     # For now, use mock data - this will be replaced with real API
+    # Use default parameters for mock pools
     all_pools = get_mock_pools()
+    
+    # Ensure the pools have the expected fields
+    for pool in all_pools:
+        # Add any missing fields with defaults
+        if 'apr' not in pool:
+            pool['apr'] = random.uniform(15.0, 55.0)  # Realistic APR range
+        if 'tvl' not in pool:
+            pool['tvl'] = random.uniform(10000.0, 5000000.0)  # Reasonable TVL range
+        if 'token_a_symbol' not in pool:
+            pool['token_a_symbol'] = 'SOL'
+        if 'token_b_symbol' not in pool:
+            pool['token_b_symbol'] = 'USDC'
     
     # Filter by profile if specified
     if profile == "high-risk":
