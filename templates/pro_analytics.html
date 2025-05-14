@@ -412,25 +412,32 @@
             // Calculate periodic rate
             const periodicRate = apyDecimal / periodsPerYear;
         
-        // Calculate compound interest
-        let finalValue = investmentAmount * Math.pow(1 + periodicRate, totalPeriods);
-        
-        // Calculate impermanent loss factor based on volatility
-        // This is a simplified model - in reality, IL is more complex
-        const volatilityFactor = (tokenAVolatility + tokenBVolatility) / 200;
-        const impermanentLossFactor = 1 - (volatilityFactor * Math.sqrt(investmentPeriod / 12));
-        
-        // Apply impermanent loss adjustment
-        finalValue = finalValue * impermanentLossFactor;
-        
-        // Calculate total return and ROI
-        const totalReturn = finalValue - investmentAmount;
-        const roiPercentage = (totalReturn / investmentAmount) * 100;
-        
-        // Update display
-        document.getElementById('final-value').innerText = '$' + finalValue.toFixed(2);
-        document.getElementById('total-return').innerText = '$' + totalReturn.toFixed(2);
-        document.getElementById('roi-percentage').innerText = roiPercentage.toFixed(2) + '%';
+            // Calculate compound interest
+            let finalValue = investmentAmount * Math.pow(1 + periodicRate, totalPeriods);
+            
+            // Calculate impermanent loss factor based on volatility
+            // This is a simplified model - in reality, IL is more complex
+            const volatilityFactor = (tokenAVolatility + tokenBVolatility) / 200;
+            const impermanentLossFactor = 1 - (volatilityFactor * Math.sqrt(investmentPeriod / 12));
+            
+            // Apply impermanent loss adjustment
+            finalValue = finalValue * impermanentLossFactor;
+            
+            // Calculate total return and ROI
+            const totalReturn = finalValue - investmentAmount;
+            const roiPercentage = (totalReturn / investmentAmount) * 100;
+            
+            // Safely update display elements
+            const finalValueEl = document.getElementById('final-value');
+            const totalReturnEl = document.getElementById('total-return');
+            const roiPercentageEl = document.getElementById('roi-percentage');
+            
+            if (finalValueEl) finalValueEl.innerText = '$' + finalValue.toFixed(2);
+            if (totalReturnEl) totalReturnEl.innerText = '$' + totalReturn.toFixed(2);
+            if (roiPercentageEl) roiPercentageEl.innerText = roiPercentage.toFixed(2) + '%';
+        } catch (error) {
+            console.error("Error in ROI calculator:", error);
+        }
     }
 </script>
 {% endblock %}
