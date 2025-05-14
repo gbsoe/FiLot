@@ -122,6 +122,20 @@ def route_callback(callback_data: str, handler_context: Dict[str, Any]) -> Optio
             "action": "back_to_main",
             "chat_id": handler_context.get("chat_id")
         }
+    elif callback_data == "back_to_explore":
+        # Special case for back to explore menu button
+        return {
+            "action": "menu_navigation",
+            "menu": "explore",
+            "chat_id": handler_context.get("chat_id")
+        }
+    elif callback_data == "menu_invest" or callback_data == "back_to_invest":
+        # Back to invest menu button
+        return {
+            "action": "menu_navigation",
+            "menu": "invest",
+            "chat_id": handler_context.get("chat_id")
+        }
     elif callback_data.startswith("menu_"):
         menu_action = callback_data.replace("menu_", "")
         return handle_menu_navigation(menu_action, handler_context)
