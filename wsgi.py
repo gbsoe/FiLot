@@ -31,7 +31,7 @@ application = app
 def run_flask():
     """Run the Flask application"""
     try:
-        app.run(host='0.0.0.0', port=5000)
+        app.run(host='0.0.0.0', port=5002)
     except Exception as e:
         logger.error(f"Error running Flask app: {e}")
 
