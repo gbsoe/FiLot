@@ -250,3 +250,58 @@ elif account_action == "subscribe":
 ```
 
 This pattern can be applied to other button handlers that are currently failing with similar errors.
+
+### 2. Anti-Loop Protection System Optimization
+
+We've also implemented significant improvements to the anti-loop protection system that was preventing button functionality:
+
+**Problem**: The anti-loop protection was too aggressive, causing button presses to be ignored or blocked for up to 5 seconds after a button was first pressed. This made the UI feel unresponsive and prevented quick navigation between sections.
+
+**Solution**: We made several targeted changes to make the protection more accommodating for UI buttons:
+
+1. **Reduced lock durations**:
+   - Reduced the global MAX_LOCK_DURATION from 5.0 to 2.0 seconds
+   - Added a special BUTTON_COOLDOWN of just 0.5 seconds specifically for UI buttons
+   - Implemented conditional lock durations based on button type
+
+2. **UI button special handling**:
+   - Added detection logic to identify UI navigation buttons (menu_*, account_*, explore_*, etc.)
+   - For UI buttons, we bypass the chat-wide locking mechanism
+   - Added a comprehensive list of whitelist buttons that should never be blocked
+   - Added many more button prefixes to the whitelist
+
+3. **Less restrictive duplicate detection**:
+   - For UI buttons, we clear the global callback_handled flag to ensure they always work
+   - We only check for exact duplicate callback IDs for UI buttons, not content similarity
+   - Added logging rather than blocking for repeated UI button presses
+
+4. **Context-aware protection**:
+   - Now using very short timeouts (0.5s) for UI navigation buttons
+   - Using moderate timeouts (2.0s) for other callbacks
+   - Retaining stronger protection (5.0s) for normal messages to prevent spam
+
+Example of the improved anti-loop handling:
+
+```python
+# Before:
+if is_looping(chat_id, callback_data, query.id):
+    logger.warning(f"Anti-loop system prevented processing callback: {callback_data[:30]}...")
+    lock_chat(chat_id, 5.0)
+    return
+
+# After:
+if is_looping(chat_id, callback_data, query.id):
+    logger.warning(f"Anti-loop system prevented processing callback: {callback_data[:30]}...")
+    # For button callbacks, we use a much shorter lock to improve responsiveness
+    if any(callback_data.startswith(prefix) for prefix in [
+        'menu_', 'account_', 'explore_', 'profile_', 'wallet_', 'invest_'
+    ]):
+        # Very short lock for UI buttons - 0.5 seconds
+        lock_chat(chat_id, 0.5)
+    else:
+        # Shorter lock than before for other callbacks - 2 seconds
+        lock_chat(chat_id, 2.0)
+    return
+```
+
+These changes make the bot much more responsive to user interaction while still maintaining protection against actual message loops or spam.
