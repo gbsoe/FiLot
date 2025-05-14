@@ -12,6 +12,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 import os
 import enum
+from slugify import slugify
 
 # Initialize the database
 db = SQLAlchemy()
@@ -321,3 +322,29 @@ class Position(db.Model):
         return f"<Position id={self.id}, user_id={self.user_id}, pool_id={self.pool_id}, status={self.status}, invested_amount_usd={self.invested_amount_usd}>"
 
 # We don't need to add positions to User manually, the backref in Position takes care of it
+
+class Post(db.Model):
+    """Blog post model for the website."""
+    __tablename__ = "posts"
+    
+    id = Column(Integer, primary_key=True)
+    title = Column(String(255), nullable=False)
+    slug = Column(String(255), nullable=False, unique=True)
+    summary = Column(Text, nullable=False)
+    content = Column(Text, nullable=False)
+    featured_image = Column(String(255), nullable=True)
+    is_published = Column(Boolean, default=True)
+    published_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    author_name = Column(String(100), nullable=False)
+    keywords = Column(String(255), nullable=True)
+    
+    def __init__(self, *args, **kwargs):
+        """Initialize a blog post, automatically creating a slug from the title."""
+        if 'title' in kwargs and 'slug' not in kwargs:
+            kwargs['slug'] = slugify(kwargs['title'])
+        super(Post, self).__init__(*args, **kwargs)
+    
+    def __repr__(self):
+        return f"<Post id={self.id}, title={self.title}, published={self.is_published}>"

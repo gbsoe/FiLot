@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    {% for url in urls %}
+    <url>
+        <loc>{{ url }}</loc>
+        <lastmod>{{ today }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>{% if url.endswith('/') %}1.0{% elif 'beginners' in url %}0.9{% elif 'developer-guide' in url %}0.8{% elif 'pools' in url %}0.8{% else %}0.7{% endif %}</priority>
+    </url>
+    {% endfor %}
+</urlset>

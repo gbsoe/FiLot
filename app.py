@@ -175,11 +175,19 @@ def index():
         # Get top pools by APR
         top_pools = Pool.query.order_by(Pool.apr_24h.desc()).limit(5).all()
         
+        # SEO meta information
+        meta = {
+            "title": "FiLot | AI-Powered DeFi Yield Farming Made Easy",
+            "description": "FiLot helps you earn passive income through DeFi yield farming on Solana. Our no-code crypto bot is perfect for beginners seeking automated investing solutions.",
+            "keywords": "crypto yield farming for beginners, easy DeFi investing, no-code crypto bot, passive income crypto guide, automated crypto investing for complete beginners"
+        }
+        
         return render_template(
             "index.html",
             stats=stats,
             recent_activity=recent_activity,
-            top_pools=top_pools
+            top_pools=top_pools,
+            meta=meta
         )
     except Exception as e:
         logger.error(f"Error in index route: {e}")
@@ -202,7 +210,11 @@ def pools():
         pool_list = all_pool_data.get('topAPR', [])
         
         if not pool_list:
-            return render_template("minimal_pools.html", pools=[])
+            return render_template("minimal_pools.html", pools=[], meta={
+                "title": "Top Solana Liquidity Pools | FiLot",
+                "description": "Explore the highest APY Solana liquidity pools available for DeFi yield farming. Track real-time Raydium pool performance with FiLot.",
+                "keywords": "Solana liquidity pools, Raydium pools, SOL/USDC APY, best Solana APY pools, automated yield farming Solana"
+            })
             
         # Format the data for the template
         for pool in pool_list:
@@ -237,8 +249,15 @@ def pools():
                 'fee': fee
             })
         
+        # SEO meta information
+        meta = {
+            "title": "Top Solana Liquidity Pools | FiLot",
+            "description": "Explore the highest APY Solana liquidity pools available for DeFi yield farming. Track real-time Raydium pool performance with FiLot.",
+            "keywords": "Solana liquidity pools, Raydium pools, SOL/USDC APY, best Solana APY pools, automated yield farming Solana"
+        }
+        
         # Use the fully featured pools template
-        return render_template("minimal_pools.html", pools=pool_data)
+        return render_template("minimal_pools.html", pools=pool_data, meta=meta)
     except Exception as e:
         logger.error(f"Error in pools route: {e}")
         # Show detailed error message for easier debugging
@@ -365,16 +384,96 @@ def docs():
 @app.route("/features")
 def features():
     """Bot features page."""
-    return render_template("features.html")
+    meta = {
+        "title": "FiLot Features | AI-Powered DeFi Investment Bot",
+        "description": "Discover FiLot's advanced features for crypto yield farming with real-time APY tracking, Telegram bot integration, and AI-powered investment recommendations.",
+        "keywords": "AI crypto investment, Telegram bot API Solana, DeFi API integration, real-time APY tracking, precision yield farming"
+    }
+    return render_template("features.html", meta=meta)
 
 @app.route("/knowledge")
 def knowledge():
     """Knowledge page about FiLot and how it works."""
-    return render_template("knowledge.html")
+    meta = {
+        "title": "DeFi Yield Farming Knowledge | FiLot Learning Center",
+        "description": "Learn about DeFi yield farming, liquidity pools, and how to use non-custodial WalletConnect with Solana. Comprehensive guide for crypto beginners.",
+        "keywords": "what is DeFi yield farming, non-custodial WalletConnect Solana, how liquidity pools work, DeFi for beginners, crypto security best practices"
+    }
+    return render_template("knowledge.html", meta=meta)
+
+# Additional SEO-focused persona pages
+
+@app.route("/beginners")
+def beginners():
+    """Beginner's guide to crypto yield farming."""
+    meta = {
+        "title": "DeFi Yield Farming for Beginners | FiLot Step-by-Step Guide",
+        "description": "Your first steps in crypto yield farming made simple. Learn how to earn passive income with FiLot's beginner-friendly guide to DeFi investing.",
+        "keywords": "step-by-step DeFi yield farming for non-tech users, earn 20% APY crypto without risk, beginner-friendly crypto guide, no-code DeFi tutorial"
+    }
+    return render_template("beginners.html", meta=meta)
+
+@app.route("/developer-guide")
+def developer_guide():
+    """Developer guide for extending FiLot."""
+    meta = {
+        "title": "FiLot Developer Guide | Extend with API & Webhooks",
+        "description": "Technical documentation for developers to integrate with FiLot's API, extend the bot with custom calls, and implement webhook callbacks.",
+        "keywords": "integrate Raydium SDK RPC, extend FiLot bot custom smart-contract calls, Telegram DeFi bot callbacks, self-hosted Flask DeFi dashboard"
+    }
+    return render_template("developer_guide.html", meta=meta)
+
+@app.route("/security")
+def security():
+    """Security and audits page."""
+    meta = {
+        "title": "FiLot Security & Audits | Non-Custodial WalletConnect",
+        "description": "Learn about FiLot's security measures, smart contract audits, and non-custodial wallet integration that keeps your crypto assets safe.",
+        "keywords": "Raydium pool smart-contract audit, on-chain APY oracle, non-custodial WalletConnect security, Solana liquidity pool security"
+    }
+    return render_template("security.html", meta=meta)
+
+@app.route("/pro-analytics")
+def pro_analytics():
+    """Pro analytics tools page."""
+    meta = {
+        "title": "Pro Analytics for DeFi | FiLot Risk Management Tools",
+        "description": "Advanced analytics for professional crypto investors. Calculate ROI, analyze risk with Sharpe ratios, and develop impermanent loss hedging strategies.",
+        "keywords": "crypto ROI calculator, DeFi risk management metrics, Solana pool Sharpe ratio, impermanent loss hedging strategies"
+    }
+    return render_template("pro_analytics.html", meta=meta)
+
+# Sitemap generation route
+@app.route("/sitemap.xml")
+def sitemap():
+    """Generate sitemap for the website."""
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    urls = [
+        "https://filot.finance/",
+        "https://filot.finance/features",
+        "https://filot.finance/pools",
+        "https://filot.finance/knowledge",
+        "https://filot.finance/beginners",
+        "https://filot.finance/developer-guide",
+        "https://filot.finance/security",
+        "https://filot.finance/pro-analytics"
+    ]
+    
+    # Add blog URLs if we have a blog model
+    try:
+        from models import Post
+        blog_posts = Post.query.all()
+        for post in blog_posts:
+            urls.append(f"https://filot.finance/blog/{post.slug}")
+    except:
+        # Blog model not implemented yet
+        pass
+    
+    return render_template("sitemap.xml.j2", urls=urls, today=today), 200, {"Content-Type": "application/xml"}
 
 # API Endpoints
 
-@app.route("/health")
+@app.route("/api/health")
 def api_health():
     """Health check API endpoint."""
     try:
