@@ -532,9 +532,9 @@ async def handle_back_to_main(update: Update, context: ContextTypes.DEFAULT_TYPE
     # Apply the persistent keyboard directly to the message
     await message.reply_markdown(
         "🏠 *Back to Main Menu*\n\n"
-        "Use our One-Touch Navigation to continue your journey.\n"
+        "Use our One-Touch Navigation to continue your journey.\n\n"
         "The buttons below provide quick access to all features!",
-        reply_markup=MAIN_KEYBOARD
+        reply_markup=get_main_menu()
     )
 
 async def process_invest_amount_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, callback_data: str) -> None:
