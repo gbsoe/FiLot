@@ -1713,7 +1713,7 @@ Share your experiences and learn from others!
                                     "Select an option from the main menu below:"
                                 )
                                 
-                                # Send welcome message with main menu
+                                # Send welcome message with main menu buttons main menu
                                 send_response(
                                     chat_id,
                                     welcome_message,
