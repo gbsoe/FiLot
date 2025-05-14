@@ -112,7 +112,7 @@ The home page features:
    - **Feature Points**:
      - DFSA Regulated
      - Bank-Grade Security
-     - 35-95% Annual Yields
+     - 15-55% Annual Yields
    - **CTA Buttons**:
      - Primary: "Start Investing Now" (https://t.me/Fi_lotbot)
      - Secondary: "See All Features"
@@ -164,7 +164,7 @@ The home page features:
    - **Headline**: "Trusted by Investors Worldwide"
    
    - **Testimonial 1**:
-     - "FiLot has transformed my crypto investing experience with its simple, button-based interface. I've earned 32% returns in just 3 months without any technical knowledge."
+     - "FiLot has transformed my crypto investing experience with its simple, button-based interface. I've earned 25% returns in just 3 months without any technical knowledge."
      - Sarah K., Dubai
    
    - **Testimonial 2**:
@@ -255,11 +255,11 @@ Shows top-performing liquidity pools with detailed information:
      - Fee percentage
    
    - **Sample Data**:
-     - SOL/USDC: 12.5% APR, $4.5M TVL, 0.25% Fee
-     - SOL/RAY: 18.7% APR, $1.25M TVL, 0.3% Fee
-     - RAY/USDC: 15.2% APR, $950K TVL, 0.25% Fee
-     - SOL/mSOL: 9.8% APR, $3.2M TVL, 0.2% Fee
-     - ETH/USDC: 7.9% APR, $8.5M TVL, 0.2% Fee
+     - SOL/USDC: 22.5% APR, $4.5M TVL, 0.25% Fee
+     - SOL/RAY: 45.8% APR, $1.25M TVL, 0.3% Fee
+     - RAY/USDC: 38.7% APR, $950K TVL, 0.25% Fee
+     - SOL/mSOL: 19.8% APR, $3.2M TVL, 0.2% Fee
+     - ETH/USDC: 15.5% APR, $8.5M TVL, 0.2% Fee
 
 4. **Investment CTA**:
    - **Message**: "Ready to start earning from these pools?"
@@ -493,35 +493,35 @@ def get_pool_data():
         "topAPR": [
             {
                 "pairName": "SOL/USDC",
-                "apr": 12.5,
+                "apr": 22.5,
                 "liquidity": 4500000,
                 "fee": 0.0025,
                 "volatility": 0.32
             },
             {
                 "pairName": "SOL/RAY",
-                "apr": 18.7,
+                "apr": 45.8,
                 "liquidity": 1250000,
                 "fee": 0.003,
                 "volatility": 0.48
             },
             {
                 "pairName": "RAY/USDC",
-                "apr": 15.2,
+                "apr": 38.7,
                 "liquidity": 950000,
                 "fee": 0.0025,
                 "volatility": 0.41
             },
             {
                 "pairName": "SOL/mSOL",
-                "apr": 9.8,
+                "apr": 19.8,
                 "liquidity": 3200000,
                 "fee": 0.002,
                 "volatility": 0.24
             },
             {
                 "pairName": "ETH/USDC",
-                "apr": 7.9,
+                "apr": 15.5,
                 "liquidity": 8500000,
                 "fee": 0.002,
                 "volatility": 0.28
