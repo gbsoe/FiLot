@@ -171,6 +171,16 @@ def route_callback(callback_data: str, handler_context: Dict[str, Any]) -> Optio
             logger.error(f"Invalid simulation callback format: {callback_data}")
             return {"error": "Invalid simulation format"}
     
+    # ---------- Account Actions ----------
+    elif callback_data.startswith("account_"):
+        action = callback_data.replace("account_", "")
+        return handle_account_action(action, handler_context)
+        
+    # ---------- Profile Actions ----------
+    elif callback_data.startswith("profile_"):
+        profile_type = callback_data.replace("profile_", "")
+        return handle_profile_action(profile_type, handler_context)
+            
     # ---------- Unknown Action ----------
     logger.warning(f"Unknown callback type: {callback_data}")
     return {
@@ -268,5 +278,52 @@ def handle_custom_simulation(context: Dict[str, Any]) -> Dict[str, Any]:
     logger.info(f"Would request custom simulation amount")
     return {
         "action": "custom_simulation",
+        "chat_id": context.get("chat_id")
+    }
+
+def handle_account_action(action: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle account-related actions."""
+    logger.info(f"Handling account action: {action}")
+    
+    if action == "subscribe":
+        return {
+            "action": "subscribe",
+            "chat_id": context.get("chat_id")
+        }
+    elif action == "unsubscribe":
+        return {
+            "action": "unsubscribe",
+            "chat_id": context.get("chat_id")
+        }
+    elif action == "help":
+        return {
+            "action": "help",
+            "chat_id": context.get("chat_id")
+        }
+    elif action == "status":
+        return {
+            "action": "status",
+            "chat_id": context.get("chat_id")
+        }
+    elif action == "wallet":
+        return {
+            "action": "wallet",
+            "chat_id": context.get("chat_id")
+        }
+    else:
+        logger.warning(f"Unknown account action: {action}")
+        return {
+            "action": "unknown_account_action",
+            "requested_action": action,
+            "chat_id": context.get("chat_id")
+        }
+
+def handle_profile_action(profile_type: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle profile-related actions."""
+    logger.info(f"Handling profile action: {profile_type}")
+    
+    return {
+        "action": "profile",
+        "profile_type": profile_type,
         "chat_id": context.get("chat_id")
     }
