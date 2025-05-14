@@ -378,23 +378,39 @@
 
 <script>
     function calculateROI() {
-        // Get input values
-        const investmentAmount = parseFloat(document.getElementById('investment-amount').value);
-        const apyRate = parseFloat(document.getElementById('apy-rate').value);
-        const investmentPeriod = parseInt(document.getElementById('investment-period').value);
-        const compoundFrequency = parseInt(document.getElementById('compound-frequency').value);
-        const tokenAVolatility = parseFloat(document.getElementById('token-a-volatility').value);
-        const tokenBVolatility = parseFloat(document.getElementById('token-b-volatility').value);
-        
-        // Calculate compounding periods
-        const periodsPerYear = 365 / compoundFrequency;
-        const totalPeriods = periodsPerYear * (investmentPeriod / 12);
-        
-        // Calculate APY as decimal
-        const apyDecimal = apyRate / 100;
-        
-        // Calculate periodic rate
-        const periodicRate = apyDecimal / periodsPerYear;
+        try {
+            // Safely get input values with fallbacks
+            const investmentAmountEl = document.getElementById('investment-amount');
+            const apyRateEl = document.getElementById('apy-rate');
+            const investmentPeriodEl = document.getElementById('investment-period');
+            const compoundFrequencyEl = document.getElementById('compound-frequency');
+            const tokenAVolatilityEl = document.getElementById('token-a-volatility');
+            const tokenBVolatilityEl = document.getElementById('token-b-volatility');
+            
+            // Check if all elements exist before proceeding
+            if (!investmentAmountEl || !apyRateEl || !investmentPeriodEl || 
+                !compoundFrequencyEl || !tokenAVolatilityEl || !tokenBVolatilityEl) {
+                console.error("One or more form elements not found");
+                return;
+            }
+            
+            // Get values with defaults in case of parsing errors
+            const investmentAmount = parseFloat(investmentAmountEl.value) || 1000;
+            const apyRate = parseFloat(apyRateEl.value) || 30;
+            const investmentPeriod = parseInt(investmentPeriodEl.value) || 12;
+            const compoundFrequency = parseInt(compoundFrequencyEl.value) || 7;
+            const tokenAVolatility = parseFloat(tokenAVolatilityEl.value) || 15;
+            const tokenBVolatility = parseFloat(tokenBVolatilityEl.value) || 2;
+            
+            // Calculate compounding periods
+            const periodsPerYear = 365 / compoundFrequency;
+            const totalPeriods = periodsPerYear * (investmentPeriod / 12);
+            
+            // Calculate APY as decimal
+            const apyDecimal = apyRate / 100;
+            
+            // Calculate periodic rate
+            const periodicRate = apyDecimal / periodsPerYear;
         
         // Calculate compound interest
         let finalValue = investmentAmount * Math.pow(1 + periodicRate, totalPeriods);
