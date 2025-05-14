@@ -142,3 +142,92 @@ def format_pool_data(pools: List[Dict[str, Any]], stable_pools: Optional[List[Di
     result += "\n💡 *Tip:* Use the Explore menu to view more pool options and simulate returns."
     
     return result
+    
+async def get_top_pools(limit: int = 5, profile: Optional[str] = None, min_tvl: Optional[float] = None) -> List[Dict[str, Any]]:
+    """
+    Get top performing pools, filtered by profile and TVL requirements
+    
+    Args:
+        limit: Maximum number of pools to return
+        profile: Optional profile filter ("high-risk" or "stable")
+        min_tvl: Optional minimum TVL requirement
+        
+    Returns:
+        List of pool dictionaries
+    """
+    # Import here to avoid circular imports
+    from api_mock_data import get_mock_pools
+    
+    # For now, use mock data - this will be replaced with real API
+    all_pools = get_mock_pools()
+    
+    # Filter by profile if specified
+    if profile == "high-risk":
+        # Higher APR pools with potentially lower TVL
+        filtered_pools = sorted(all_pools, key=lambda p: p.get('apr', 0), reverse=True)
+    elif profile == "stable":
+        # Focus on higher TVL, lower volatility pools
+        filtered_pools = sorted(all_pools, key=lambda p: p.get('tvl', 0), reverse=True)
+        # Further filter for stable pairs
+        stable_tokens = ['USDC', 'USDT', 'DAI', 'BUSD', 'UST']
+        filtered_pools = [
+            p for p in filtered_pools 
+            if any(t in p.get('token_a_symbol', '').upper() for t in stable_tokens) or
+               any(t in p.get('token_b_symbol', '').upper() for t in stable_tokens)
+        ]
+    else:
+        # Default to sorting by APR
+        filtered_pools = sorted(all_pools, key=lambda p: p.get('apr', 0), reverse=True)
+    
+    # Apply minimum TVL filter if specified
+    if min_tvl is not None:
+        filtered_pools = [p for p in filtered_pools if p.get('tvl', 0) >= min_tvl]
+    
+    # Return limited results
+    return filtered_pools[:limit]
+
+def format_pool_details(pool: Dict[str, Any], index: int = 1, investment_amount: Optional[float] = None) -> str:
+    """
+    Format detailed pool information for a specific pool, including potential returns
+    
+    Args:
+        pool: Pool dictionary
+        index: Display index
+        investment_amount: Optional amount to show projected returns
+        
+    Returns:
+        Formatted markdown string
+    """
+    try:
+        # Extract pool data
+        token_a = pool.get('token_a_symbol', 'Token A')
+        token_b = pool.get('token_b_symbol', 'Token B')
+        apr = pool.get('apr', 0)
+        tvl = pool.get('tvl', 0)
+        
+        # Format base details
+        result = (
+            f"*{index}. {token_a}/{token_b}*\n"
+            f"• APR: {apr:.2f}%\n"
+            f"• TVL: ${tvl:,.2f}\n"
+        )
+        
+        # Add projected returns if investment amount specified
+        if investment_amount:
+            daily_return = investment_amount * (apr/100/365)
+            weekly_return = daily_return * 7
+            monthly_return = daily_return * 30
+            yearly_return = investment_amount * (apr/100)
+            
+            result += (
+                f"• *Projected Returns on ${investment_amount:,.2f}:*\n"
+                f"  Daily: ${daily_return:.2f}\n"
+                f"  Weekly: ${weekly_return:.2f}\n"
+                f"  Monthly: ${monthly_return:.2f}\n"
+                f"  Yearly: ${yearly_return:.2f}\n"
+            )
+        
+        return result
+    except Exception as e:
+        logger.error(f"Error formatting pool details: {e}")
+        return f"*{index}. Error formatting pool*\n"

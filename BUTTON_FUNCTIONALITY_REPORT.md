@@ -305,3 +305,104 @@ if is_looping(chat_id, callback_data, query.id):
 ```
 
 These changes make the bot much more responsive to user interaction while still maintaining protection against actual message loops or spam.
+
+### 3. Invest Section Button Handlers
+
+We've implemented comprehensive fixes for the invest section buttons that were previously failing:
+
+**Problem**: The invest section buttons for selecting amounts and confirming investments were not being properly handled. When users clicked on amount selection buttons, nothing would happen or they would receive errors.
+
+**Solution**: We created specialized callback handlers for the invest section similar to our approach with the account section:
+
+1. **Amount Button Processing**:
+   - Added specialized processing for `amount_X` buttons in the callback handler
+   - Created a direct handler for `amount_custom` that prompts for manual amount entry
+   - Implemented proper error handling for amount parsing and validation
+
+2. **Investment Menu Flow**:
+   - Improved the `menu_invest` button to provide better context for users
+   - Connected the back navigation buttons properly
+   - Added direct handlers for numerically-specified amounts
+
+3. **Pool Selection**:
+   - Added functions to properly retrieve and format pool options based on selected amount
+   - Improved pool detail display with projected returns based on investment amount
+   - Fixed confirmation button interaction for specific pools
+
+4. **Callback Integration**:
+   - Used the same pattern of specialized callback handlers as in the account section
+   - Added proper error handling for each step of the investment flow
+   - Ensured that all callbacks receive appropriate responses
+
+Example of the improved investment button handling:
+
+```python
+# Button click to menu_invest
+elif callback_data.startswith("menu_invest"):
+    # Show investment amount options
+    keyboard = [
+        [
+            InlineKeyboardButton("$50", callback_data="amount_50"),
+            InlineKeyboardButton("$100", callback_data="amount_100"),
+            InlineKeyboardButton("$500", callback_data="amount_500")
+        ],
+        [
+            InlineKeyboardButton("$1,000", callback_data="amount_1000"),
+            InlineKeyboardButton("$5,000", callback_data="amount_5000")
+        ],
+        [
+            InlineKeyboardButton("Custom Amount", callback_data="amount_custom")
+        ],
+        [
+            InlineKeyboardButton("⬅️ Back", callback_data="back_to_main")
+        ]
+    ]
+    
+    await query.message.reply_markdown(
+        "💰 *Select Investment Amount*\n\n"
+        "Choose how much you'd like to invest to see top pool options:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+# Amount button handling  
+elif callback_data.startswith("amount_"):
+    # Import the proper handler from investment_flow
+    from investment_flow import process_invest_amount_callback
+    from keyboard_utils import MAIN_KEYBOARD
+
+    try:
+        # Special handling for amount buttons to make them more reliable
+        if callback_data == "amount_custom":
+            # For custom amount entry, let the user enter their own amount
+            await query.message.reply_markdown(
+                "💰 *Enter Custom Amount*\n\n"
+                "Please enter the amount you'd like to invest in USD.\n"
+                "For example: `500`",
+                reply_markup=ForceReply()
+            )
+        else:
+            # For predefined amounts, extract the amount value
+            amount_str = callback_data.replace("amount_", "")
+            try:
+                amount = float(amount_str)
+                result = await process_invest_amount_callback(callback_data, update, context, amount)
+                
+                if not result:
+                    await query.message.reply_text(
+                        "Sorry, there was an error processing your investment amount. Please try again.",
+                        reply_markup=MAIN_KEYBOARD
+                    )
+            except ValueError:
+                await query.message.reply_text(
+                    "Invalid amount format. Please try again.",
+                    reply_markup=MAIN_KEYBOARD
+                )
+    except Exception as e:
+        logger.error(f"Error processing invest amount: {e}", exc_info=True)
+        await query.message.reply_text(
+            "Sorry, there was an error processing your request. Please try again.",
+            reply_markup=MAIN_KEYBOARD
+        )
+```
+
+These improvements significantly enhance the investment flow functionality, making the entire process smooth and responsive for users.
