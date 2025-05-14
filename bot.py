@@ -2246,6 +2246,30 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                 # Create a new context.args with empty list for the walletconnect command
                 context.args = []
                 await walletconnect_command(update, context)
+            
+            elif account_action == "subscribe":
+                # Redirect to subscribe handler
+                logger.info("Redirecting account_subscribe to subscribe_command handler")
+                context.args = []
+                await subscribe_command(update, context)
+                
+            elif account_action == "unsubscribe":
+                # Redirect to unsubscribe handler
+                logger.info("Redirecting account_unsubscribe to unsubscribe_command handler")
+                context.args = []
+                await unsubscribe_command(update, context)
+                
+            elif account_action == "help":
+                # Redirect to help handler
+                logger.info("Redirecting account_help to help_command handler")
+                context.args = []
+                await help_command(update, context)
+                
+            elif account_action == "status":
+                # Redirect to status handler
+                logger.info("Redirecting account_status to status_command handler")
+                context.args = []
+                await status_command(update, context)
                 
             elif account_action == "profile":
                 # Show profile options
@@ -2259,44 +2283,17 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                     reply_markup=RISK_PROFILE_KEYBOARD
                 )
                 
-            elif account_action == "subscribe":
-                # Redirect to subscribe handler
-                logger.info("Redirecting account_subscribe to subscribe handler")
-                await subscribe_command(update, context)
-                
-            elif account_action == "unsubscribe":
-                # Redirect to unsubscribe handler
-                logger.info("Redirecting account_unsubscribe to unsubscribe handler")
-                await unsubscribe_command(update, context)
-                
-            elif account_action == "help":
-                # Show help information
-                logger.info("Showing help from account_help")
-                await query.message.reply_markdown(
-                    "❓ *Help & Support* ❓\n\n"
-                    "• Use the persistent buttons at the bottom of the chat to access the main functions\n"
-                    "• /invest - View and manage your investments\n"
-                    "• /explore - Discover new pools and DeFi opportunities\n"
-                    "• /account - Manage your wallet and settings\n\n"
-                    "For more assistance, contact our support team at support@filot.finance."
-                )
-                
-            elif account_action == "status":
-                # Redirect to status handler
-                logger.info("Redirecting account_status to status handler")
-                await status_command(update, context)
-                
             else:
-                # Handle unknown account action
+                # We already handled the common account actions (subscribe, unsubscribe, help, status)
+                # at the top of this section, so if we get here, it's an unknown action
                 logger.warning(f"Unknown account action: {account_action}")
                 from keyboard_utils import MAIN_KEYBOARD
                 await query.message.reply_text(
-                    "Sorry, that account option is not available yet. Please try another option from the Account menu.",
+                    f"Sorry, the action '{account_action}' is not recognized. Please use /help to see available commands.",
                     reply_markup=MAIN_KEYBOARD
                 )
-            
+                
             return
-            
         elif callback_data == "menu_main":
             # Show main menu - Import at use to avoid circular imports
             from menus import get_main_menu
