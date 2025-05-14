@@ -131,6 +131,18 @@ def route_callback(callback_data: str, handler_context: Dict[str, Any]) -> Optio
         pool_id = callback_data.replace("confirm_invest_", "")
         return handle_investment_confirmation(pool_id, handler_context)
         
+    elif callback_data.startswith("amount_"):
+        amount_str = callback_data.replace("amount_", "")
+        if amount_str == "custom":
+            return handle_custom_amount(handler_context)
+        else:
+            try:
+                amount = float(amount_str)
+                return handle_investment_amount(amount, handler_context)
+            except ValueError:
+                logger.error(f"Invalid amount format in callback: {callback_data}")
+                return {"error": "Invalid amount format"}
+        
     elif callback_data.startswith("invest_"):
         return handle_investment_option(callback_data, handler_context)
     
@@ -278,6 +290,23 @@ def handle_custom_simulation(context: Dict[str, Any]) -> Dict[str, Any]:
     logger.info(f"Would request custom simulation amount")
     return {
         "action": "custom_simulation",
+        "chat_id": context.get("chat_id")
+    }
+    
+def handle_custom_amount(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle custom investment amount request."""
+    logger.info(f"Processing custom amount investment request")
+    return {
+        "action": "amount_custom",
+        "chat_id": context.get("chat_id")
+    }
+    
+def handle_investment_amount(amount: float, context: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle specific investment amount selection."""
+    logger.info(f"Processing investment amount selection: ${amount:.2f}")
+    return {
+        "action": "amount_selected",
+        "amount": amount,
         "chat_id": context.get("chat_id")
     }
 

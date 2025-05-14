@@ -2210,7 +2210,16 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         elif callback_data == "menu_invest":
             # Show invest menu - Import at use to avoid circular imports
             from menus import get_invest_menu
-            await query.message.edit_reply_markup(reply_markup=get_invest_menu())
+            
+            # Updated to match menu_explore approach and display full message rather than just edit buttons
+            # This provides better context to the user and is more reliable
+            await query.message.edit_text(
+                "💰 *Invest in DeFi Pools* 💰\n\n"
+                "How much would you like to invest?\n"
+                "Select an amount below or choose 'Custom Amount' to enter a specific value:",
+                reply_markup=get_invest_menu(),
+                parse_mode="Markdown"
+            )
             return
             
         elif callback_data == "menu_explore":
@@ -2910,9 +2919,73 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             elif invest_action == "amount" or callback_data.startswith("amount_"):
                 # Import the proper handler from investment_flow
                 from investment_flow import process_invest_amount_callback
+                from keyboard_utils import MAIN_KEYBOARD
 
-                # Let the specialized handler in investment_flow.py handle this
-                await process_invest_amount_callback(update, context, callback_data)
+                try:
+                    # Special handling for amount buttons to make them more reliable
+                    if callback_data == "amount_custom":
+                        # For custom amount entry, let the user enter their own amount
+                        await query.message.reply_markdown(
+                            "💰 *Enter Your Investment Amount*\n\n"
+                            "Please enter how much you would like to invest. Just type a number (e.g. 100).\n\n"
+                            "💡 *Example:* 500 (represents $500 USD)",
+                            reply_markup=InlineKeyboardMarkup([
+                                [InlineKeyboardButton("⬅️ Back to Invest Menu", callback_data="menu_invest")]
+                            ])
+                        )
+                        
+                        # Set state to await amount if context available
+                        if hasattr(context, 'user_data'):
+                            context.user_data["state"] = "awaiting_amount"
+                    else:
+                        # Process a specific amount that was chosen via button
+                        try:
+                            amount = float(callback_data.replace("amount_", ""))
+                            logger.info(f"Processing investment amount: ${amount:.2f}")
+                            
+                            # Show investment options for this amount
+                            from pool_formatter import get_top_pools, format_pool_details
+                            top_pools = await get_top_pools(3, profile=None, min_tvl=10000)
+                            
+                            response = (
+                                f"💰 *Investment Options for ${amount:.2f}*\n\n"
+                                f"Here are the top pools for your investment:\n\n"
+                            )
+                            
+                            # Format pools with investment-specific details
+                            for i, pool in enumerate(top_pools, 1):
+                                response += format_pool_details(pool, i, amount)
+                            
+                            # Create buttons for pools
+                            keyboard = []
+                            for i, pool in enumerate(top_pools):
+                                pool_id = pool.get('id', f'pool_{i}')
+                                token_pair = f"{pool.get('token_a_symbol', 'Token A')}/{pool.get('token_b_symbol', 'Token B')}"
+                                keyboard.append([
+                                    InlineKeyboardButton(f"Invest in {token_pair}", callback_data=f"confirm_invest_{pool_id}")
+                                ])
+                            
+                            # Add navigation buttons
+                            keyboard.append([
+                                InlineKeyboardButton("⬅️ Back to Amounts", callback_data="menu_invest"),
+                                InlineKeyboardButton("🏠 Main Menu", callback_data="back_to_main")
+                            ])
+                            
+                            # Send response
+                            await query.message.reply_markdown(
+                                response,
+                                reply_markup=InlineKeyboardMarkup(keyboard)
+                            )
+                            
+                        except ValueError:
+                            # Fallback to the investment flow handler
+                            await process_invest_amount_callback(update, context, callback_data)
+                except Exception as e:
+                    logger.error(f"Error processing amount callback: {e}", exc_info=True)
+                    await query.message.reply_text(
+                        "Sorry, I couldn't process that investment amount. Please try again or select another option.",
+                        reply_markup=MAIN_KEYBOARD
+                    )
                 
             # Add other investment action handlers as needed
             else:
