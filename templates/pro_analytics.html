@@ -271,6 +271,37 @@
                             <button type="button" class="btn btn-primary px-4" onclick="calculateROI()">Calculate Returns</button>
                         </div>
                     </form>
+                    
+                    <!-- Results Container -->
+                    <div class="mt-4 pt-4 border-top" id="results-container" style="display:none;">
+                        <h3 class="h5 mb-3 text-center">Projected Investment Results</h3>
+                        <div class="row text-center">
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body">
+                                        <h4 class="h6 text-muted">Final Value</h4>
+                                        <p class="h3 mb-0 text-primary" id="final-value">$0.00</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body">
+                                        <h4 class="h6 text-muted">Total Return</h4>
+                                        <p class="h3 mb-0 text-success" id="total-return">$0.00</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body">
+                                        <h4 class="h6 text-muted">ROI</h4>
+                                        <p class="h3 mb-0 text-success" id="roi-percentage">0.00%</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="mt-4 p-3 bg-light rounded">
                         <div class="row">
                             <div class="col-md-4 text-center mb-3 mb-md-0">
@@ -431,10 +462,14 @@
             const finalValueEl = document.getElementById('final-value');
             const totalReturnEl = document.getElementById('total-return');
             const roiPercentageEl = document.getElementById('roi-percentage');
+            const resultsContainer = document.getElementById('results-container');
             
             if (finalValueEl) finalValueEl.innerText = '$' + finalValue.toFixed(2);
             if (totalReturnEl) totalReturnEl.innerText = '$' + totalReturn.toFixed(2);
             if (roiPercentageEl) roiPercentageEl.innerText = roiPercentage.toFixed(2) + '%';
+            
+            // Show the results container
+            if (resultsContainer) resultsContainer.style.display = 'block';
         } catch (error) {
             console.error("Error in ROI calculator:", error);
         }
