@@ -2631,9 +2631,49 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                 amount = float(amount_str)
                 logger.info(f"Processing simulation request for ${amount:.2f}")
                 
-                # Set arguments for simulate_command and call it
-                context.args = [str(amount)]
-                await simulate_command(update, context)
+                # Instead of calling simulate_command directly, let's implement the simulation here
+                await query.message.reply_text("Please wait while I run the investment simulation...")
+                
+                try:
+                    # Import at function level to avoid circular imports
+                    from response_data import get_pool_data as get_predefined_pool_data
+                    
+                    # Get predefined pool data directly as dictionaries
+                    predefined_data = get_predefined_pool_data()
+                    
+                    # Process top APR pools from the predefined data (bestPerformance = topAPR)
+                    # These should be the 2 highest-performing pools
+                    pool_list = predefined_data.get('bestPerformance', [])
+                    
+                    if not pool_list:
+                        await query.message.reply_text(
+                            "Sorry, I couldn't retrieve pool data at the moment. Please try again later."
+                        )
+                        return
+                    
+                    # For simulation, we use the top performing pools (2 pools)
+                    from pool_formatter import format_simulation_results
+                    
+                    formatted_simulation = format_simulation_results(pool_list, amount)
+                    
+                    # Add wallet connection options - both direct and WalletConnect
+                    keyboard = [
+                        [
+                            InlineKeyboardButton("Connect Wallet (Address)", callback_data="wallet_connect_address"),
+                            InlineKeyboardButton("Connect Wallet (QR Code)", callback_data="wallet_connect_qr")
+                        ],
+                        [InlineKeyboardButton("⬅️ Back to Explore", callback_data="back_to_explore")]
+                    ]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    
+                    # Send the simulation results
+                    await query.message.reply_text(formatted_simulation, reply_markup=reply_markup)
+                    logger.info(f"Sent simulation response for amount ${amount:.2f}")
+                except Exception as e:
+                    logger.error(f"Error processing simulation: {e}", exc_info=True)
+                    await query.message.reply_text(
+                        "Sorry, there was an error running the simulation. Please try again later."
+                    )
                 return
                 
             except (ValueError, TypeError) as e:
@@ -2648,15 +2688,17 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         elif callback_data == "back_to_explore":
             # Go back to explore menu
             from menus import get_explore_menu
+            
+            explore_text = (
+                "🔍 *Explore FiLot Features* 🔍\n\n"
+                "Discover investment opportunities, simulate returns, and learn about cryptocurrency pools."
+            )
+            
+            # Use edit_text instead of reply_markdown to update the existing message
             await query.message.edit_text(
-                "📊 *Explore DeFi Opportunities* 📊\n\n"
-                "Select what you'd like to explore:\n\n"
-                "• For *FAQ & Help*: Type `/explore faq`\n"
-                "• For *Community*: Type `/explore social`\n"
-                "• For *Top Pools*: Use the Top Pools button below\n"
-                "• For *Simulations*: Use the Simulate Returns button below",
-                reply_markup=get_explore_menu(),
-                parse_mode="Markdown"
+                explore_text,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=get_explore_menu()
             )
             return
         
