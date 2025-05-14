@@ -108,7 +108,7 @@ The home page features:
 1. **Hero Section**:
    - **Main Headline**: "Precision Investing with FiLot"
    - **Subheading**: "The trusted AI-powered investment advisor bringing institutional-grade crypto liquidity pool investing to everyone, with cutting-edge security and reliability."
-   - **Badges**: "Secure Investment"
+   - **Badges**: "oSecure Investment"
    - **Feature Points**:
      - Trusted Platform
      - Bank-Grade Security
