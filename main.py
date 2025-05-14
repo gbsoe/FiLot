@@ -1632,15 +1632,46 @@ Share your experiences and learn from others!
                                 # Import keyboard for consistent UI
                                 from keyboard_utils import MAIN_KEYBOARD
                                 
-                                send_response(
-                                    chat_id,
-                                    "📡 *Subscription Activated*\n\n"
-                                    "You are now subscribed to daily updates!\n\n"
-                                    "You'll receive market insights and top pool recommendations each day.",
-                                    parse_mode="Markdown",
-                                    reply_markup=MAIN_KEYBOARD
-                                )
-                                logger.info(f"User {update_obj.callback_query.from_user.id} subscribed to daily updates")
+                                # Actually update the database with subscription status
+                                try:
+                                    import db_utils
+                                    user_id = update_obj.callback_query.from_user.id
+                                    
+                                    # Import app context to handle database operations
+                                    from app import app
+                                    with app.app_context():
+                                        success = db_utils.subscribe_user(user_id)
+                                        if success:
+                                            db_utils.log_user_activity(user_id, "subscribe")
+                                    
+                                    # Message differs based on success
+                                    if success:
+                                        send_response(
+                                            chat_id,
+                                            "📡 *Subscription Activated*\n\n"
+                                            "You are now subscribed to daily updates!\n\n"
+                                            "You'll receive market insights and top pool recommendations each day.",
+                                            parse_mode="Markdown",
+                                            reply_markup=MAIN_KEYBOARD
+                                        )
+                                    else:
+                                        send_response(
+                                            chat_id,
+                                            "📡 *Already Subscribed*\n\n"
+                                            "You are already subscribed to daily updates!\n\n"
+                                            "You'll continue to receive market insights and top pool recommendations each day.",
+                                            parse_mode="Markdown",
+                                            reply_markup=MAIN_KEYBOARD
+                                        )
+                                except Exception as e:
+                                    logger.error(f"Error handling subscribe callback: {e}", exc_info=True)
+                                    send_response(
+                                        chat_id,
+                                        "Sorry, there was an error updating your subscription status. Please try again later.",
+                                        reply_markup=MAIN_KEYBOARD
+                                    )
+                                
+                                logger.info(f"User {update_obj.callback_query.from_user.id} attempted to subscribe to daily updates")
                                 
                             # Handle unsubscribe callback
                             elif callback_data == "unsubscribe":
