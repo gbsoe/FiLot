@@ -2597,6 +2597,57 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                     reply_markup=MAIN_KEYBOARD
                 )
             
+        # Handle simulation requests when simulate_100, simulate_500, etc. is clicked
+        elif callback_data.startswith("simulate_"):
+            try:
+                # Extract the simulation amount
+                amount_str = callback_data.replace("simulate_", "")
+                
+                # Check for custom simulation request
+                if amount_str == "custom":
+                    await query.message.reply_markdown(
+                        "✏️ *Custom Simulation Amount* ✏️\n\n"
+                        "Please enter the amount you want to simulate in USD.\n"
+                        "For example: `$500` or `1000`",
+                        reply_markup=InlineKeyboardMarkup([
+                            [InlineKeyboardButton("⬅️ Back to Simulate", callback_data="explore_simulate")]
+                        ])
+                    )
+                    return
+                
+                # Handle numeric amounts
+                amount = float(amount_str)
+                logger.info(f"Processing simulation request for ${amount:.2f}")
+                
+                # Set arguments for simulate_command and call it
+                context.args = [str(amount)]
+                await simulate_command(update, context)
+                return
+                
+            except (ValueError, TypeError) as e:
+                logger.error(f"Error processing simulation callback: {e}")
+                await query.message.reply_text(
+                    "Sorry, there was an error processing your simulation request. "
+                    "Please try again or use /simulate command directly."
+                )
+                return
+                
+        # Handle back to explore menu button
+        elif callback_data == "back_to_explore":
+            # Go back to explore menu
+            from menus import get_explore_menu
+            await query.message.edit_text(
+                "📊 *Explore DeFi Opportunities* 📊\n\n"
+                "Select what you'd like to explore:\n\n"
+                "• For *FAQ & Help*: Type `/explore faq`\n"
+                "• For *Community*: Type `/explore social`\n"
+                "• For *Top Pools*: Use the Top Pools button below\n"
+                "• For *Simulations*: Use the Simulate Returns button below",
+                reply_markup=get_explore_menu(),
+                parse_mode="Markdown"
+            )
+            return
+            
         # Handle investment-related actions with standardized approach
         elif callback_data.startswith("invest_") or callback_data.startswith("amount_") or callback_data.startswith("wallet_connect_"):
             # Determine the investment action type
