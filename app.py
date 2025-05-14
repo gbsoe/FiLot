@@ -237,10 +237,14 @@ def pools():
                 'fee': fee
             })
         
-        # Use the extremely simplified template
+        # Use the fully featured pools template
         return render_template("minimal_pools.html", pools=pool_data)
     except Exception as e:
         logger.error(f"Error in pools route: {e}")
+        # Show detailed error message for easier debugging
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"Detailed error: {error_details}")
         return render_template("error.html", error=str(e))
 
 @app.route("/users")
@@ -362,6 +366,11 @@ def docs():
 def features():
     """Bot features page."""
     return render_template("features.html")
+
+@app.route("/knowledge")
+def knowledge():
+    """Knowledge page about FiLot and how it works."""
+    return render_template("knowledge.html")
 
 # API Endpoints
 

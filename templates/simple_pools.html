@@ -1,77 +1,44 @@
 {% extends "base.html" %}
 
-{% block title %}FiLot Bot - Pools (Simple){% endblock %}
+{% block title %}Simple Pools Page{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h2 class="mb-0">Cryptocurrency Pools</h2>
-            </div>
-            <div class="card-body">
-                <p class="card-text">
-                    View and monitor all tracked liquidity pools sorted by APR (Annual Percentage Rate).
-                </p>
-            </div>
-        </div>
+<div class="container mt-4">
+  <h1>Simple Pools List</h1>
+  
+  <div class="alert alert-info">
+    <p>This is a simplified pool page for debugging</p>
+    <p>About Raydium: Raydium is a leading Automated Market Maker (AMM) on the Solana blockchain.</p>
+    <a href="https://raydium.io/liquidity-pools/" target="_blank" class="btn btn-primary">Visit Raydium Liquidity Pools</a>
+  </div>
+  
+  <div class="card">
+    <div class="card-body">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Pool</th>
+            <th>APR</th>
+            <th>TVL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if pools %}
+            {% for pool in pools %}
+              <tr>
+                <td>{{ pool.token_a_symbol }}/{{ pool.token_b_symbol }}</td>
+                <td>{{ pool.apr_24h }}</td>
+                <td>{{ pool.tvl }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="3">No pools available</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
     </div>
+  </div>
 </div>
-
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h3 class="mb-0">Pool List</h3>
-                    <div>
-                        <button class="btn btn-outline-primary" id="refresh-pools">
-                            <i class="bi bi-arrow-clockwise"></i> Refresh
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Pool</th>
-                                <th>APR (24h)</th>
-                                <th>APR (7d)</th>
-                                <th>TVL</th>
-                                <th>Fee</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if pools %}
-                                {% for pool in pools %}
-                                <tr>
-                                    <td>{{ pool.token_a_symbol }}/{{ pool.token_b_symbol }}</td>
-                                    <td>{{ pool.apr_24h }}%</td>
-                                    <td>{{ pool.apr_7d }}%</td>
-                                    <td>${{ pool.tvl }}</td>
-                                    <td>{{ pool.fee }}%</td>
-                                </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="5" class="text-center">No pools available</td>
-                                </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    document.getElementById('refresh-pools').addEventListener('click', function() {
-        location.reload();
-    });
-</script>
 {% endblock %}

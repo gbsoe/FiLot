@@ -1,40 +1,201 @@
 {% extends "base.html" %}
 
-{% block title %}Cryptocurrency Pools{% endblock %}
+{% block title %}Cryptocurrency Pools | FiLot Investments{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-  <h1>Cryptocurrency Pools</h1>
-  
-  <div class="alert alert-info">
-    Viewing simplified list of cryptocurrency pools
+  <div class="row mb-5">
+    <div class="col-lg-8 mx-auto text-center">
+      <h1 class="fw-bold mb-3">Cryptocurrency Liquidity Pools</h1>
+      <p class="lead text-muted">FiLot helps you earn passive income by investing in these high-performance liquidity pools.</p>
+    </div>
   </div>
   
-  <table class="table table-striped table-dark">
-    <thead>
-      <tr>
-        <th>Pool</th>
-        <th>APR (24h)</th>
-        <th>TVL</th>
-        <th>Fee</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% if pools %}
-        {% for pool in pools %}
-          <tr>
-            <td>{{ pool.token_a_symbol }}/{{ pool.token_b_symbol }}</td>
-            <td>{{ pool.apr_24h }}</td>
-            <td>{{ pool.tvl }}</td>
-            <td>{{ pool.fee }}</td>
-          </tr>
-        {% endfor %}
-      {% else %}
-        <tr>
-          <td colspan="4" class="text-center">No pools available</td>
-        </tr>
-      {% endif %}
-    </tbody>
-  </table>
+  <div class="row mb-5">
+    <div class="col-lg-10 mx-auto">
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5">
+        <div class="card-body p-0">
+          <div class="row g-0">
+            <div class="col-md-5 p-4 d-flex flex-column justify-content-center" style="background: linear-gradient(120deg, rgba(39, 84, 235, 0.05), rgba(39, 84, 235, 0.1));">
+              <h3 class="fw-bold mb-3">What are Liquidity Pools?</h3>
+              <p class="text-muted">Liquidity pools are on-chain smart contracts that hold paired token reserves, letting traders swap directly against the pool rather than a counterparty. By depositing tokens, liquidity providers earn a proportional share of each swap's fees, converting idle tokens into a yield-generating asset.</p>
+            </div>
+            <div class="col-md-7 p-4">
+              <div class="d-flex mb-4">
+                <div class="me-3">
+                  <div class="feature-icon">
+                    <i class="fas fa-coins"></i>
+                  </div>
+                </div>
+                <div>
+                  <h4 class="fw-bold">Powered by Raydium on Solana</h4>
+                  <p class="mb-0">FiLot currently focuses on Raydium liquidity pools on the Solana blockchain. Raydium is Solana's leading automated market maker (AMM) and liquidity provider, with an all-time high TVL of $2.589 billion as of May 2025 and processing over $1.2 billion in 24h DEX volume. In Q1 2025, its average daily trading volume reached $3.6 billion, marking its fourth straight quarter leading Solana DEX volumes.</p>
+                </div>
+              </div>
+              
+              <div class="d-flex">
+                <div class="me-3">
+                  <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                  </div>
+                </div>
+                <div>
+                  <h4 class="fw-bold">Security & Reliability</h4>
+                  <p class="mb-0">Raydium has undergone multiple security audits by leading firms including Kudelski Security (Feb 2021, July 2021), Quantstamp (Oct 2021), Neodyme (Oct 2021, Dec 2022, Jan 2023, Nov 2023), OtterSec (Jan 2023), and Halborn (Jan 2023, Dec 2023). An active bug-bounty program and continuous peer reviews further enhance security. After a November 2022 incident, Raydium patched vulnerabilities and strengthened key-management protocols.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="alert alert-light p-4 border rounded-3 mb-4">
+        <div class="d-flex">
+          <i class="fas fa-info-circle fs-4 me-3 mt-1 text-primary"></i>
+          <div>
+            <h5 class="fw-bold">Why FiLot Chooses Raydium</h5>
+            <p class="mb-0">Raydium offers some of the most stable and profitable liquidity pools in the crypto space, with DeFiLlama reporting $2.177 billion current TVL. Their innovative hybrid model combines a "constant-product" AMM with OpenBook's limit-order functionality via Fibonacci-sequenced orders, merging AMM depth with order-book precision. Launched in February 2021, Raydium enables permissionless pool creation, yield farming, and new-token distributions through its AcceleRaytor launchpad. FiLot's AI analyzes thousands of pools to select only the most reliable ones with consistent returns.</p>
+            <div class="mt-3">
+              <a href="https://raydium.io/liquidity-pools/" target="_blank" class="btn btn-primary">
+                <i class="fas fa-external-link-alt me-2"></i>Visit Raydium Liquidity Pools
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mb-3">
+    <div class="col-12">
+      <h2 class="fw-bold">Current Top Performing Pools</h2>
+      <p class="text-muted">These are the highest yielding pools that meet FiLot's strict security and performance criteria.</p>
+    </div>
+  </div>
+  
+  <div class="card border-0 shadow mb-5">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0 px-4 py-3">Pool</th>
+              <th class="border-0 px-4 py-3">APR (24h)</th>
+              <th class="border-0 px-4 py-3">Total Value Locked</th>
+              <th class="border-0 px-4 py-3">Fee</th>
+              <th class="border-0 px-4 py-3">Risk Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if pools %}
+              {% for pool in pools %}
+                <tr>
+                  <td class="px-4 py-3 align-middle">
+                    <div class="d-flex align-items-center">
+                      <div class="me-3">
+                        <div class="d-flex">
+                          <div class="rounded-circle overflow-hidden" style="width: 28px; height: 28px; background-color: #f8fafc; margin-right: -10px; z-index: 2; border: 2px solid white;">
+                            <img src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/{{ pool.token_a_symbol }}/logo.png" alt="{{ pool.token_a_symbol }}" onerror="this.onerror=null; this.src='https://cryptologos.cc/logos/{{ pool.token_a_symbol | lower }}-{{ pool.token_a_symbol | lower }}-logo.png';" class="img-fluid">
+                          </div>
+                          <div class="rounded-circle overflow-hidden" style="width: 28px; height: 28px; background-color: #f8fafc; z-index: 1; border: 2px solid white;">
+                            <img src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/{{ pool.token_b_symbol }}/logo.png" alt="{{ pool.token_b_symbol }}" onerror="this.onerror=null; this.src='https://cryptologos.cc/logos/{{ pool.token_b_symbol | lower }}-{{ pool.token_b_symbol | lower }}-logo.png';" class="img-fluid">
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <strong>{{ pool.token_a_symbol }}/{{ pool.token_b_symbol }}</strong>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 align-middle text-primary fw-bold">{{ pool.apr_24h }}</td>
+                  <td class="px-4 py-3 align-middle">{{ pool.tvl }}</td>
+                  <td class="px-4 py-3 align-middle">{{ pool.fee }}</td>
+                  <td class="px-4 py-3 align-middle">
+                    {% if "12" in pool.apr_24h %}
+                      <span class="badge bg-primary" style="background-color: #2754EB !important;">Low Risk</span>
+                    {% elif "24" in pool.apr_24h %}
+                      <span class="badge bg-primary" style="background-color: #2754EB !important;">Balanced</span>
+                    {% elif "36" in pool.apr_24h %}
+                      <span class="badge bg-primary" style="background-color: #2754EB !important;">Medium Risk</span>
+                    {% else %}
+                      <span class="badge bg-primary" style="background-color: #2754EB !important;">Growth</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="5" class="text-center py-4">
+                  <div class="py-5">
+                    <i class="fas fa-database text-muted mb-3" style="font-size: 3rem;"></i>
+                    <p class="lead mb-0">No pools available at the moment</p>
+                    <p class="text-muted">Please check back later or contact support</p>
+                  </div>
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mb-5">
+    <div class="col-lg-10 mx-auto">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
+        <div class="card-body p-4">
+          <h4 class="fw-bold text-primary mb-3">Raydium's Market Leadership</h4>
+          <div class="row">
+            <div class="col-md-3 mb-4 mb-md-0">
+              <div class="text-center p-3 border rounded-3">
+                <div class="display-5 text-primary mb-2">$2.58B+</div>
+                <div class="fw-bold">All-Time High TVL</div>
+                <small class="text-muted">May 2025</small>
+              </div>
+            </div>
+            <div class="col-md-3 mb-4 mb-md-0">
+              <div class="text-center p-3 border rounded-3">
+                <div class="display-5 text-primary mb-2">$2.17B</div>
+                <div class="fw-bold">Current TVL</div>
+                <small class="text-muted">DeFiLlama</small>
+              </div>
+            </div>
+            <div class="col-md-3 mb-4 mb-md-0">
+              <div class="text-center p-3 border rounded-3">
+                <div class="display-5 text-primary mb-2">$429M</div>
+                <div class="fw-bold">24h Volume</div>
+                <small class="text-muted">CoinMarketCap</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center p-3 border rounded-3">
+                <div class="display-5 text-primary mb-2">$3.6B</div>
+                <div class="fw-bold">Avg. Daily Vol.</div>
+                <small class="text-muted">Q1 2025 (Messari)</small>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4">
+            <p class="mb-0">Raydium's combination of deep liquidity, hybrid AMM/CLOB design, and rigorous security posture keeps it at the forefront of Solana DeFi—delivering fast, low-cost trades and reliable yield opportunities for liquidity providers.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-light p-4 border rounded-3">
+        <div class="d-flex">
+          <i class="fas fa-lightbulb fs-4 me-3 mt-1 text-warning"></i>
+          <div>
+            <h5 class="fw-bold">How FiLot Makes Investing Easy</h5>
+            <p class="mb-0">Instead of manually researching and selecting pools, FiLot's AI analyzes risk factors, historical performance, and market conditions to recommend the best pools for your investment style. You can start earning with just a few taps in the FiLot Telegram bot.</p>
+            <div class="mt-3">
+              <a href="https://t.me/filot_bot" target="_blank" class="btn btn-primary">
+                <i class="fab fa-telegram me-2"></i>Start with FiLot Bot
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
