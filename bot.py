@@ -928,8 +928,11 @@ async def simulate_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         
         # Add wallet connection options - both direct and WalletConnect
         keyboard = [
-            [InlineKeyboardButton("Connect Wallet (Address)", callback_data="enter_address")],
-            [InlineKeyboardButton("Connect Wallet (QR Code)", callback_data="walletconnect")]
+            [
+                InlineKeyboardButton("Connect Wallet (Address)", callback_data="wallet_connect_address"),
+                InlineKeyboardButton("Connect Wallet (QR Code)", callback_data="wallet_connect_qr")
+            ],
+            [InlineKeyboardButton("⬅️ Back to Explore", callback_data="back_to_explore")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -2562,6 +2565,15 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                 )
                 await query.message.reply_markdown(faq_text)
                 
+            elif explore_action == "simulate":
+                # Show simulation options
+                await query.message.reply_markdown(
+                    "💰 *Simulate Investment Returns* 💰\n\n"
+                    "Select an amount to simulate or enter a custom amount using:\n"
+                    "`/explore simulate <amount>`",
+                    reply_markup=get_simulate_menu()
+                )
+                
             elif explore_action == "social":
                 # Show social media information with updated text from main.py
                 community_text = (
@@ -2647,12 +2659,60 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                 parse_mode="Markdown"
             )
             return
+        
+        # Handle wallet connection options from simulation results
+        elif callback_data == "wallet_connect_address":
+            await query.message.reply_markdown(
+                "🔗 *Connect Wallet by Address* 🔗\n\n"
+                "Please enter your Solana wallet address to connect.\n"
+                "Example: `8xrt7LnhU4VrVNmhfjVsHLa2rMxXUyGemwveRFchvQxr`",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("⬅️ Back to Simulation", callback_data="back_to_explore")]
+                ])
+            )
+            return
+        
+        elif callback_data == "wallet_connect_qr":
+            await query.message.reply_markdown(
+                "📱 *WalletConnect QR Code* 📱\n\n"
+                "Scan this QR code with your Solana wallet app to connect.\n"
+                "(QR code generation in progress...)",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("⬅️ Back to Simulation", callback_data="back_to_explore")]
+                ])
+            )
+            # In a real implementation, we would generate a WalletConnect session and QR code here
+            return
             
         # Handle investment-related actions with standardized approach
         elif callback_data.startswith("invest_") or callback_data.startswith("amount_") or callback_data.startswith("wallet_connect_"):
             # Determine the investment action type
             invest_action = ""
             
+            # Handle numeric wallet_connect callbacks specially
+            if callback_data.startswith("wallet_connect_") and any(c.isdigit() for c in callback_data):
+                # This is a wallet connect for a specific amount from simulation
+                try:
+                    amount = float(callback_data.replace("wallet_connect_", ""))
+                    logger.info(f"Processing wallet connect for investment amount: ${amount:.2f}")
+                    
+                    # Show wallet connect options
+                    await query.message.reply_markdown(
+                        f"🔗 *Connect Wallet for ${amount:.2f} Investment* 🔗\n\n"
+                        "Choose how you'd like to connect your wallet:",
+                        reply_markup=InlineKeyboardMarkup([
+                            [
+                                InlineKeyboardButton("Enter Address", callback_data="wallet_connect_address"),
+                                InlineKeyboardButton("Scan QR Code", callback_data="wallet_connect_qr")
+                            ],
+                            [InlineKeyboardButton("⬅️ Back", callback_data="back_to_explore")]
+                        ])
+                    )
+                    return
+                except (ValueError, TypeError) as e:
+                    logger.error(f"Error parsing wallet connect amount: {e}")
+                    
+            # Normal invest action handling        
             if callback_data.startswith("invest_"):
                 invest_action = callback_data.replace("invest_", "")
                 logger.info(f"Processing invest action: {invest_action}")
@@ -2664,14 +2724,18 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                 logger.info(f"Processing wallet connect for investment: {callback_data}")
             
             # Handle different investment actions
-            if invest_action == "wallet_connect" or callback_data.startswith("wallet_connect_"):
-                # Extract amount from callback data
-                amount = float(callback_data.replace("wallet_connect_", ""))
-                
+            if invest_action == "wallet_connect" and not callback_data.startswith("wallet_connect_address") and not callback_data.startswith("wallet_connect_qr"):
+                # For generic wallet connect without amount specified
                 await query.message.reply_markdown(
-                    f"💼 *Connect Wallet to Invest ${amount:,.2f}*\n\n"
-                    "To proceed with this investment, please connect your wallet.\n\n"
-                    "Use /wallet to connect your wallet address, or use /walletconnect for a QR code connection."
+                    "🔗 *Connect Wallet* 🔗\n\n"
+                    "Choose how you'd like to connect your wallet:",
+                    reply_markup=InlineKeyboardMarkup([
+                        [
+                            InlineKeyboardButton("Enter Address", callback_data="wallet_connect_address"),
+                            InlineKeyboardButton("Scan QR Code", callback_data="wallet_connect_qr")
+                        ],
+                        [InlineKeyboardButton("⬅️ Back", callback_data="back_to_main")]
+                    ])
                 )
             
             elif invest_action == "amount" or callback_data.startswith("amount_"):
