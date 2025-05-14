@@ -7,7 +7,7 @@ This document explains how button processing works in the FiLot Telegram bot's t
 ## Button Processing Architecture
 
 FiLot uses a multi-layered system to process button interactions:
-
+2
 1. **Callback Query Generation**: When a user clicks a button, a callback query is generated with a specific `callback_data` value.
 2. **Callback Routing**: The `handle_callback_query` function in `bot.py` receives the callback query and routes it to the appropriate handler.
 3. **Callback Registry**: The `callback_registry` in `callback_handler.py` tracks processed callbacks to prevent duplicate processing.
@@ -205,7 +205,9 @@ Context persistence problems:
 
 By addressing these issues, the button functionality in all sections should improve significantly, providing a more reliable user experience.
 
-## Recent Fix: Account Section Button Handlers
+## Recent Fixes
+
+### 1. Account Section Button Handlers
 
 We've just implemented a fix for the account section buttons (subscribe, unsubscribe, help, status) that were previously failing with errors. The issue was:
 

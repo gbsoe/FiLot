@@ -32,7 +32,8 @@ _callback_locks: Dict[str, float] = {}
 
 # Memory management
 MAX_TRACKING_SIZE = 1000
-MAX_LOCK_DURATION = 5.0  # seconds
+MAX_LOCK_DURATION = 2.0  # seconds - reduced from 5.0 to be less aggressive for buttons
+BUTTON_COOLDOWN = 0.5  # seconds - very short cooldown for buttons specifically
 
 def is_message_looping(chat_id: int, message_text: Optional[str] = None, 
                        callback_id: Optional[str] = None) -> bool:
@@ -61,19 +62,37 @@ def is_message_looping(chat_id: int, message_text: Optional[str] = None,
             msg_hash = hashlib.md5(message_text.encode()).hexdigest()[:12]
             content_key = f"{chat_id}_{msg_hash}"
             
+            # Check if this is a button-related message (callbacks or menu items)
+            is_button = False
+            if message_text and isinstance(message_text, str):
+                # Check if this is a button callback
+                button_patterns = ['menu_', 'account_', 'explore_', 'profile_', 'wallet_', 'amount_', 'simulate_']
+                is_button = any(message_text.startswith(pattern) for pattern in button_patterns)
+            
             # Check if we've seen this message content recently
             if content_key in _recent_messages:
                 last_time = _recent_messages[content_key]
-                if now - last_time < 10.0:
-                    logger.warning(f"Similar message detected within 10s window: {message_text[:30]}...")
+                
+                # Use a shorter cooldown window for buttons
+                if is_button:
+                    cooldown_window = BUTTON_COOLDOWN
+                else:
+                    cooldown_window = 5.0  # Reduced from 10.0 seconds for regular messages
+                
+                if now - last_time < cooldown_window:
+                    if is_button:
+                        logger.info(f"Button pressed again within {cooldown_window}s: {message_text[:30]}...")
+                    else:
+                        logger.warning(f"Similar message detected within {cooldown_window}s window: {message_text[:30]}...")
                     
-                    # Lock this chat for a short period
-                    _user_locks[chat_id] = True
+                    # For buttons, don't lock the whole chat, just reject this specific callback
+                    if not is_button:
+                        # Only lock chat for non-button messages
+                        _user_locks[chat_id] = True
+                        # Schedule unlock after MAX_LOCK_DURATION
+                        threading.Timer(MAX_LOCK_DURATION, _release_lock, args=[chat_id]).start()
                     
-                    # Schedule unlock after MAX_LOCK_DURATION
-                    threading.Timer(MAX_LOCK_DURATION, _release_lock, args=[chat_id]).start()
-                    
-                    return True
+                    return not is_button  # Return False for buttons to allow them through, True for regular messages
             
             # Update the recent messages
             _recent_messages[content_key] = now
@@ -85,18 +104,38 @@ def is_message_looping(chat_id: int, message_text: Optional[str] = None,
         if callback_id:
             # Whitelist for navigation buttons that should bypass anti-loop protection
             # These buttons are exempt from loop detection because they're used for core navigation
+            # Comprehensive list of all main navigation buttons
             navigation_buttons = [
-                'menu_explore', 'menu_invest', 'menu_account', 'back_to_explore', 'explore_simulate',
-                # Add all account menu options
-                'walletconnect', 'subscribe', 'unsubscribe', 'status', 'menu_faq',
-                # Add profile settings
-                'profile_high-risk', 'profile_stable',
-                # Add explore menu buttons
-                'explore_pools', 'explore_info', 'explore_faq'
+                # Main menu navigation
+                'menu_explore', 'menu_invest', 'menu_account', 'menu_main', 'menu_faq',
+                
+                # Explore section buttons
+                'back_to_explore', 'explore_simulate', 'explore_pools', 'explore_info', 'explore_faq',
+                
+                # Account section buttons - specific buttons
+                'walletconnect', 'subscribe', 'unsubscribe', 'status', 'help',
+                
+                # Profile settings
+                'profile_high-risk', 'profile_stable', 'profile_moderate',
+                
+                # Investment buttons
+                'confirm_invest', 'invest_now', 'invest_back_to_profile', 'start_invest',
+                
+                # Simulation buttons
+                'simulate_100', 'simulate_500', 'simulate_1000', 'simulate_5000', 'simulate_custom'
             ]
             
-            # Add prefixed buttons to whitelist
-            button_prefixes = ['amount_', 'account_', 'explore_', 'profile_', 'wallet_', 'invest_']
+            # Extended comprehensive prefixes for all button patterns
+            button_prefixes = [
+                # Main sections
+                'menu_', 'account_', 'explore_', 'profile_', 
+                
+                # Investment related
+                'wallet_', 'invest_', 'amount_', 'simulate_', 'confirm_invest_',
+                
+                # Pagination and selection
+                'page_', 'select_', 'pool_', 'token_'
+            ]
             
             # Get callback data if available (for additional checks)
             callback_data = None

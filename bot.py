@@ -2105,11 +2105,18 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         chat_id = query.message.chat_id
         callback_data = query.data
         
-        # Check if this is a potential message loop with our aggressive protection
+        # Check if this is a potential message loop with our less aggressive protection
         if is_looping(chat_id, callback_data, query.id):
             logger.warning(f"Anti-loop system prevented processing callback: {callback_data[:30]}...")
-            # Lock this chat for a short period to prevent more loops
-            lock_chat(chat_id, 5.0)
+            # For button callbacks, we use a much shorter lock to improve responsiveness
+            if any(callback_data.startswith(prefix) for prefix in [
+                'menu_', 'account_', 'explore_', 'profile_', 'wallet_', 'invest_', 'amount_', 'simulate_'
+            ]):
+                # Very short lock for UI buttons - 0.5 seconds
+                lock_chat(chat_id, 0.5)
+            else:
+                # Shorter lock than before for other callbacks - 2 seconds
+                lock_chat(chat_id, 2.0)
             return
             
         # Create unique tracking IDs for this callback to prevent duplicates
@@ -2120,20 +2127,42 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         if not hasattr(context, 'user_data'):
             context.user_data = {}
         
-        # Check multiple ways to detect duplicates
-        if context.user_data.get("callback_handled", False):
-            logger.info("Skipping already handled callback query (user_data flag)")
-            return
+        # Less aggressive duplicate detection for UI buttons
+        is_ui_button = any(callback_data.startswith(prefix) for prefix in [
+            'menu_', 'account_', 'explore_', 'profile_', 'invest_'
+        ])
+        
+        # For UI navigation buttons, we'll be much less strict about duplicate detection
+        if is_ui_button:
+            # Clear any previous callback_handled flag to ensure UI buttons always work
+            if "callback_handled" in context.user_data:
+                del context.user_data["callback_handled"]
+                
+            # For UI navigation, allow processing the same button more frequently
+            # Only check exact duplicate callback IDs (not content)
+            if context.user_data.get(callback_id, False):
+                logger.info(f"UI Button pressed again: {callback_data[:30]} - allowing through")
+                # Still allow it to go through, just logging
             
-        if context.user_data.get(callback_id, False) or context.user_data.get(content_id, False):
-            logger.info(f"Skipping duplicate callback: {callback_data[:30]}...")
-            return
-            
-        # Mark as being handled using multiple methods for redundancy
+            # We don't use content_id check for UI buttons to make them more responsive
+        else:
+            # For non-UI buttons, maintain stricter duplicate detection
+            if context.user_data.get("callback_handled", False):
+                logger.info("Skipping already handled callback query (user_data flag)")
+                return
+                
+            if context.user_data.get(callback_id, False) or context.user_data.get(content_id, False):
+                logger.info(f"Skipping duplicate callback: {callback_data[:30]}...")
+                return
+        
+        # Mark as being handled using multiple methods
         context.user_data["callback_handled"] = True
         context.user_data["message_response_sent"] = False
         context.user_data[callback_id] = True
-        context.user_data[content_id] = True
+        
+        # Only store content ID for non-UI buttons
+        if not is_ui_button:
+            context.user_data[content_id] = True
         
         # Log user activity within app context
         with app.app_context():
