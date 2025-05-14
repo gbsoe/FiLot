@@ -23,6 +23,9 @@ def get_invest_menu() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton("👁️ View My Positions", callback_data="menu_positions"),
             InlineKeyboardButton("✏️ Custom Amount", callback_data="amount_custom")
+        ],
+        [
+            InlineKeyboardButton("🏠 Back to Main Menu", callback_data="back_to_main")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -39,6 +42,9 @@ def get_explore_menu() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton("🏆 Top Pools", callback_data="explore_pools"),
             InlineKeyboardButton("📊 Simulate Returns", callback_data="explore_simulate")
+        ],
+        [
+            InlineKeyboardButton("🏠 Back to Main Menu", callback_data="back_to_main")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -62,6 +68,9 @@ def get_account_menu() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton("❓ Help", callback_data="account_help"),
             InlineKeyboardButton("📊 Status", callback_data="account_status")
+        ],
+        [
+            InlineKeyboardButton("🏠 Back to Main Menu", callback_data="back_to_main")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -85,6 +94,9 @@ def get_custom_amount_menu() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton("⬅️ Back to Invest Menu", callback_data="menu_invest")
+        ],
+        [
+            InlineKeyboardButton("🏠 Back to Main Menu", callback_data="back_to_main")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -107,6 +119,11 @@ def get_exit_position_menu(positions) -> InlineKeyboardMarkup:
     # Add a back button
     keyboard.append([
         InlineKeyboardButton("⬅️ Back to Invest Menu", callback_data="menu_invest")
+    ])
+    
+    # Add main menu button
+    keyboard.append([
+        InlineKeyboardButton("🏠 Back to Main Menu", callback_data="back_to_main")
     ])
     
     return InlineKeyboardMarkup(keyboard)
@@ -148,6 +165,9 @@ def get_simulate_menu() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton("⬅️ Back to Explore", callback_data="back_to_explore")
+        ],
+        [
+            InlineKeyboardButton("🏠 Back to Main Menu", callback_data="back_to_main")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
