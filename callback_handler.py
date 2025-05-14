@@ -116,7 +116,13 @@ def route_callback(callback_data: str, handler_context: Dict[str, Any]) -> Optio
     logger.info(f"Routing callback: {callback_data} for chat_id: {chat_id}")
     
     # ---------- Menu Navigation ----------
-    if callback_data.startswith("menu_"):
+    if callback_data == "back_to_main":
+        # Special case for main menu button
+        return {
+            "action": "back_to_main",
+            "chat_id": handler_context.get("chat_id")
+        }
+    elif callback_data.startswith("menu_"):
         menu_action = callback_data.replace("menu_", "")
         return handle_menu_navigation(menu_action, handler_context)
     

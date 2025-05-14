@@ -1701,8 +1701,29 @@ Share your experiences and learn from others!
                                 )
                                 logger.info(f"User {update_obj.callback_query.from_user.id} checked system status")
                             
+                            # Handle back to main menu callback
+                            elif callback_data == "back_to_main":
+                                # Import keyboard for consistent UI
+                                from keyboard_utils import MAIN_KEYBOARD
+                                from menus import get_main_menu
+                                
+                                # Create a welcome message with main menu
+                                welcome_message = (
+                                    "🏠 *Welcome to FiLot Main Menu*\n\n"
+                                    "Select an option from the main menu below:"
+                                )
+                                
+                                # Send welcome message with main menu
+                                send_response(
+                                    chat_id,
+                                    welcome_message,
+                                    parse_mode="Markdown",
+                                    reply_markup=get_main_menu()
+                                )
+                                logger.info(f"Sent main menu to user {update_obj.callback_query.from_user.id} via back_to_main")
+                                
                             # Handle FAQ menu callback 
-                            elif callback_data == "menu_faq" or (callback_data.startswith("menu_") and menu_action == "faq"):
+                            elif callback_data == "menu_faq" or (callback_data.startswith("menu_") and callback_data == "menu_faq"):
                                 # Import keyboard for consistent UI
                                 from keyboard_utils import MAIN_KEYBOARD
                                 
@@ -1749,41 +1770,25 @@ Share your experiences and learn from others!
                                 menu_action = callback_data.replace("menu_", "")
                                 
                                 if menu_action == "invest":
-                                    # Create a simplified object to pass to start_invest_flow
-                                    from investment_flow import start_invest_flow
-                                    logger.info(f"Triggering investment flow from menu button")
+                                    # Create investment menu using the menus module for consistency
+                                    from menus import get_invest_menu
+                                    logger.info(f"Triggering investment menu from menu_invest button (Back to Amounts button)")
                                     
-                                    # Run the investment flow handler using async and the event loop
-                                    import asyncio
-                                    loop = asyncio.new_event_loop()
-                                    asyncio.set_event_loop(loop)
+                                    # Create the invest options message with simplified approach
+                                    invest_message = (
+                                        "💰 *Ready to Invest?* 💰\n\n"
+                                        "With our One-Touch interface, simply select an investment amount below or choose 'Custom Amount' to enter a specific value.\n\n"
+                                        "💡 *Tip:* All investment options can be managed through our convenient buttons - no typing required!"
+                                    )
                                     
-                                    try:
-                                        # Need to create a simplified update object for the handler
-                                        # The telegram Update constructor doesn't take effective_user directly
-                                        # so we'll create a modified update with just the message
-                                        simplified_update = Update.de_json(
-                                            {
-                                                'update_id': update_dict.get('update_id', 0),
-                                                'message': update_obj.callback_query.message.to_dict()
-                                            }, 
-                                            bot
-                                        )
-                                        simplified_context = SimpleContext()
-                                        simplified_context.user_data = {"message_handled": True}
-                                        
-                                        # Run the invest flow handler
-                                        loop.run_until_complete(start_invest_flow(simplified_update, simplified_context))
-                                        logger.info("Successfully triggered investment flow")
-                                    except Exception as menu_error:
-                                        logger.error(f"Error in menu_invest handler: {menu_error}")
-                                        logger.error(traceback.format_exc())
-                                        send_response(
-                                            chat_id,
-                                            "Sorry, there was an error starting the investment flow. Please try again using the 💰 Invest button."
-                                        )
-                                    finally:
-                                        loop.close()
+                                    # Send the investment options menu directly
+                                    send_response(
+                                        chat_id,
+                                        invest_message,
+                                        parse_mode="Markdown",
+                                        reply_markup=get_invest_menu()
+                                    )
+                                    logger.info("Successfully showed investment menu via menu_invest callback")
                                 
                                 elif menu_action == "explore":
                                     # Handle explore menu item with direct implementation to avoid relying on database
