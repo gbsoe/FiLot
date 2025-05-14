@@ -89,10 +89,10 @@ The `base.html` template defines the overall structure, styling, and navigation.
    ```
 
 3. **Footer**: Three-column layout with:
-   - Company info with DFSA reference
+   - Company info
    - Quick links to pages
    - Social media links (Telegram, Twitter)
-   - Copyright notice with DFSA regulation statement
+   - Copyright notice
 
 4. **External Resources**:
    - Bootstrap 5.3.2
@@ -108,11 +108,11 @@ The home page features:
 1. **Hero Section**:
    - **Main Headline**: "Precision Investing with FiLot"
    - **Subheading**: "The trusted AI-powered investment advisor bringing institutional-grade crypto liquidity pool investing to everyone, with cutting-edge security and reliability."
-   - **Badges**: "Regulated by DFSA" and "Secure Investment"
+   - **Badges**: "Secure Investment"
    - **Feature Points**:
-     - DFSA Regulated
+     - Trusted Platform
      - Bank-Grade Security
-     - 15-55% Annual Yields
+     - 15-55% APY
    - **CTA Buttons**:
      - Primary: "Start Investing Now" (https://t.me/Fi_lotbot)
      - Secondary: "See All Features"
@@ -121,12 +121,12 @@ The home page features:
 
 2. **Features Overview**:
    - **Section Headline**: "Secure & Precise Investment Platform"
-   - **Section Subheading**: "Our DFSA-regulated investment technology delivers institutional-grade access to crypto liquidity pools with a simplified One-Command interface designed for both novice and experienced investors."
+   - **Section Subheading**: "Our investment technology delivers institutional-grade access to crypto liquidity pools with a simplified One-Command interface designed for both novice and experienced investors."
    
    - **Feature Card 1: One-Touch Investing**
-     - "The DFSA-regulated most advanced investment interface uses persistent buttons for all features, making crypto investing accessible for both novice and professional investors."
+     - "The most advanced investment interface uses persistent buttons for all features, making crypto investing accessible for both novice and professional investors."
      - Benefits:
-       - Enterprise-grade security with DFSA regulatory compliance
+       - Enterprise-grade security standards
        - One-tap navigation between sophisticated investment services
        - Instant access to high-yield liquidity pools (15-55% APY)
    
@@ -138,7 +138,7 @@ The home page features:
        - Real-time portfolio monitoring with exit recommendations
    
    - **Feature Card 3: AI Advisory**
-     - "DFSA-compliant AI intelligence analyzes market data from over 1,200 sources to provide institutional-quality investment recommendations at enterprise scale."
+     - "Advanced AI intelligence analyzes market data from over 1,200 sources to provide institutional-quality investment recommendations at enterprise scale."
      - Benefits:
        - Advanced sentiment analysis meets technical indicators
        - Multi-factor risk assessment with impermanent loss protection
@@ -146,7 +146,7 @@ The home page features:
 
 3. **Investment Process**:
    - **Headline**: "The FiLot Investment Process"
-   - **Subheading**: "Simple. Secure. DFSA Regulated."
+   - **Subheading**: "Simple. Secure. Reliable."
    
    - **Step 1**: "Start Investing"
      - "Open Telegram and tap the blue "Invest" button to begin your investment journey with Dubai's most trusted crypto advisor."
@@ -172,7 +172,7 @@ The home page features:
      - Michael T., Singapore
    
    - **Testimonial 3**:
-     - "As an institutional investor, I appreciate the DFSA compliance and enterprise-grade security. The returns speak for themselves."
+     - "As an institutional investor, I appreciate the enterprise-grade security. The returns speak for themselves."
      - James L., London
 
 5. **Final CTA Section**:
@@ -186,9 +186,9 @@ Detailed breakdown of FiLot's features:
 
 1. **Hero Section**:
    - **Headline**: "FiLot Precision Features"
-   - **Subheading**: "Our DFSA-compliant platform delivers institutional-grade cryptocurrency investment tools with military-grade security, absolute precision, and uncompromising reliability as our highest priorities."
+   - **Subheading**: "Our platform delivers institutional-grade cryptocurrency investment tools with military-grade security, absolute precision, and uncompromising reliability as our highest priorities."
    - **Badge**: "Enterprise-Grade Security"
-   - **DFSA Logo**: Displayed prominently
+   - **Security Icon**: Displayed prominently
 
 2. **One-Command Interface**:
    - **Headline**: "One-Command Interface"
@@ -201,8 +201,8 @@ Detailed breakdown of FiLot's features:
      - **Accessibility First**: "Designed for investors of all technical skill levels, from novice to professional, with intuitive visual cues."
 
 3. **Security & Compliance**:
-   - **Headline**: "DFSA-Regulated Security"
-   - **Description**: "FiLot operates under Dubai Financial Services Authority regulation, implementing institutional-grade security measures that exceed industry standards."
+   - **Headline**: "Enterprise Security"
+   - **Description**: "FiLot implements institutional-grade security measures that exceed industry standards, ensuring your investments are protected at all times."
    
    - **Key Points**:
      - **Regulatory Compliance**: "Fully regulated operation ensuring the highest standards of financial service provision."
@@ -225,7 +225,7 @@ Detailed breakdown of FiLot's features:
    - **Description**: "FiLot delivers institutional-quality analytics on Raydium liquidity pools, providing comprehensive metrics for informed investment decisions."
    
    - **Key Points**:
-     - **Real-Time APR Tracking**: "Continuous monitoring of Annual Percentage Rates with historical trend analysis."
+     - **Real-Time APY Tracking**: "Continuous monitoring of Annual Percentage Yields with historical trend analysis."
      - **Liquidity Depth Analysis**: "Evaluation of pool stability through liquidity depth metrics and volume patterns."
      - **Volatility Measurement**: "Proprietary volatility scoring system to identify stable investment opportunities."
      - **Fee Generation Forecasting**: "Predictive modeling of fee generation based on trading volume patterns."
@@ -250,16 +250,16 @@ Shows top-performing liquidity pools with detailed information:
 3. **Pools Table**:
    - Clean, minimal design showing:
      - Token pair (e.g., SOL/USDC)
-     - APR (24h) percentages
+     - APY (Annual Percentage Yield)
      - TVL (Total Value Locked) in USD
      - Fee percentage
    
    - **Sample Data**:
-     - SOL/USDC: 22.5% APR, $4.5M TVL, 0.25% Fee
-     - SOL/RAY: 45.8% APR, $1.25M TVL, 0.3% Fee
-     - RAY/USDC: 38.7% APR, $950K TVL, 0.25% Fee
-     - SOL/mSOL: 19.8% APR, $3.2M TVL, 0.2% Fee
-     - ETH/USDC: 15.5% APR, $8.5M TVL, 0.2% Fee
+     - SOL/USDC: 22.5% APY, $4.5M TVL, 0.25% Fee
+     - SOL/RAY: 45.8% APY, $1.25M TVL, 0.3% Fee
+     - RAY/USDC: 38.7% APY, $950K TVL, 0.25% Fee
+     - SOL/mSOL: 19.8% APY, $3.2M TVL, 0.2% Fee
+     - ETH/USDC: 15.5% APY, $8.5M TVL, 0.2% Fee
 
 4. **Investment CTA**:
    - **Message**: "Ready to start earning from these pools?"
@@ -299,12 +299,12 @@ Educational content about cryptocurrency investing:
    - **Key Points**:
      - **Never Give Up Control**: "FiLot only requests permission to execute the specific transactions you approve."
      - **Transparent Transactions**: "Every investment action is clearly explained before execution."
-     - **Regulated Protection**: "DFSA regulatory compliance ensures institutional-grade security standards."
+     - **Enterprise Protection**: "Our security protocols ensure institutional-grade protection standards."
 
 5. **FAQ Section**:
    - **Common Questions**:
-     - **"How much can I earn with FiLot?"**: "Returns vary by pool, but typical APRs range from 15-55% annually on Raydium pools."
-     - **"Are my funds safe?"**: "Yes. FiLot is non-custodial, meaning you always maintain control of your funds. We're also regulated by the Dubai Financial Services Authority (DFSA)."
+     - **"How much can I earn with FiLot?"**: "Returns vary by pool, but typical APYs range from 15-55% annually on Raydium pools."
+     - **"Are my funds safe?"**: "Yes. FiLot is non-custodial, meaning you always maintain control of your funds. We implement enterprise-grade security measures to protect your investments."
      - **"How does FiLot make money?"**: "FiLot charges a small performance fee on profits, only when you make money. If you don't profit, we don't either."
      - **"What cryptocurrencies can I invest?"**: "Currently, FiLot supports Solana (SOL) and Solana-based tokens through Raydium liquidity pools."
      - **"Do I need technical knowledge?"**: "No. FiLot's One-Command interface handles all the technical aspects for you."
@@ -376,7 +376,7 @@ The website is powered by a Flask application with the following routes:
 1. **Pool Data**:
    - Fetched from `response_data.py` via `get_pool_data()`
    - Contains structured information about liquidity pools
-   - Displays top pools by APR
+   - Displays top pools by APY
 
 2. **User Data**:
    - Pulled from database via SQLAlchemy
@@ -490,38 +490,38 @@ def get_pool_data():
     """
     # Sample pool data for demonstration
     return {
-        "topAPR": [
+        "topAPY": [
             {
                 "pairName": "SOL/USDC",
-                "apr": 22.5,
+                "apy": 22.5,
                 "liquidity": 4500000,
                 "fee": 0.0025,
                 "volatility": 0.32
             },
             {
                 "pairName": "SOL/RAY",
-                "apr": 45.8,
+                "apy": 45.8,
                 "liquidity": 1250000,
                 "fee": 0.003,
                 "volatility": 0.48
             },
             {
                 "pairName": "RAY/USDC",
-                "apr": 38.7,
+                "apy": 38.7,
                 "liquidity": 950000,
                 "fee": 0.0025,
                 "volatility": 0.41
             },
             {
                 "pairName": "SOL/mSOL",
-                "apr": 19.8,
+                "apy": 19.8,
                 "liquidity": 3200000,
                 "fee": 0.002,
                 "volatility": 0.24
             },
             {
                 "pairName": "ETH/USDC",
-                "apr": 15.5,
+                "apy": 15.5,
                 "liquidity": 8500000,
                 "fee": 0.002,
                 "volatility": 0.28
@@ -538,9 +538,9 @@ def get_pool_data():
 
 ## Modifications to Make
 
-1. **DFSA References**:
-   - Use "regulated by DFSA" instead of "certified by" or "licensed by"
-   - Link to DFSA website: https://www.dfsa.ae/
+1. **Regulatory References**:
+   - Use simple regulatory language that builds trust
+   - Avoid excessive references to specific regulatory bodies
 
 2. **Social Media**:
    - Remove LinkedIn and Discord icons from footer
@@ -549,7 +549,7 @@ def get_pool_data():
 
 3. **Pool Listings**:
    - Remove redundant token images for cleaner interface
-   - Keep token pair text, APR, TVL, and fee information
+   - Keep token pair text, APY, TVL, and fee information
 
 ## Key HTML Templates Breakdown
 
@@ -597,7 +597,7 @@ def get_pool_data():
         <div class="container">
             <!-- Footer content with three columns... -->
             <div class="text-center">
-                <p class="text-muted mb-0">FiLot © 2025. All rights reserved. <span class="small">Regulated by the <a href="https://www.dfsa.ae/" target="_blank" class="text-muted text-decoration-underline">Dubai Financial Services Authority (DFSA)</a></span></p>
+                <p class="text-muted mb-0">FiLot © 2025. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -656,7 +656,7 @@ After recreating the website, verify that:
    - No JavaScript errors in the console
 
 4. **Content Verification**:
-   - DFSA regulation language is correctly used
+   - Regulatory language is appropriate and not excessive
    - Telegram bot link is set to https://t.me/Fi_lotbot
    - Social media links are correctly configured
    - No typos or formatting issues in educational content

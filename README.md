@@ -1,6 +1,6 @@
 # FiLot: Agentic AI Investment Advisor
 
-FiLot is a cutting-edge Telegram bot designed to revolutionize cryptocurrency investment experiences through intelligent, user-friendly technologies. Regulated by the Dubai Financial Services Authority (DFSA), FiLot serves as an agentic AI-powered system that analyzes liquidity pools, recommends optimal investments, and can execute trades securely with varying levels of automation. 
+FiLot is a cutting-edge Telegram bot designed to revolutionize cryptocurrency investment experiences through intelligent, user-friendly technologies. FiLot serves as an agentic AI-powered system that analyzes liquidity pools, recommends optimal investments, and can execute trades securely with varying levels of automation.
 
 With our new simplified One-Command interface and persistent navigation buttons, investing in cryptocurrency has never been more accessible. FiLot specializes in providing access to Raydium liquidity pools on the Solana blockchain, offering institutional-grade investment opportunities with advanced security features and AI-driven recommendations.
 
@@ -12,7 +12,7 @@ With our new simplified One-Command interface and persistent navigation buttons,
 - **Persistent Button Navigation**: Consistent and reliable button functionality throughout the app
 - **Secure Wallet Integration**: WalletConnect protocol support for safe transactions
 - **Personalized Risk Management**: Customized strategies based on user profiles
-- **DFSA Regulation**: Institutional-grade security standards and regulatory compliance
+- **Enterprise Security**: Institutional-grade security standards and comprehensive safeguards
 
 ## Project Structure
 
@@ -146,7 +146,7 @@ See the [Development Roadmap](FiLot_Development_Roadmap.md) for detailed informa
 FiLot implements comprehensive security and privacy measures:
 
 ### Security Features
-- **DFSA Regulation**: Regulated by the Dubai Financial Services Authority for institutional-grade trust
+- **Institutional-Grade Trust**: Enterprise security standards with rigorous protocols and safeguards
 - **Non-custodial Architecture**: Users maintain complete control of their funds at all times
 - **WalletConnect Integration**: Secure wallet connectivity without exposing private keys
 - **Read-only Access Mode**: Default conservative approach to wallet connections

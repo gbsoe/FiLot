@@ -27,14 +27,14 @@ POOL_TOKEN_PAIRS = {
     "CYbD9RaToYMtWKA7QZyoLahnHdWq553Vm62Lh6qWtuxq": ("SOL", "USDC"),  # Actually WSOL but displayed as SOL
 }
 
-# Realistic APR and TVL ranges for different pool types
-APR_RANGES = {
-    "SOL/USDC": (30.0, 150.0),
-    "SOL/RAY": (40.0, 80.0),
-    "SOL/USDT": (25.0, 55.0),
+# Realistic APY and TVL ranges for different pool types
+APY_RANGES = {
+    "SOL/USDC": (15.0, 45.0),
+    "SOL/RAY": (25.0, 55.0),
+    "SOL/USDT": (15.0, 40.0),
     "ETH/USDC": (15.0, 35.0),
-    "RAY/USDC": (50.0, 100.0),
-    "default": (10.0, 30.0)
+    "RAY/USDC": (20.0, 50.0),
+    "default": (15.0, 30.0)
 }
 
 TVL_RANGES = {
@@ -158,14 +158,14 @@ def get_pool_data():
             elif "apr" in normalized_pool and "apr24h" not in normalized_pool:
                 normalized_pool["apr24h"] = normalized_pool["apr"]
                 
-            # Set default APR if missing
+            # Set default APY if missing
             if "apr" not in normalized_pool:
                 token_pair = normalized_pool.get("pairName", "default")
-                apr_range = APR_RANGES.get(token_pair, APR_RANGES["default"])
-                normalized_pool["apr"] = random.uniform(*apr_range)
+                apy_range = APY_RANGES.get(token_pair, APY_RANGES["default"])
+                normalized_pool["apr"] = random.uniform(*apy_range)
                 normalized_pool["apr24h"] = normalized_pool["apr"]
                 
-            # Set weekly and monthly APR variations if missing
+            # Set weekly and monthly APY variations if missing
             if "apr7d" in normalized_pool and "aprWeekly" not in normalized_pool:
                 normalized_pool["aprWeekly"] = normalized_pool["apr7d"]
             elif "aprWeekly" in normalized_pool and "apr7d" not in normalized_pool:
@@ -321,10 +321,10 @@ def create_predefined_pools():
         "id": "3ucNos4NbumPLZNWztqGHNFFgkHeRMBQAVemeeomsUxv",
         "pairName": "SOL/USDC",
         "tokenPair": "SOL/USDC",
-        "apr": 58.7,
-        "apr24h": 58.7,
-        "apr7d": 55.2,
-        "apr30d": 61.3,
+        "apr": 45.7,
+        "apr24h": 45.7,
+        "apr7d": 42.2,
+        "apr30d": 48.3,
         "liquidity": 8_500_000,
         "liquidityUsd": 8_500_000,
         "tokenPrices": {
@@ -337,10 +337,10 @@ def create_predefined_pools():
         "id": "2AXXcN6oN9bBT5owwmTH53C7QHUXvhLeu718Kqt8rvY2",
         "pairName": "SOL/RAY",
         "tokenPair": "SOL/RAY",
-        "apr": 75.3,
-        "apr24h": 75.3,
-        "apr7d": 72.8,
-        "apr30d": 78.1,
+        "apr": 54.3,
+        "apr24h": 54.3,
+        "apr7d": 51.8,
+        "apr30d": 52.1,
         "liquidity": 3_200_000,
         "liquidityUsd": 3_200_000,
         "tokenPrices": {
@@ -353,10 +353,10 @@ def create_predefined_pools():
         "id": "CYbD9RaToYMtWKA7QZyoLahnHdWq553Vm62Lh6qWtuxq",
         "pairName": "SOL/USDT",
         "tokenPair": "SOL/USDT",
-        "apr": 45.1,
-        "apr24h": 45.1,
-        "apr7d": 43.5,
-        "apr30d": 47.2,
+        "apr": 39.1,
+        "apr24h": 39.1,
+        "apr7d": 37.5,
+        "apr30d": 41.2,
         "liquidity": 2_100_000,
         "liquidityUsd": 2_100_000,
         "tokenPrices": {
