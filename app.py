@@ -438,6 +438,7 @@ def security():
     return render_template("security.html", meta=meta)
 
 @app.route("/pro-analytics")
+@app.route("/pro_analytics")  # Add underscore route for compatibility
 def pro_analytics():
     """Pro analytics tools page."""
     meta = {

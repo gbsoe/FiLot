@@ -394,28 +394,32 @@
 <script>
     function calculateROI() {
         try {
+            console.log("Starting ROI calculation...");
+            
             // Safely get input values with fallbacks
             const investmentAmountEl = document.getElementById('investment-amount');
+            console.log("Investment amount element:", investmentAmountEl);
+            
             const apyRateEl = document.getElementById('apy-rate');
+            console.log("APY rate element:", apyRateEl);
+            
             const investmentPeriodEl = document.getElementById('investment-period');
             const compoundFrequencyEl = document.getElementById('compound-frequency');
             const tokenAVolatilityEl = document.getElementById('token-a-volatility');
             const tokenBVolatilityEl = document.getElementById('token-b-volatility');
             
-            // Check if all elements exist before proceeding
-            if (!investmentAmountEl || !apyRateEl || !investmentPeriodEl || 
-                !compoundFrequencyEl || !tokenAVolatilityEl || !tokenBVolatilityEl) {
-                console.error("One or more form elements not found");
-                return;
-            }
+            // Use default values if elements don't exist (for debugging purposes)
+            const investmentAmount = investmentAmountEl ? parseFloat(investmentAmountEl.value) : 1000;
+            const apyRate = apyRateEl ? parseFloat(apyRateEl.value) : 30;
+            const investmentPeriod = investmentPeriodEl ? parseInt(investmentPeriodEl.value) : 12;
+            const compoundFrequency = compoundFrequencyEl ? parseInt(compoundFrequencyEl.value) : 7;
+            const tokenAVolatility = tokenAVolatilityEl ? parseFloat(tokenAVolatilityEl.value) : 15;
+            const tokenBVolatility = tokenBVolatilityEl ? parseFloat(tokenBVolatilityEl.value) : 2;
             
-            // Get values with defaults in case of parsing errors
-            const investmentAmount = parseFloat(investmentAmountEl.value) || 1000;
-            const apyRate = parseFloat(apyRateEl.value) || 30;
-            const investmentPeriod = parseInt(investmentPeriodEl.value) || 12;
-            const compoundFrequency = parseInt(compoundFrequencyEl.value) || 7;
-            const tokenAVolatility = parseFloat(tokenAVolatilityEl.value) || 15;
-            const tokenBVolatility = parseFloat(tokenBVolatilityEl.value) || 2;
+            console.log("Using values:", { 
+                investmentAmount, apyRate, investmentPeriod, 
+                compoundFrequency, tokenAVolatility, tokenBVolatility 
+            });
             
             // Calculate compounding periods
             const periodsPerYear = 365 / compoundFrequency;
