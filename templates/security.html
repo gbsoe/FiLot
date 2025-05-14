@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}{{ meta.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-lg-12 text-center mb-5">
+            <h1 class="display-4 fw-bold text-primary">Security & Audits: Non-Custodial WalletConnect on Solana</h1>
+            <p class="lead mt-3">How FiLot ensures your assets remain under your control while helping you maximize yields.</p>
+        </div>
+    </div>
+
+    <div class="row mb-5 justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="bg-primary-gradient rounded-circle p-3 me-3">
+                            <i class="fas fa-shield-alt text-white fa-2x"></i>
+                        </div>
+                        <div>
+                            <h2 class="mb-0">FiLot Security Architecture</h2>
+                        </div>
+                    </div>
+                    <p>FiLot is designed with security as the top priority. Our non-custodial architecture means your crypto assets always remain under your control in your own wallet. FiLot never takes custody of your funds and cannot access your assets without your explicit approval for each transaction.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Non-Custodial Architecture Section -->
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/filot-non-custodial-architecture.webp') }}" alt="FiLot non-custodial wallet architecture diagram" class="img-fluid rounded shadow-sm" width="600" height="400">
+        </div>
+        <div class="col-md-6">
+            <h2 class="fw-bold">Non-Custodial Architecture</h2>
+            <p class="lead">Your keys, your crypto, always.</p>
+            <p>FiLot uses WalletConnect v2 protocol to interact with your Solana wallet. This means:</p>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Your private keys never leave your wallet</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> You approve each transaction individually</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> FiLot cannot initiate transactions without your approval</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Connection sessions can be terminated at any time</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Open-source WalletConnect protocol with strong encryption</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Smart Contract Audits Section -->
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-6 order-md-2">
+            <img src="{{ url_for('static', filename='images/filot-smart-contract-audit.webp') }}" alt="FiLot smart contract audit process" class="img-fluid rounded shadow-sm" width="600" height="400">
+        </div>
+        <div class="col-md-6 order-md-1">
+            <h2 class="fw-bold">Smart Contract Audits</h2>
+            <p class="lead">We only recommend thoroughly vetted pools.</p>
+            <p>FiLot incorporates multiple levels of pool security verification:</p>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> We only support pools from audited protocols (Raydium, Orca)</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Additional internal security review for each pool</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Continuous monitoring for exploits or vulnerabilities</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Immediate blacklisting of compromised pools</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Full audit trail of pool recommendations</li>
+            </ul>
+            <p class="mt-3"><a href="https://raydium.io/audit/" class="text-decoration-none" target="_blank">View Raydium Audits <i class="fas fa-external-link-alt fs-6"></i></a></p>
+        </div>
+    </div>
+
+    <!-- On-Chain Proof Section -->
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/filot-on-chain-proof.webp') }}" alt="FiLot on-chain data verification" class="img-fluid rounded shadow-sm" width="600" height="400">
+        </div>
+        <div class="col-md-6">
+            <h2 class="fw-bold">On-Chain APY Oracle</h2>
+            <p class="lead">Transparent and verifiable yield data.</p>
+            <p>FiLot provides transparent, on-chain verification of APY data:</p>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> All pool APY data is derived directly from on-chain information</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Calculations follow standard DeFi methodologies</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Regular comparison with protocol-reported APYs</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Full transparency in APY calculation formulas</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Historical APY tracking for realistic projections</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Data Security Section -->
+    <div class="row mb-5">
+        <div class="col-lg-12 mb-4">
+            <h2 class="fw-bold text-center mb-4">Enterprise-Grade Data Security</h2>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="icon-wrapper bg-primary-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                        <i class="fas fa-lock text-white fa-2x"></i>
+                    </div>
+                    <h3 class="h4">Encryption</h3>
+                    <p>All data transmissions are secured with TLS 1.3 encryption. Sensitive user data is encrypted at rest using AES-256.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="icon-wrapper bg-primary-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                        <i class="fas fa-user-shield text-white fa-2x"></i>
+                    </div>
+                    <h3 class="h4">Privacy Protection</h3>
+                    <p>We maintain minimal user data and follow strict privacy practices. Your investment data is never shared with third parties.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="icon-wrapper bg-primary-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                        <i class="fas fa-shield-virus text-white fa-2x"></i>
+                    </div>
+                    <h3 class="h4">Attack Protection</h3>
+                    <p>Our infrastructure features DDoS protection, WAF, rate limiting, and regular penetration testing to prevent attacks.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Best Practices Section -->
+    <div class="row mb-5 justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary-gradient">
+                    <h2 class="h4 mb-0 text-white">Security Best Practices for Users</h2>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Only interact with FiLot through official channels</li>
+                                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Use hardware wallets for significant investments</li>
+                                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Verify transaction details before approving</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Keep wallet seed phrases offline and secure</li>
+                                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Enable 2FA on all related accounts</li>
+                                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Disconnect your wallet when not in use</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Disclosure Section -->
+    <div class="row mb-5 justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h3 class="h5 mb-0">Risk Disclosure</h3>
+                </div>
+                <div class="card-body">
+                    <p>While FiLot employs extensive security measures, DeFi investing carries inherent risks:</p>
+                    <ul>
+                        <li><strong>Smart Contract Risk</strong>: Despite audits, there is always a risk of undiscovered vulnerabilities in smart contracts.</li>
+                        <li><strong>Impermanent Loss</strong>: Price changes between paired assets can result in value reduction compared to just holding.</li>
+                        <li><strong>Market Risk</strong>: Cryptocurrency markets are volatile, and prices can fluctuate rapidly.</li>
+                        <li><strong>APY Fluctuation</strong>: Yields can change based on market conditions and are not guaranteed.</li>
+                    </ul>
+                    <p>FiLot provides tools to monitor and mitigate these risks, but users should only invest funds they can afford to lose and should diversify their investments appropriately.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Partners Section -->
+    <div class="row mb-5">
+        <div class="col-lg-12 text-center mb-4">
+            <h2 class="fw-bold">Security Partners & Certifications</h2>
+        </div>
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 text-center">
+                    <div class="row align-items-center">
+                        <div class="col-md-3 mb-4 mb-md-0">
+                            <img src="{{ url_for('static', filename='images/security-certifications-1.webp') }}" alt="Security certification logo" class="img-fluid" style="max-height: 80px;" width="160" height="80">
+                        </div>
+                        <div class="col-md-3 mb-4 mb-md-0">
+                            <img src="{{ url_for('static', filename='images/security-certifications-2.webp') }}" alt="Security certification logo" class="img-fluid" style="max-height: 80px;" width="160" height="80">
+                        </div>
+                        <div class="col-md-3 mb-4 mb-md-0">
+                            <img src="{{ url_for('static', filename='images/security-certifications-3.webp') }}" alt="Security certification logo" class="img-fluid" style="max-height: 80px;" width="160" height="80">
+                        </div>
+                        <div class="col-md-3">
+                            <img src="{{ url_for('static', filename='images/security-certifications-4.webp') }}" alt="Security certification logo" class="img-fluid" style="max-height: 80px;" width="160" height="80">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row mt-5">
+        <div class="col-lg-12 text-center">
+            <div class="card border-0 bg-primary-gradient shadow-lg p-5">
+                <div class="card-body">
+                    <h2 class="text-white mb-4">Ready to Start Investing Securely?</h2>
+                    <p class="text-white mb-4">Experience FiLot's secure, non-custodial approach to DeFi investing</p>
+                    <a href="https://t.me/Fi_lotbot" class="btn btn-light btn-lg px-4 py-2" data-event="start_investing">
+                        <i class="fab fa-telegram me-2"></i>Start with FiLot Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Internal Link Section -->
+    <div class="row mt-5 mb-5">
+        <div class="col-lg-12">
+            <h3 class="text-center mb-4">Learn More About FiLot</h3>
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <h4 class="card-title">Beginners Guide</h4>
+                            <p class="card-text">Step-by-step instructions for getting started with FiLot and DeFi yield farming.</p>
+                            <a href="/beginners" class="btn btn-outline-primary">For Beginners</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <h4 class="card-title">Developer Integration</h4>
+                            <p class="card-text">Learn how developers can integrate with FiLot's API and extend its capabilities.</p>
+                            <a href="/developer-guide" class="btn btn-outline-primary">Developer Guide</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <h4 class="card-title">Investment Knowledge</h4>
+                            <p class="card-text">Expand your understanding of DeFi concepts, liquidity pools, and yield farming.</p>
+                            <a href="/knowledge" class="btn btn-outline-primary">Knowledge Base</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

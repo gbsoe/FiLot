@@ -14,7 +14,7 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import text
-from models import db, User, Pool, BotStatistics, UserQuery, UserActivityLog, ErrorLog
+from models import db, User, Pool, BotStatistics, UserQuery, UserActivityLog, ErrorLog, Post
 
 # Load environment variables
 load_dotenv()
@@ -31,6 +31,10 @@ app.secret_key = os.environ.get("SESSION_SECRET", "default-secret-key")
 
 # Initialize SQLAlchemy with the Flask application
 db.init_app(app)
+
+# Register blueprints
+from blog import blog_bp
+app.register_blueprint(blog_bp)
 
 # Set up logging
 logging.basicConfig(

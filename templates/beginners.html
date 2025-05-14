@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}{{ meta.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-lg-12 text-center mb-5">
+            <h1 class="display-4 fw-bold text-primary">FiLot for Beginners: Your First Steps in Crypto Yield Farming</h1>
+            <p class="lead mt-3">No technical knowledge required - start earning passive income with crypto in just a few simple steps.</p>
+        </div>
+    </div>
+
+    <!-- Structured data - HowTo -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "name": "How to Start Crypto Yield Farming for Beginners",
+        "description": "Learn how to earn passive income from DeFi yield farming with FiLot - no technical knowledge required.",
+        "totalTime": "PT10M",
+        "estimatedCost": {
+            "@type": "MonetaryAmount",
+            "currency": "USD",
+            "value": "100"
+        },
+        "step": [
+            {
+                "@type": "HowToStep",
+                "name": "Create a Telegram Account",
+                "text": "Download Telegram from your app store and create an account if you don't already have one.",
+                "image": "https://filot.finance/static/images/filot-telegram-signup-guide.webp",
+                "url": "https://filot.finance/beginners#step1"
+            },
+            {
+                "@type": "HowToStep",
+                "name": "Start a Conversation with FiLot Bot",
+                "text": "Search for @Fi_lotbot on Telegram and start a conversation by sending /start.",
+                "image": "https://filot.finance/static/images/filot-bot-start-command.webp",
+                "url": "https://filot.finance/beginners#step2"
+            },
+            {
+                "@type": "HowToStep",
+                "name": "Connect Your Wallet",
+                "text": "Use the Account button to connect your existing Solana wallet or create a new one.",
+                "image": "https://filot.finance/static/images/filot-connect-wallet-guide.webp",
+                "url": "https://filot.finance/beginners#step3"
+            },
+            {
+                "@type": "HowToStep",
+                "name": "Start Investing",
+                "text": "Use the Explore button to view top-performing pools and start investing with as little as $100.",
+                "image": "https://filot.finance/static/images/filot-invest-guide.webp",
+                "url": "https://filot.finance/beginners#step4"
+            }
+        ]
+    }
+    </script>
+
+    <div class="row mb-5 justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="bg-primary-gradient rounded-circle p-3 me-3">
+                            <i class="fas fa-info-circle text-white fa-2x"></i>
+                        </div>
+                        <div>
+                            <h2 class="mb-0">What is DeFi Yield Farming?</h2>
+                        </div>
+                    </div>
+                    <p class="mb-0">Yield farming is a way to earn passive income with your crypto assets. It works by providing liquidity (your tokens) to decentralized exchanges, helping other users trade more easily. In return, you earn a portion of the trading fees - this is your "yield" or "APY" (Annual Percentage Yield).</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-lg-12 text-center mb-4">
+            <h2 class="fw-bold">4-Step Guide to Start Earning with FiLot</h2>
+            <p class="text-muted">No coding required - complete beginner friendly</p>
+        </div>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="row mb-5 align-items-center" id="step1">
+        <div class="col-md-6 order-md-2">
+            <img src="{{ url_for('static', filename='images/filot-telegram-screen.webp') }}" alt="Create a Telegram account" class="img-fluid rounded shadow-sm" width="500" height="300">
+        </div>
+        <div class="col-md-6 order-md-1">
+            <div class="p-3">
+                <div class="step-number bg-primary text-white rounded-circle d-inline-block text-center mb-3" style="width: 40px; height: 40px; line-height: 40px;">1</div>
+                <h3 class="fw-bold">Create a Telegram Account</h3>
+                <p>If you don't already have Telegram, download it from your app store and create an account with your phone number. Telegram provides a secure platform for interacting with FiLot.</p>
+                <p class="text-muted"><i class="fas fa-clock me-2"></i>Time: 2 minutes</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="row mb-5 align-items-center" id="step2">
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/filot-bot-conversation.webp') }}" alt="Start a conversation with FiLot Bot" class="img-fluid rounded shadow-sm" width="500" height="300">
+        </div>
+        <div class="col-md-6">
+            <div class="p-3">
+                <div class="step-number bg-primary text-white rounded-circle d-inline-block text-center mb-3" style="width: 40px; height: 40px; line-height: 40px;">2</div>
+                <h3 class="fw-bold">Start a Conversation with FiLot Bot</h3>
+                <p>Search for <strong>@Fi_lotbot</strong> on Telegram and tap "Start". The bot will welcome you and show you the simple button menu to navigate its features.</p>
+                <p class="text-muted"><i class="fas fa-clock me-2"></i>Time: 1 minute</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="row mb-5 align-items-center" id="step3">
+        <div class="col-md-6 order-md-2">
+            <img src="{{ url_for('static', filename='images/filot-wallet-connect.webp') }}" alt="Connect your wallet to FiLot" class="img-fluid rounded shadow-sm" width="500" height="300">
+        </div>
+        <div class="col-md-6 order-md-1">
+            <div class="p-3">
+                <div class="step-number bg-primary text-white rounded-circle d-inline-block text-center mb-3" style="width: 40px; height: 40px; line-height: 40px;">3</div>
+                <h3 class="fw-bold">Connect Your Wallet</h3>
+                <p>Use the <strong>Account</strong> button to connect your existing Solana wallet (like Phantom or Solflare) or create a new one. Your crypto always remains under your control - FiLot never takes custody of your funds.</p>
+                <p class="text-muted"><i class="fas fa-clock me-2"></i>Time: 2 minutes</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="row mb-5 align-items-center" id="step4">
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/filot-investment-screen.webp') }}" alt="Start investing with FiLot" class="img-fluid rounded shadow-sm" width="500" height="300">
+        </div>
+        <div class="col-md-6">
+            <div class="p-3">
+                <div class="step-number bg-primary text-white rounded-circle d-inline-block text-center mb-3" style="width: 40px; height: 40px; line-height: 40px;">4</div>
+                <h3 class="fw-bold">Start Investing</h3>
+                <p>Use the <strong>Explore</strong> button to view top-performing pools, then use <strong>Invest</strong> to put your assets to work. FiLot recommends pools based on your risk preference and shows you estimated returns.</p>
+                <p class="text-muted"><i class="fas fa-clock me-2"></i>Time: 5 minutes</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Section with structured data -->
+    <div class="row mt-5 mb-5">
+        <div class="col-lg-12 text-center mb-4">
+            <h2 class="fw-bold">Frequently Asked Questions</h2>
+        </div>
+        <div class="col-lg-10 mx-auto">
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h3 class="accordion-header" id="headingOne">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                            How much money do I need to start yield farming?
+                        </button>
+                    </h3>
+                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            You can start with as little as $100 worth of SOL or USDC. However, for optimal results and to offset transaction fees, we recommend starting with at least $500.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h3 class="accordion-header" id="headingTwo">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            Is yield farming risky? Can I lose my money?
+                        </button>
+                    </h3>
+                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Like all investments, yield farming carries risks. The main risks include impermanent loss (when token prices change) and smart contract risks. FiLot helps minimize these risks by recommending thoroughly audited pools with stable tokens and by monitoring your positions for any concerning changes.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h3 class="accordion-header" id="headingThree">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            How much can I earn from yield farming?
+                        </button>
+                    </h3>
+                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            APY (Annual Percentage Yield) varies by pool and market conditions. Stable pools typically offer 15-30% APY, while more volatile pools can offer 30-55% APY. FiLot always shows you realistic projections based on current market rates.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h3 class="accordion-header" id="headingFour">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                            Does FiLot hold my crypto tokens?
+                        </button>
+                    </h3>
+                    <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            No, FiLot is non-custodial. This means we never take control of your crypto assets. You maintain full ownership and control through your personal wallet. FiLot simply provides the interface and AI recommendations to help you interact with DeFi protocols.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h3 class="accordion-header" id="headingFive">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                            Can I withdraw my investment at any time?
+                        </button>
+                    </h3>
+                    <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Yes, you can withdraw your investment at any time. Simply use the "Positions" feature to view your active investments and select "Exit Position" on any position you wish to withdraw from. The process takes just a few minutes.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- FAQ Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "How much money do I need to start yield farming?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "You can start with as little as $100 worth of SOL or USDC. However, for optimal results and to offset transaction fees, we recommend starting with at least $500."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is yield farming risky? Can I lose my money?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Like all investments, yield farming carries risks. The main risks include impermanent loss (when token prices change) and smart contract risks. FiLot helps minimize these risks by recommending thoroughly audited pools with stable tokens and by monitoring your positions for any concerning changes."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How much can I earn from yield farming?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "APY (Annual Percentage Yield) varies by pool and market conditions. Stable pools typically offer 15-30% APY, while more volatile pools can offer 30-55% APY. FiLot always shows you realistic projections based on current market rates."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Does FiLot hold my crypto tokens?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No, FiLot is non-custodial. This means we never take control of your crypto assets. You maintain full ownership and control through your personal wallet. FiLot simply provides the interface and AI recommendations to help you interact with DeFi protocols."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can I withdraw my investment at any time?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes, you can withdraw your investment at any time. Simply use the 'Positions' feature to view your active investments and select 'Exit Position' on any position you wish to withdraw from. The process takes just a few minutes."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Call to Action -->
+    <div class="row mt-5">
+        <div class="col-lg-12 text-center">
+            <div class="card border-0 bg-primary-gradient shadow-lg p-5">
+                <div class="card-body">
+                    <h2 class="text-white mb-4">Ready to Start Your Passive Income Journey?</h2>
+                    <p class="text-white mb-4">Join thousands of beginners already earning with FiLot's easy-to-use platform</p>
+                    <a href="https://t.me/Fi_lotbot" class="btn btn-light btn-lg px-4 py-2" data-event="start_investing">
+                        <i class="fab fa-telegram me-2"></i>Start with FiLot Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Internal Link Section -->
+    <div class="row mt-5 mb-5">
+        <div class="col-lg-12">
+            <h3 class="text-center mb-4">Explore More FiLot Resources</h3>
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <h4 class="card-title">Learn About DeFi</h4>
+                            <p class="card-text">Understand the fundamentals of DeFi yield farming and how liquidity pools work.</p>
+                            <a href="/knowledge" class="btn btn-outline-primary">Visit Knowledge Center</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <h4 class="card-title">Explore Top Pools</h4>
+                            <p class="card-text">View the current highest-APY Solana liquidity pools and their performance metrics.</p>
+                            <a href="/pools" class="btn btn-outline-primary">See Top Pools</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <h4 class="card-title">Advanced Analytics</h4>
+                            <p class="card-text">For more experienced users - access pro-level analytics and risk management tools.</p>
+                            <a href="/pro-analytics" class="btn btn-outline-primary">View Pro Analytics</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

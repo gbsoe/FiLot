@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+
+{% block title %}{{ meta.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-lg-12 text-center mb-5">
+            <h1 class="display-4 fw-bold text-primary">Pro Analytics: ROI, Sharpe Ratio & Impermanent Loss Tools</h1>
+            <p class="lead mt-3">Advanced analytics for professional crypto investors to optimize their DeFi strategy.</p>
+        </div>
+    </div>
+
+    <div class="row mb-5 justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="bg-primary-gradient rounded-circle p-3 me-3">
+                            <i class="fas fa-chart-line text-white fa-2x"></i>
+                        </div>
+                        <div>
+                            <h2 class="mb-0">Professional-Grade DeFi Analytics</h2>
+                        </div>
+                    </div>
+                    <p>FiLot Pro Analytics provides sophisticated tools for serious DeFi investors. Our comprehensive suite includes accurate ROI calculation, risk-adjusted return metrics like Sharpe ratios, impermanent loss modeling, and portfolio optimization tools. Make data-driven decisions with institutional-grade analysis.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROI Calculator Section -->
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/filot-roi-calculator.webp') }}" alt="FiLot ROI calculator interface" class="img-fluid rounded shadow-sm" width="600" height="400">
+        </div>
+        <div class="col-md-6">
+            <h2 class="fw-bold">Crypto ROI Calculator</h2>
+            <p class="lead">Advanced return modeling for yield farming positions.</p>
+            <p>Our ROI calculator goes beyond basic APY projections to provide:</p>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Compound interest modeling with daily, weekly, or monthly reinvestment</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Token price impact simulation based on historical volatility</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Fee-adjusted return calculations including transaction costs</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Tax implications estimation for major jurisdictions</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Customizable investment time horizons from days to years</li>
+            </ul>
+            <a href="https://t.me/Fi_lotbot?start=pro_calc" class="btn btn-primary mt-3">Access ROI Calculator <i class="fas fa-arrow-right ms-2"></i></a>
+        </div>
+    </div>
+
+    <!-- Risk Metrics Section -->
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-6 order-md-2">
+            <img src="{{ url_for('static', filename='images/filot-risk-metrics.webp') }}" alt="FiLot risk management metrics visualization" class="img-fluid rounded shadow-sm" width="600" height="400">
+        </div>
+        <div class="col-md-6 order-md-1">
+            <h2 class="fw-bold">DeFi Risk Management Metrics</h2>
+            <p class="lead">Sophisticated risk analysis for informed decisions.</p>
+            <p>Measure and compare pools based on risk-adjusted performance:</p>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Sharpe Ratio calculation for risk-adjusted returns</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Volatility analysis with daily and weekly measurements</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Max drawdown historical tracking for stability assessment</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Correlation matrices between different pool types</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Smart contract risk scoring based on audit history</li>
+            </ul>
+            <a href="https://t.me/Fi_lotbot?start=pro_risk" class="btn btn-primary mt-3">Access Risk Metrics <i class="fas fa-arrow-right ms-2"></i></a>
+        </div>
+    </div>
+
+    <!-- Sharpe Ratio Table Section -->
+    <div class="row mb-5">
+        <div class="col-lg-12 mb-4">
+            <h2 class="fw-bold text-center">Solana Pool Sharpe Ratio Rankings</h2>
+            <p class="text-center text-muted">Higher Sharpe ratio indicates better risk-adjusted returns</p>
+        </div>
+        <div class="col-md-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Pool</th>
+                                    <th>Sharpe Ratio</th>
+                                    <th>APY Range (30d)</th>
+                                    <th>Price Volatility</th>
+                                    <th>Liquidity Depth</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>USDC/USDT</td>
+                                    <td>4.21</td>
+                                    <td>15-17%</td>
+                                    <td>Very Low</td>
+                                    <td>Very High</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>SOL/USDC</td>
+                                    <td>3.57</td>
+                                    <td>24-32%</td>
+                                    <td>Medium</td>
+                                    <td>Very High</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>mSOL/USDC</td>
+                                    <td>3.12</td>
+                                    <td>21-28%</td>
+                                    <td>Low</td>
+                                    <td>High</td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td>ETH/USDC</td>
+                                    <td>2.95</td>
+                                    <td>22-30%</td>
+                                    <td>Medium</td>
+                                    <td>High</td>
+                                </tr>
+                                <tr>
+                                    <td>5</td>
+                                    <td>BTC/USDC</td>
+                                    <td>2.82</td>
+                                    <td>21-29%</td>
+                                    <td>Medium</td>
+                                    <td>High</td>
+                                </tr>
+                                <tr>
+                                    <td>6</td>
+                                    <td>RAY/USDC</td>
+                                    <td>2.41</td>
+                                    <td>35-45%</td>
+                                    <td>High</td>
+                                    <td>Medium</td>
+                                </tr>
+                                <tr>
+                                    <td>7</td>
+                                    <td>ORCA/USDC</td>
+                                    <td>2.33</td>
+                                    <td>34-47%</td>
+                                    <td>High</td>
+                                    <td>Medium</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="#" class="btn btn-sm btn-outline-primary">Download Full Sharpe Ratio CSV <i class="fas fa-download ms-1"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Impermanent Loss Section -->
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/filot-impermanent-loss.webp') }}" alt="FiLot impermanent loss simulation tool" class="img-fluid rounded shadow-sm" width="600" height="400">
+        </div>
+        <div class="col-md-6">
+            <h2 class="fw-bold">Impermanent Loss Hedging Strategies</h2>
+            <p class="lead">Protect your yield farming returns with advanced modeling.</p>
+            <p>Our impermanent loss tools help you understand and minimize this key DeFi risk:</p>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Real-time IL calculator with price change simulation</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> IL hedging strategies through complementary positions</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Historical IL backtesting across market conditions</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Option-based protection strategies (advanced)</li>
+                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Portfolio-wide IL exposure analytics</li>
+            </ul>
+            <a href="https://t.me/Fi_lotbot?start=pro_il" class="btn btn-primary mt-3">Access IL Tools <i class="fas fa-arrow-right ms-2"></i></a>
+        </div>
+    </div>
+
+    <!-- Portfolio Optimization Section -->
+    <div class="row mb-5">
+        <div class="col-lg-12 mb-4">
+            <h2 class="fw-bold text-center">DeFi Portfolio Optimization</h2>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="icon-wrapper bg-primary-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                        <i class="fas fa-balance-scale text-white fa-2x"></i>
+                    </div>
+                    <h3 class="h4">Modern Portfolio Theory</h3>
+                    <p>Apply Markowitz portfolio optimization to DeFi positions. Find the optimal allocation across pools to maximize returns for your risk tolerance.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="icon-wrapper bg-primary-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                        <i class="fas fa-robot text-white fa-2x"></i>
+                    </div>
+                    <h3 class="h4">AI-Powered Rebalancing</h3>
+                    <p>Get optimal rebalancing suggestions based on changing market conditions. Our machine learning algorithms detect when to shift your allocations.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="icon-wrapper bg-primary-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                        <i class="fas fa-chart-pie text-white fa-2x"></i>
+                    </div>
+                    <h3 class="h4">Asset Allocation Models</h3>
+                    <p>Apply professional asset allocation strategies to your DeFi portfolio. Includes barbell, core-satellite, and risk parity approaches.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive ROI Calculator Section -->
+    <div class="row mb-5 justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary-gradient">
+                    <h2 class="h4 mb-0 text-white">Interactive ROI Calculator</h2>
+                </div>
+                <div class="card-body p-4">
+                    <form>
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="investment-amount" class="form-label">Investment Amount ($)</label>
+                                <input type="number" class="form-control" id="investment-amount" value="1000">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="apy-rate" class="form-label">APY Rate (%)</label>
+                                <input type="number" class="form-control" id="apy-rate" value="30">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="investment-period" class="form-label">Investment Period</label>
+                                <select class="form-select" id="investment-period">
+                                    <option value="1">1 Month</option>
+                                    <option value="3">3 Months</option>
+                                    <option value="6">6 Months</option>
+                                    <option value="12" selected>1 Year</option>
+                                    <option value="24">2 Years</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="compound-frequency" class="form-label">Compound Frequency</label>
+                                <select class="form-select" id="compound-frequency">
+                                    <option value="1">Daily</option>
+                                    <option value="7" selected>Weekly</option>
+                                    <option value="30">Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="token-a-volatility" class="form-label">Token A Volatility (%)</label>
+                                <input type="number" class="form-control" id="token-a-volatility" value="15">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="token-b-volatility" class="form-label">Token B Volatility (%)</label>
+                                <input type="number" class="form-control" id="token-b-volatility" value="2">
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button type="button" class="btn btn-primary px-4" onclick="calculateROI()">Calculate Returns</button>
+                        </div>
+                    </form>
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <div class="row">
+                            <div class="col-md-4 text-center mb-3 mb-md-0">
+                                <h5>Final Value</h5>
+                                <p class="fs-4 fw-bold text-primary" id="final-value">$1,300</p>
+                            </div>
+                            <div class="col-md-4 text-center mb-3 mb-md-0">
+                                <h5>Total Return</h5>
+                                <p class="fs-4 fw-bold text-primary" id="total-return">$300</p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <h5>ROI</h5>
+                                <p class="fs-4 fw-bold text-primary" id="roi-percentage">30%</p>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-muted small mb-0">* This calculation includes estimated impermanent loss based on token volatility.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Features Section -->
+    <div class="row mb-5 justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h3 class="h5 mb-0">Advanced Features for Professional Investors</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Multi-pool correlation matrices</li>
+                                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Tax-optimized exit strategy planning</li>
+                                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Custom notification triggers for key metrics</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> API access for institutional integrations</li>
+                                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Historical performance exports (CSV, JSON)</li>
+                                <li class="list-group-item border-0 ps-0"><i class="fas fa-check-circle text-success me-2"></i> Strategy backtesting against historical data</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row mt-5">
+        <div class="col-lg-12 text-center">
+            <div class="card border-0 bg-primary-gradient shadow-lg p-5">
+                <div class="card-body">
+                    <h2 class="text-white mb-4">Ready to Optimize Your DeFi Strategy?</h2>
+                    <p class="text-white mb-4">Access professional-grade analytics and make data-driven investment decisions</p>
+                    <a href="https://t.me/Fi_lotbot?start=pro_analytics" class="btn btn-light btn-lg px-4 py-2" data-event="start_investing">
+                        <i class="fab fa-telegram me-2"></i>Access Pro Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Internal Link Section -->
+    <div class="row mt-5 mb-5">
+        <div class="col-lg-12">
+            <h3 class="text-center mb-4">Explore More Resources</h3>
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <h4 class="card-title">Security Documentation</h4>
+                            <p class="card-text">Learn about our security measures, smart contract audits, and non-custodial integration.</p>
+                            <a href="/security" class="btn btn-outline-primary">Security Details</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <h4 class="card-title">Top Liquidity Pools</h4>
+                            <p class="card-text">View current top-performing Solana liquidity pools with real-time APY data.</p>
+                            <a href="/pools" class="btn btn-outline-primary">Explore Pools</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <h4 class="card-title">Developer Integration</h4>
+                            <p class="card-text">Learn how to integrate FiLot analytics into your own applications and dashboards.</p>
+                            <a href="/developer-guide" class="btn btn-outline-primary">Developer Guide</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateROI() {
+        // Get input values
+        const investmentAmount = parseFloat(document.getElementById('investment-amount').value);
+        const apyRate = parseFloat(document.getElementById('apy-rate').value);
+        const investmentPeriod = parseInt(document.getElementById('investment-period').value);
+        const compoundFrequency = parseInt(document.getElementById('compound-frequency').value);
+        const tokenAVolatility = parseFloat(document.getElementById('token-a-volatility').value);
+        const tokenBVolatility = parseFloat(document.getElementById('token-b-volatility').value);
+        
+        // Calculate compounding periods
+        const periodsPerYear = 365 / compoundFrequency;
+        const totalPeriods = periodsPerYear * (investmentPeriod / 12);
+        
+        // Calculate APY as decimal
+        const apyDecimal = apyRate / 100;
+        
+        // Calculate periodic rate
+        const periodicRate = apyDecimal / periodsPerYear;
+        
+        // Calculate compound interest
+        let finalValue = investmentAmount * Math.pow(1 + periodicRate, totalPeriods);
+        
+        // Calculate impermanent loss factor based on volatility
+        // This is a simplified model - in reality, IL is more complex
+        const volatilityFactor = (tokenAVolatility + tokenBVolatility) / 200;
+        const impermanentLossFactor = 1 - (volatilityFactor * Math.sqrt(investmentPeriod / 12));
+        
+        // Apply impermanent loss adjustment
+        finalValue = finalValue * impermanentLossFactor;
+        
+        // Calculate total return and ROI
+        const totalReturn = finalValue - investmentAmount;
+        const roiPercentage = (totalReturn / investmentAmount) * 100;
+        
+        // Update display
+        document.getElementById('final-value').innerText = '$' + finalValue.toFixed(2);
+        document.getElementById('total-return').innerText = '$' + totalReturn.toFixed(2);
+        document.getElementById('roi-percentage').innerText = roiPercentage.toFixed(2) + '%';
+    }
+</script>
+{% endblock %}

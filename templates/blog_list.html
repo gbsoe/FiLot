@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}{{ meta.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-lg-12 text-center mb-5">
+            <h1 class="display-4 fw-bold text-primary">FiLot Blog</h1>
+            <p class="lead mt-3">Latest insights on DeFi yield farming, Solana ecosystem updates, and cryptocurrency investment strategies.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Featured Post -->
+        {% if posts|length > 0 %}
+        <div class="col-lg-12 mb-5">
+            <div class="card border-0 shadow-sm">
+                <div class="row g-0">
+                    <div class="col-md-5">
+                        {% if posts[0].featured_image %}
+                        <img src="{{ url_for('static', filename='images/' + posts[0].featured_image) }}" alt="{{ posts[0].title }}" class="img-fluid rounded-start" style="height: 100%; object-fit: cover;" width="600" height="400">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='images/filot-defi-yield-farming-guide.webp') }}" alt="{{ posts[0].title }}" class="img-fluid rounded-start" style="height: 100%; object-fit: cover;" width="600" height="400">
+                        {% endif %}
+                    </div>
+                    <div class="col-md-7">
+                        <div class="card-body p-4 h-100 d-flex flex-column">
+                            <div class="mb-2">
+                                <span class="badge bg-primary-gradient">Featured</span>
+                                <span class="text-muted ms-2">{{ posts[0].published_at.strftime('%B %d, %Y') }}</span>
+                            </div>
+                            <h2 class="card-title h3 fw-bold">{{ posts[0].title }}</h2>
+                            <p class="card-text flex-grow-1">{{ posts[0].summary }}</p>
+                            <div>
+                                <a href="{{ url_for('blog.blog_post', slug=posts[0].slug) }}" class="btn btn-primary">Read Article</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Blog Posts Grid -->
+        <div class="col-lg-12">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for post in posts[1:] if posts|length > 1 %}
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm">
+                        {% if post.featured_image %}
+                        <img src="{{ url_for('static', filename='images/' + post.featured_image) }}" class="card-img-top" alt="{{ post.title }}" width="400" height="225">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='images/filot-crypto-investment-strategy.webp') }}" class="card-img-top" alt="{{ post.title }}" width="400" height="225">
+                        {% endif %}
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <span class="text-muted">{{ post.published_at.strftime('%B %d, %Y') }}</span>
+                            </div>
+                            <h3 class="card-title h5 fw-bold">{{ post.title }}</h3>
+                            <p class="card-text">{{ post.summary }}</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 pt-0">
+                            <a href="{{ url_for('blog.blog_post', slug=post.slug) }}" class="btn btn-outline-primary">Read More</a>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                {% if posts|length == 0 %}
+                <div class="col-12 text-center py-5">
+                    <h3>Coming Soon!</h3>
+                    <p class="text-muted">We're working on our first blog posts. Check back soon for insightful articles on DeFi yield farming and cryptocurrency investing.</p>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Newsletter Signup -->
+    <div class="row mt-5">
+        <div class="col-lg-12">
+            <div class="card border-0 bg-primary-gradient shadow-sm p-4">
+                <div class="card-body text-center">
+                    <h2 class="text-white mb-3">Stay Updated</h2>
+                    <p class="text-white mb-4">Subscribe to our newsletter for the latest DeFi insights and investment strategies</p>
+                    <div class="row justify-content-center">
+                        <div class="col-md-6">
+                            <form>
+                                <div class="input-group">
+                                    <input type="email" class="form-control" placeholder="Your email address" aria-label="Email address" required>
+                                    <button class="btn btn-light" type="submit" data-event="newsletter_signup">Subscribe</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blog Categories -->
+    <div class="row mt-5">
+        <div class="col-lg-12 mb-4">
+            <h2 class="fw-bold">Topics</h2>
+        </div>
+        <div class="col-lg-12">
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
+                    <a href="#" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chart-line text-primary fa-2x mb-3"></i>
+                                <h3 class="h5">Yield Farming</h3>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="#" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-shield-alt text-primary fa-2x mb-3"></i>
+                                <h3 class="h5">Security</h3>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="#" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-robot text-primary fa-2x mb-3"></i>
+                                <h3 class="h5">AI & DeFi</h3>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="#" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-file-invoice-dollar text-primary fa-2x mb-3"></i>
+                                <h3 class="h5">Taxes & Regulation</h3>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Internal Link Section -->
+    <div class="row mt-5">
+        <div class="col-lg-12 mb-4">
+            <h2 class="fw-bold">Explore More Resources</h2>
+        </div>
+        <div class="col-lg-12">
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <h3 class="card-title h4">Beginners Guide</h3>
+                            <p class="card-text">New to DeFi? Our step-by-step beginners guide makes yield farming simple.</p>
+                            <a href="/beginners" class="btn btn-outline-primary">View Guide</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <h3 class="card-title h4">Top Pools</h3>
+                            <p class="card-text">Explore the current highest-APY Solana liquidity pools available for yield farming.</p>
+                            <a href="/pools" class="btn btn-outline-primary">View Pools</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <h3 class="card-title h4">Pro Analytics</h3>
+                            <p class="card-text">Access advanced analytics tools for optimizing your DeFi yield farming strategy.</p>
+                            <a href="/pro-analytics" class="btn btn-outline-primary">View Analytics</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
