@@ -2248,28 +2248,136 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                 await walletconnect_command(update, context)
             
             elif account_action == "subscribe":
-                # Redirect to subscribe handler
-                logger.info("Redirecting account_subscribe to subscribe_command handler")
-                context.args = []
-                await subscribe_command(update, context)
+                # Process subscribe through a callback-friendly approach
+                logger.info("Processing account_subscribe button")
+                try:
+                    # Import app at function level to avoid circular imports
+                    from app import app
+                    
+                    # Get user info
+                    user = update.callback_query.from_user
+                    
+                    # Use app context for all database operations
+                    success = False
+                    with app.app_context():
+                        # Subscribe user in database
+                        success = db_utils.subscribe_user(user.id)
+                        
+                        if success:
+                            db_utils.log_user_activity(user.id, "subscribe")
+                    
+                    # Send response using callback query's message
+                    if success:
+                        await query.message.reply_markdown(
+                            "✅ You've successfully subscribed to daily updates!\n\n"
+                            "You'll receive daily insights about the best-performing liquidity pools "
+                            "and investment opportunities.\n\n"
+                            "Use /unsubscribe to stop receiving updates at any time."
+                        )
+                    else:
+                        await query.message.reply_markdown(
+                            "You're already subscribed to daily updates.\n\n"
+                            "Use /unsubscribe if you wish to stop receiving updates."
+                        )
+                except Exception as e:
+                    logger.error(f"Error in subscribe button handler: {e}", exc_info=True)
+                    await query.message.reply_text(
+                        "Sorry, an error occurred while processing your request. Please try again later."
+                    )
                 
             elif account_action == "unsubscribe":
-                # Redirect to unsubscribe handler
-                logger.info("Redirecting account_unsubscribe to unsubscribe_command handler")
-                context.args = []
-                await unsubscribe_command(update, context)
+                # Process unsubscribe through a callback-friendly approach
+                logger.info("Processing account_unsubscribe button")
+                try:
+                    # Import app at function level to avoid circular imports
+                    from app import app
+                    
+                    # Get user info
+                    user = update.callback_query.from_user
+                    
+                    # Use app context for all database operations
+                    success = False
+                    with app.app_context():
+                        # Unsubscribe user in database
+                        success = db_utils.unsubscribe_user(user.id)
+                        
+                        if success:
+                            db_utils.log_user_activity(user.id, "unsubscribe")
+                    
+                    # Send response using callback query's message
+                    if success:
+                        await query.message.reply_markdown(
+                            "✅ You've successfully unsubscribed from daily updates.\n\n"
+                            "You'll no longer receive daily pool insights.\n\n"
+                            "Use /subscribe if you'd like to receive updates again in the future."
+                        )
+                    else:
+                        await query.message.reply_markdown(
+                            "You're not currently subscribed to daily updates.\n\n"
+                            "Use /subscribe if you'd like to receive daily insights."
+                        )
+                except Exception as e:
+                    logger.error(f"Error in unsubscribe button handler: {e}", exc_info=True)
+                    await query.message.reply_text(
+                        "Sorry, an error occurred while processing your request. Please try again later."
+                    )
                 
             elif account_action == "help":
-                # Redirect to help handler
-                logger.info("Redirecting account_help to help_command handler")
-                context.args = []
-                await help_command(update, context)
+                # Process help through a callback-friendly approach
+                logger.info("Processing account_help button")
+                # Simply send a direct reply with the help text
+                await query.message.reply_markdown(
+                    "🤖 *FiLot Bot Commands* 🤖\n\n"
+                    "*/invest* - Start the investment process\n"
+                    "*/explore* - Explore top pools and simulate returns\n"
+                    "*/account* - Manage your account and preferences\n"
+                    "*/subscribe* - Get daily updates on best pools\n"
+                    "*/unsubscribe* - Stop receiving daily updates\n"
+                    "*/wallet* - Connect your crypto wallet\n"
+                    "*/profile* - Set your investment profile\n"
+                    "*/status* - Check bot and account status\n"
+                    "*/help* - Show this help message\n\n"
+                    "Simply type any question to get AI-assisted answers!"
+                )
                 
             elif account_action == "status":
-                # Redirect to status handler
-                logger.info("Redirecting account_status to status_command handler")
-                context.args = []
-                await status_command(update, context)
+                # Process status through a callback-friendly approach
+                logger.info("Processing account_status button")
+                try:
+                    # Import the app at function level to avoid circular imports
+                    from app import app
+                    
+                    # Get user info
+                    user = update.callback_query.from_user
+                    
+                    # Use app context for all database operations
+                    with app.app_context():
+                        # Log the activity inside app context
+                        db_utils.log_user_activity(user.id, "status_command")
+                        
+                        # Get user status inside app context
+                        db_user = db_utils.get_or_create_user(user.id)
+                        
+                        # Format the status text with user data
+                        status_text = (
+                            "🤖 *FiLot Bot Status*\n\n"
+                            "✅ Bot is operational and ready to assist you!\n\n"
+                            "*Your Account Status:*\n"
+                            f"• User ID: {db_user.telegram_id}\n"
+                            f"• Subscription: {'Active ✅' if db_user.is_subscribed else 'Inactive ❌'}\n"
+                            f"• Verification: {'Verified ✅' if db_user.is_verified else 'Unverified ❌'}\n"
+                            f"• Account Created: {db_user.created_at.strftime('%Y-%m-%d')}\n\n"
+                            "Use /help to see available commands."
+                        )
+                    
+                    # Send response using callback query's message
+                    await query.message.reply_markdown(status_text)
+                    
+                except Exception as e:
+                    logger.error(f"Error in status button handler: {e}", exc_info=True)
+                    await query.message.reply_text(
+                        "Sorry, an error occurred while checking status. Please try again later."
+                    )
                 
             elif account_action == "profile":
                 # Show profile options

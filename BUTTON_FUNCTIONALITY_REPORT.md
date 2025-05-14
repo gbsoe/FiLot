@@ -204,3 +204,47 @@ Context persistence problems:
    - Implement retry mechanisms for transient failures
 
 By addressing these issues, the button functionality in all sections should improve significantly, providing a more reliable user experience.
+
+## Recent Fix: Account Section Button Handlers
+
+We've just implemented a fix for the account section buttons (subscribe, unsubscribe, help, status) that were previously failing with errors. The issue was:
+
+**Problem**: The original implementation was directly calling the command handlers (e.g., `subscribe_command()`) when a button was clicked, but these command handlers expected an update object with a message attribute, not a callback_query attribute.
+
+**Solution**: We created specialized callback-specific versions of each handler that:
+
+1. Extract user information from the callback_query instead of from update.message
+2. Perform the same database operations as the original command handlers
+3. Send responses using query.message.reply_* instead of update.message.reply_*
+4. Include proper error handling for each callback function
+
+This approach ensures that the button callbacks correctly handle the different structure of callback_query updates versus message updates, while maintaining the same core functionality.
+
+Example of the improved handler structure:
+
+```python
+# Before:
+elif account_action == "subscribe":
+    # Redirect to subscribe handler (This would fail)
+    context.args = []
+    await subscribe_command(update, context)
+
+# After:
+elif account_action == "subscribe":
+    # Process subscribe through a callback-friendly approach
+    try:
+        # Get user info from callback query instead of message
+        user = update.callback_query.from_user
+        
+        # Database operations remain the same
+        with app.app_context():
+            success = db_utils.subscribe_user(user.id)
+            
+        # Send response using query.message instead of update.message
+        await query.message.reply_markdown("Success message...")
+    except Exception as e:
+        logger.error(f"Error in subscribe button handler: {e}", exc_info=True)
+        await query.message.reply_text("Error message...")
+```
+
+This pattern can be applied to other button handlers that are currently failing with similar errors.
