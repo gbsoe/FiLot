@@ -2499,7 +2499,21 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             logger.info(f"Processing explore action: {explore_action}")
                 
             # Handle different explore actions
-            if explore_action == "pools":
+            if explore_action == "simulate":
+                # Show investment simulation options
+                # Import at function level to avoid circular imports
+                from menus import get_simulate_menu
+                
+                # Updated to use the simulation menu not the investment menu
+                await query.message.reply_markdown(
+                    "💰 *Investment Return Simulator* 💰\n\n"
+                    "Choose an investment amount to simulate potential returns "
+                    "based on current APRs and liquidity pool data:\n\n"
+                    "_This is a simulation only and not financial advice._",
+                    reply_markup=get_simulate_menu()
+                )
+                
+            elif explore_action == "pools":
                 # Send a confirmation message that we're fetching pool information
                 loading_message = await query.message.reply_markdown(
                     "🔍 *Fetching Pool Opportunities*\n\n"
@@ -2565,14 +2579,7 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                 )
                 await query.message.reply_markdown(faq_text)
                 
-            elif explore_action == "simulate":
-                # Show simulation options
-                await query.message.reply_markdown(
-                    "💰 *Simulate Investment Returns* 💰\n\n"
-                    "Select an amount to simulate or enter a custom amount using:\n"
-                    "`/explore simulate <amount>`",
-                    reply_markup=get_simulate_menu()
-                )
+            # Handler for "simulate" was moved up to avoid duplicate handlers
                 
             elif explore_action == "social":
                 # Show social media information with updated text from main.py
