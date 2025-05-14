@@ -358,6 +358,11 @@ def docs():
     """API documentation page."""
     return render_template("docs.html")
 
+@app.route("/features")
+def features():
+    """Bot features page."""
+    return render_template("features.html")
+
 # API Endpoints
 
 @app.route("/health")

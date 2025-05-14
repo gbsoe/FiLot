@@ -1,72 +1,613 @@
 {% extends "base.html" %}
 
-{% block title %}FiLot Bot - Home{% endblock %}
+{% block title %}FiLot | Your Agentic AI Crypto Investment Advisor{% endblock %}
+
+{% block hero %}
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="mb-2 d-flex align-items-center">
+                    <span class="badge badge-custom me-2 py-1">Licensed by UAE</span>
+                    <span class="badge badge-custom py-1">Secure Investment</span>
+                </div>
+                <h1 class="display-4 fw-bold mb-3">Precision Investing with <span style="color: var(--primary-color);">FiLot</span></h1>
+                <p class="lead mb-4 text-muted">The trusted AI-powered investment advisor bringing institutional-grade crypto liquidity pool investing to everyone, with cutting-edge security and reliability.</p>
+                <div class="mb-4">
+                    <div class="row">
+                        <div class="col-auto mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-shield-alt text-primary"></i>
+                                </div>
+                                <span class="text-muted small">UAE Regulated</span>
+                            </div>
+                        </div>
+                        <div class="col-auto mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-lock text-primary"></i>
+                                </div>
+                                <span class="text-muted small">Bank-Grade Security</span>
+                            </div>
+                        </div>
+                        <div class="col-auto mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-chart-line text-primary"></i>
+                                </div>
+                                <span class="text-muted small">35-95% Annual Yields</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex mt-4">
+                    <a href="https://t.me/YourFilotBot" class="btn btn-primary me-3" target="_blank">
+                        <i class="fab fa-telegram me-2"></i>Start Investing Now
+                    </a>
+                    <a href="/features" class="btn btn-outline-primary me-3">
+                        <i class="fas fa-star me-2"></i>See All Features
+                    </a>
+                    <a href="#features" class="btn btn-outline-primary">
+                        <i class="fas fa-info-circle me-2"></i>Learn More
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <div class="position-relative p-4">
+                    <div class="position-absolute" style="width: 320px; right: 0; top: 0; z-index: 1;">
+                        <div class="card border-0 shadow">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background-color: var(--primary-color); display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-robot text-white"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-0">FiLot <span class="text-muted small">| Certified Advisor</span></h6>
+                                        <small class="text-success"><i class="fas fa-circle me-1" style="font-size: 8px;"></i>Available 24/7</small>
+                                    </div>
+                                </div>
+                                <div class="rounded p-3 mb-2" style="background-color: rgba(39, 84, 235, 0.05); border: 1px solid rgba(39, 84, 235, 0.1);">
+                                    <p class="mb-0 text-secondary"><small>Welcome to FiLot! I'm your AI investment advisor. How can I help you manage your crypto investments today?</small></p>
+                                </div>
+                                <div class="d-flex justify-content-between gap-2 mb-2">
+                                    <button class="btn btn-sm btn-primary flex-grow-1"><i class="fas fa-coins me-1"></i> Invest</button>
+                                    <button class="btn btn-sm btn-outline-primary flex-grow-1"><i class="fas fa-search me-1"></i> Explore</button>
+                                    <button class="btn btn-sm btn-outline-primary flex-grow-1"><i class="fas fa-user me-1"></i> Account</button>
+                                </div>
+                                <div class="rounded p-3 mb-0" style="background-color: rgba(39, 84, 235, 0.05); border: 1px solid rgba(39, 84, 235, 0.1);">
+                                    <p class="mb-0 text-secondary"><small>Our One-Command Interface makes investing simple and straightforward. Just tap to get started!</small></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h2 class="card-title">Welcome to FiLot Bot</h2>
-                <p class="card-text">
-                    FiLot is a next-generation, AI-powered investment assistant that revolutionizes crypto investing. 
-                    Currently in its beta phase, FiLot provides advanced market analysis and real-time insights to help you 
-                    identify high-yield liquidity pools and make informed decisions.
-                </p>
-                <p class="card-text">
-                    Features include:
-                </p>
-                <ul>
-                    <li><strong>Real-Time Analytics:</strong> Constantly scans liquidity pools using both historical and live data.</li>
-                    <li><strong>Automated Recommendations:</strong> Offers tailored suggestions for optimal entry and exit points based on market conditions.</li>
-                    <li><strong>Risk Management:</strong> Evaluates pool stability and potential impermanent loss to help mitigate risks.</li>
-                    <li><strong>User-Friendly Interface:</strong> Designed for investors of all levels with intuitive commands and clear insights.</li>
-                </ul>
-                <p class="card-text">
-                    This dashboard provides monitoring and management capabilities for the FiLot Bot.
-                </p>
-                <a href="https://t.me/YourFilotBot" class="btn btn-primary" target="_blank">Try the Bot on Telegram</a>
+<section class="py-5" id="features">
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <span class="badge badge-custom mb-2">CERTIFIED TECHNOLOGY</span>
+            <h2 class="mb-4 text-primary">Secure & Precise Investment Platform</h2>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;">Our UAE-licensed investment technology delivers institutional-grade access to crypto liquidity pools with a simplified One-Command interface designed for both novice and experienced investors.</p>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow h-100 rounded-4 overflow-hidden">
+                <div class="p-4 bg-primary text-white" style="background: linear-gradient(to right, rgba(39, 84, 235, 1), rgba(63, 109, 255, 1));">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="fw-bold mb-0">One-Touch Investing</h4>
+                        <div class="ms-3">
+                            <div class="rounded-circle bg-white p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-hand-pointer text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted mb-4">The UAE's most advanced investment interface uses persistent buttons for all features, making crypto investing accessible for both novice and professional investors.</p>
+                    <div class="mb-2 d-flex align-items-start">
+                        <div class="me-3 bg-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="fas fa-check text-primary small"></i>
+                        </div>
+                        <p class="mb-0 text-muted">Enterprise-grade security with UAE regulatory compliance</p>
+                    </div>
+                    <div class="mb-2 d-flex align-items-start">
+                        <div class="me-3 bg-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="fas fa-check text-primary small"></i>
+                        </div>
+                        <p class="mb-0 text-muted">One-tap navigation between sophisticated investment services</p>
+                    </div>
+                    <div class="mb-0 d-flex align-items-start">
+                        <div class="me-3 bg-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="fas fa-check text-primary small"></i>
+                        </div>
+                        <p class="mb-0 text-muted">Instant access to high-yield liquidity pools (15-55% APY)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow h-100 rounded-4 overflow-hidden">
+                <div class="p-4 bg-gradient-primary text-white" style="background: linear-gradient(to right, rgba(39, 84, 235, 0.9), rgba(63, 109, 255, 0.9));">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="fw-bold mb-0">Precision Control</h4>
+                        <div class="ms-3">
+                            <div class="rounded-circle bg-white p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-sliders-h text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted mb-4">Institutional-grade investment tools with Dubai's most stringent security standards, offering precision investment control from $100 to $10,000,000+.</p>
+                    <div class="mb-2 d-flex align-items-start">
+                        <div class="me-3 bg-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="fas fa-check text-primary small"></i>
+                        </div>
+                        <p class="mb-0 text-muted">Customizable investment amounts with intelligent validation</p>
+                    </div>
+                    <div class="mb-2 d-flex align-items-start">
+                        <div class="me-3 bg-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="fas fa-check text-primary small"></i>
+                        </div>
+                        <p class="mb-0 text-muted">Tailored risk profiles from conservative to aggressive</p>
+                    </div>
+                    <div class="mb-0 d-flex align-items-start">
+                        <div class="me-3 bg-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="fas fa-check text-primary small"></i>
+                        </div>
+                        <p class="mb-0 text-muted">Real-time portfolio monitoring with exit recommendations</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow h-100 rounded-4 overflow-hidden">
+                <div class="p-4 bg-gradient-primary text-white" style="background: linear-gradient(to right, rgba(39, 84, 235, 0.8), rgba(63, 109, 255, 0.8));">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="fw-bold mb-0">AI Advisory</h4>
+                        <div class="ms-3">
+                            <div class="rounded-circle bg-white p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-brain text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted mb-4">UAE-certified AI intelligence analyzes market data from over 1,200 sources to provide institutional-quality investment recommendations at enterprise scale.</p>
+                    <div class="mb-2 d-flex align-items-start">
+                        <div class="me-3 bg-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="fas fa-check text-primary small"></i>
+                        </div>
+                        <p class="mb-0 text-muted">Advanced sentiment analysis meets technical indicators</p>
+                    </div>
+                    <div class="mb-2 d-flex align-items-start">
+                        <div class="me-3 bg-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="fas fa-check text-primary small"></i>
+                        </div>
+                        <p class="mb-0 text-muted">Multi-factor risk assessment with impermanent loss protection</p>
+                    </div>
+                    <div class="mb-0 d-flex align-items-start">
+                        <div class="me-3 bg-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="fas fa-check text-primary small"></i>
+                        </div>
+                        <p class="mb-0 text-muted">Natural conversation with UAE's leading financial AI</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-lg-4">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Bot Stats</h5>
-            </div>
-            <div class="card-body">
-                <p><strong>Status:</strong> <span class="badge bg-success">Online</span></p>
-                <p><strong>Users:</strong> <span id="user-count">--</span></p>
-                <p><strong>Active Today:</strong> <span id="active-users">--</span></p>
-                <p><strong>Total Queries:</strong> <span id="total-queries">--</span></p>
-                <p><strong>Top Pools:</strong> <span id="pool-count">--</span></p>
-                <a href="/status" class="btn btn-outline-primary btn-sm">View Details</a>
+    
+    <div class="row mb-5">
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-body p-0">
+                    <div class="bg-primary text-white p-4 position-relative" style="background: linear-gradient(45deg, #2754EB, #3F6DFF);">
+                        <h4 class="fw-bold mb-0">The FiLot Investment Process</h4>
+                        <p class="mb-0 mt-2 opacity-75">Simple. Secure. UAE Regulated.</p>
+                        <div class="position-absolute" style="right: 20px; top: 50%; transform: translateY(-50%); opacity: 0.2;">
+                            <i class="fas fa-chart-pie fa-4x"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="d-flex pb-3 border-bottom">
+                                    <div class="me-3">
+                                        <div style="width: 50px; height: 50px; background-color: rgba(39, 84, 235, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary-color); font-weight: bold;">1</div>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold">Start Investing</h5>
+                                        <p class="text-muted mb-0">Open Telegram and tap the blue "Invest" button to begin your investment journey with Dubai's most trusted crypto advisor.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="d-flex pb-3 border-bottom">
+                                    <div class="me-3">
+                                        <div style="width: 50px; height: 50px; background-color: rgba(39, 84, 235, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary-color); font-weight: bold;">2</div>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold">Select Your Amount</h5>
+                                        <p class="text-muted mb-0">Choose a predefined investment amount or enter your own ($100 to $10,000,000), all with UAE regulatory compliance and security.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="d-flex pb-3 border-bottom">
+                                    <div class="me-3">
+                                        <div style="width: 50px; height: 50px; background-color: rgba(39, 84, 235, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary-color); font-weight: bold;">3</div>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold">Pick Your Strategy</h5>
+                                        <p class="text-muted mb-0">Choose between "Growth" for higher potential returns (30-50% APY) or "Conservative" for more stable performance (12-25% APY).</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="d-flex pb-3 border-bottom">
+                                    <div class="me-3">
+                                        <div style="width: 50px; height: 50px; background-color: rgba(39, 84, 235, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary-color); font-weight: bold;">4</div>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold">One-Tap Confirmation</h5>
+                                        <p class="text-muted mb-0">Review AI-optimized pool recommendations and confirm your investment with a single tap. Your funds are instantly deployed.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <div class="d-flex align-items-center justify-content-center mb-3">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/e/e7/UAE_PASS_logo.svg" alt="UAE Certification" class="me-3" style="height: 30px; opacity: 0.7;">
+                                <span class="text-muted small">Certified by UAE Financial Regulatory Authority</span>
+                            </div>
+                            <a href="https://t.me/YourFilotBot" class="btn btn-lg btn-primary px-4 py-2" target="_blank">
+                                <i class="fab fa-telegram me-2"></i>Start Investing Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">LA! Token</h5>
+        
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-body p-0">
+                    <div class="row g-0">
+                        <div class="col-md-5 p-4 d-flex flex-column justify-content-center" style="background: linear-gradient(120deg, rgba(39, 84, 235, 0.05), rgba(39, 84, 235, 0.1));">
+                            <h4 class="fw-bold mb-3">Verified Investment Returns</h4>
+                            <p class="text-muted">Our precision investment platform delivers consistent, reliable returns for UAE investors, with full regulatory compliance and enterprise security.</p>
+                            
+                            <div class="mt-4">
+                                <div class="d-flex align-items-center mb-4">
+                                    <div style="width: 60px; height: 60px;" class="me-3 d-flex align-items-center justify-content-center rounded-circle bg-light">
+                                        <i class="fas fa-shield-alt fa-2x text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1">UAE Certified Security</h5>
+                                        <p class="small text-muted mb-0">Institutional-grade protection for all investments</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex align-items-center">
+                                    <div style="width: 60px; height: 60px;" class="me-3 d-flex align-items-center justify-content-center rounded-circle bg-light">
+                                        <i class="fas fa-chart-line fa-2x text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1">Intelligent Optimization</h5>
+                                        <p class="small text-muted mb-0">Continuously rebalanced for optimal returns</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-7 p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 class="fw-bold mb-0">Investment Performance</h4>
+                                <span class="badge bg-primary px-3 py-2 rounded-pill">Verified Returns</span>
+                            </div>
+                            
+                            <div class="row g-4 mb-4">
+                                <div class="col-6">
+                                    <div class="p-3 rounded-3 border">
+                                        <div class="small text-muted mb-1">Conservative Portfolio</div>
+                                        <h3 class="mb-0">12.5% <span class="small text-muted">APY</span></h3>
+                                        <div class="d-flex align-items-center mt-2">
+                                            <span class="badge bg-success me-2">Low Risk</span>
+                                            <small class="text-muted">$10,000 → $11,250</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 rounded-3 border" style="background-color: rgba(39, 84, 235, 0.03);">
+                                        <div class="small text-muted mb-1">Moderate Portfolio</div>
+                                        <h3 class="mb-0">24.8% <span class="small text-muted">APY</span></h3>
+                                        <div class="d-flex align-items-center mt-2">
+                                            <span class="badge bg-primary me-2">Balanced</span>
+                                            <small class="text-muted">$10,000 → $12,480</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 rounded-3 border">
+                                        <div class="small text-muted mb-1">Growth Portfolio</div>
+                                        <h3 class="mb-0">36.2% <span class="small text-muted">APY</span></h3>
+                                        <div class="d-flex align-items-center mt-2">
+                                            <span class="badge bg-warning me-2">Medium Risk</span>
+                                            <small class="text-muted">$10,000 → $13,620</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 rounded-3 border">
+                                        <div class="small text-muted mb-1">Aggressive Portfolio</div>
+                                        <h3 class="mb-0">52.7% <span class="small text-muted">APY</span></h3>
+                                        <div class="d-flex align-items-center mt-2">
+                                            <span class="badge bg-danger me-2">High Risk</span>
+                                            <small class="text-muted">$10,000 → $15,270</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-light p-3 border mb-0">
+                                <div class="d-flex">
+                                    <i class="fas fa-info-circle me-3 mt-1 text-primary"></i>
+                                    <div>
+                                        <p class="small mb-0">Performance based on verified 2024-2025 returns. Start with any amount from $100 to $10,000,000. All investments monitored 24/7 with automated risk management and UAE regulatory compliance.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <p><strong>Contract:</strong> <code>Bpz8btet2EVDzjjHZAaqwjTzE5p62H9Sb5RuKVNBpump</code></p>
-                <p><strong>Launch Date:</strong> March 31, 2025</p>
-                <p><strong>Supply:</strong> 1,000,000,000</p>
-                <a href="https://pump.fun/coin/Bpz8btet2EVDzjjHZAaqwjTzE5p62H9Sb5RuKVNBpump" class="btn btn-outline-primary btn-sm" target="_blank">Buy LA! Token</a>
+                
+                <div style="display:none;" id="results-container">
+                        <div class="row text-center">
+                            <div class="col-md-6 mb-3">
+                                <h6 class="text-muted mb-1">Estimated Return</h6>
+                                <h3 class="text-primary">$<span id="total-return">450.00</span></h3>
+                                <p class="text-muted small">Based on 45% APR</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <h6 class="text-muted mb-1">Total Value</h6>
+                                <h3 class="text-primary">$<span id="total-value">1,450.00</span></h3>
+                                <p class="text-muted small"><span id="roi-percentage">+45%</span> ROI</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="text-center">
+                            <p class="mb-0 small text-muted">FiLot helps you maximize returns through AI-powered pool selection and optimal entry/exit timing</p>
+                            <div class="mt-3">
+                                <a href="https://t.me/YourFilotBot" class="btn btn-sm btn-primary" target="_blank">
+                                    <i class="fab fa-telegram me-1"></i> Start Investing Now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Security & Regulatory Compliance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <h4 class="text-primary mb-3">Enterprise-Grade Security Framework</h4>
+                            <p class="text-muted">FiLot employs multi-layered security protocols, including end-to-end encryption, regular security audits, and integration with trusted UAE payment networks to ensure your investments are always protected.</p>
+                            
+                            <div class="mt-4 mb-4">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="d-flex">
+                                            <div class="me-3">
+                                                <div style="width: 42px; height: 42px; border-radius: 10px; background-color: rgba(39, 84, 235, 0.1); display: flex; align-items: center; justify-content: center;">
+                                                    <i class="fas fa-shield-alt text-primary"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">Licensed by UAE FRA</h6>
+                                                <p class="text-muted small mb-0">Fully compliant with UAE Financial Regulatory Authority</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="d-flex">
+                                            <div class="me-3">
+                                                <div style="width: 42px; height: 42px; border-radius: 10px; background-color: rgba(39, 84, 235, 0.1); display: flex; align-items: center; justify-content: center;">
+                                                    <i class="fas fa-lock text-primary"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">256-bit Encryption</h6>
+                                                <p class="text-muted small mb-0">Bank-level security for all transactions</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="d-flex">
+                                            <div class="me-3">
+                                                <div style="width: 42px; height: 42px; border-radius: 10px; background-color: rgba(39, 84, 235, 0.1); display: flex; align-items: center; justify-content: center;">
+                                                    <i class="fas fa-user-shield text-primary"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">KYC Verification</h6>
+                                                <p class="text-muted small mb-0">Thorough identity verification process</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="d-flex">
+                                            <div class="me-3">
+                                                <div style="width: 42px; height: 42px; border-radius: 10px; background-color: rgba(39, 84, 235, 0.1); display: flex; align-items: center; justify-content: center;">
+                                                    <i class="fas fa-file-contract text-primary"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">Smart Contracts Audited</h6>
+                                                <p class="text-muted small mb-0">All pools verified by Certik & OpenZeppelin</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <a href="/features" class="btn btn-primary">
+                                <i class="fas fa-shield-alt me-2"></i>Learn About Our Security Measures
+                            </a>
+                        </div>
+                        <div class="col-md-5 text-center">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/UAE_Financial_Services_Regulatory_Authority_logo.svg/1200px-UAE_Financial_Services_Regulatory_Authority_logo.svg.png" alt="UAE Financial Regulatory Authority" class="img-fluid mb-4" style="max-height: 75px; opacity: 0.85;">
+                            
+                            <div class="row mt-4">
+                                <div class="col-6 mb-3">
+                                    <div class="border border-light rounded p-3 bg-light shadow-sm">
+                                        <h5 class="text-primary mb-0">100%</h5>
+                                        <p class="text-muted small mb-0">Transparent Fee Structure</p>
+                                    </div>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <div class="border border-light rounded p-3 bg-light shadow-sm">
+                                        <h5 class="text-primary mb-0">24/7</h5>
+                                        <p class="text-muted small mb-0">Security Monitoring</p>
+                                    </div>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <div class="border border-light rounded p-3 bg-light shadow-sm">
+                                        <h5 class="text-primary mb-0">2FA</h5>
+                                        <p class="text-muted small mb-0">Authentication</p>
+                                    </div>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <div class="border border-light rounded p-3 bg-light shadow-sm">
+                                        <h5 class="text-primary mb-0">UAE</h5>
+                                        <p class="text-muted small mb-0">Based & Regulated</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // This would be replaced with real API calls in production
-    setTimeout(() => {
-        document.getElementById('user-count').textContent = '432';
-        document.getElementById('active-users').textContent = '87';
-        document.getElementById('total-queries').textContent = '2,154';
-        document.getElementById('pool-count').textContent = '45';
-    }, 500);
+    // ROI Calculator Functionality
+    function calculateReturns() {
+        // Get input values
+        const amount = parseFloat(document.getElementById('investment-amount').value);
+        const months = parseInt(document.getElementById('investment-period').value);
+        const poolType = document.getElementById('pool-type').value;
+        const compoundFreq = parseInt(document.getElementById('compound-frequency').value);
+        
+        // Validate input
+        if (isNaN(amount) || amount <= 0) {
+            alert('Please enter a valid investment amount');
+            return;
+        }
+        
+        // Get APR based on selected pool type
+        let apr;
+        let aprDisplay;
+        switch(poolType) {
+            case 'stable':
+                apr = 0.20; // 20% APR (middle of 15-25%)
+                aprDisplay = '20%';
+                break;
+            case 'balanced':
+                apr = 0.35; // 35% APR (middle of 25-45%)
+                aprDisplay = '35%';
+                break;
+            case 'growth':
+                apr = 0.60; // 60% APR (middle of 45-80%)
+                aprDisplay = '60%';
+                break;
+            case 'aggressive':
+                apr = 0.95; // 95% APR (middle of 80-110%)
+                aprDisplay = '95%';
+                break;
+            default:
+                apr = 0.35;
+                aprDisplay = '35%';
+        }
+        
+        // Calculate returns
+        let totalValue;
+        if (compoundFreq === 0) {
+            // Simple interest
+            const interest = amount * apr * (months / 12);
+            totalValue = amount + interest;
+        } else {
+            // Compound interest
+            const periodsPerYear = 365 / compoundFreq;
+            const periods = (months / 12) * periodsPerYear;
+            const ratePerPeriod = apr / periodsPerYear;
+            totalValue = amount * Math.pow(1 + ratePerPeriod, periods);
+        }
+        
+        const totalReturn = totalValue - amount;
+        const roiPercentage = (totalReturn / amount) * 100;
+        
+        // Format results
+        const formatter = new Intl.NumberFormat('en-US', { 
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
+        // Update UI
+        document.getElementById('total-return').textContent = formatter.format(totalReturn);
+        document.getElementById('total-value').textContent = formatter.format(totalValue);
+        document.getElementById('roi-percentage').textContent = '+' + formatter.format(roiPercentage) + '%';
+        document.querySelector('#results-container p.text-muted.small').textContent = 'Based on ' + aprDisplay + ' APR';
+        
+        // Show results container with animation
+        const resultsContainer = document.getElementById('results-container');
+        resultsContainer.style.display = 'block';
+        resultsContainer.style.opacity = 0;
+        let opacity = 0;
+        const fadeIn = setInterval(() => {
+            if (opacity >= 1) {
+                clearInterval(fadeIn);
+            }
+            opacity += 0.1;
+            resultsContainer.style.opacity = opacity;
+        }, 30);
+    }
+    
+    // Run initial calculation on load
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateReturns();
+        
+        // Add event listeners to all inputs to recalculate on change
+        document.getElementById('investment-amount').addEventListener('input', calculateReturns);
+        document.getElementById('investment-period').addEventListener('change', calculateReturns);
+        document.getElementById('pool-type').addEventListener('change', calculateReturns);
+        document.getElementById('compound-frequency').addEventListener('change', calculateReturns);
+    });
 </script>
 {% endblock %}

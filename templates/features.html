@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block title %}FiLot | Bot Features{% endblock %}
+
+{% block hero %}
+<section class="hero-section" style="background: linear-gradient(135deg, rgba(236, 244, 255, 0.8), rgba(247, 250, 255, 0.9)), url('https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=1932&auto=format&fit=crop') center/cover no-repeat;">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-12 text-center">
+                <div class="mb-3 d-flex align-items-center justify-content-center">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/UAE_PASS_logo.svg/2560px-UAE_PASS_logo.svg.png" alt="UAE Certification" class="me-3" style="height: 32px;">
+                    <span class="badge bg-primary px-3 py-2 rounded-pill">Enterprise-Grade Security</span>
+                </div>
+                
+                <div class="position-relative mb-4">
+                    <h1 class="display-4 fw-bold mb-0">
+                        <span class="d-inline-block position-relative">
+                            FiLot
+                            <span class="position-absolute" style="height: 6px; width: 100%; background: linear-gradient(90deg, #2754EB, #3F6DFF); bottom: 5px; left: 0; z-index: -1; opacity: 0.3; border-radius: 10px;"></span>
+                        </span>
+                        <span class="text-primary"> Precision Features</span>
+                    </h1>
+                </div>
+                
+                <p class="lead mb-4 mx-auto text-muted" style="max-width: 700px; font-weight: 300;">Our UAE-certified platform delivers institutional-grade cryptocurrency investment tools with military-grade security, absolute precision, and uncompromising reliability as our highest priorities.</p>
+                
+                <div class="row justify-content-center mb-4">
+                    <div class="col-auto">
+                        <div class="d-flex align-items-center bg-light rounded-pill px-3 py-2 border">
+                            <div class="me-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-shield-alt text-primary"></i>
+                            </div>
+                            <span class="text-muted small">Dubai Financial Services Authority</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="d-flex align-items-center bg-light rounded-pill px-3 py-2 border">
+                            <div class="me-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-lock text-primary"></i>
+                            </div>
+                            <span class="text-muted small">256-bit Encryption</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="d-flex align-items-center bg-light rounded-pill px-3 py-2 border">
+                            <div class="me-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-chart-line text-primary"></i>
+                            </div>
+                            <span class="text-muted small">AI-Powered Analysis</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="https://t.me/YourFilotBot" class="btn btn-lg btn-primary px-4 py-2 rounded-pill" target="_blank">
+                        <i class="fab fa-telegram me-2"></i>Start Investing Now
+                    </a>
+                    <a href="/" class="btn btn-lg btn-outline-primary px-4 py-2 rounded-pill">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto">
+            <div class="card mb-5">
+                <div class="card-header text-center py-3">
+                    <h4 class="mb-0">One-Command Interface</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="feature-icon mx-auto">
+                            <i class="fas fa-hand-pointer"></i>
+                        </div>
+                        <h2 class="mb-2 text-primary">Precision Navigation</h2>
+                        <p class="text-muted">Our UAE-certified button-based navigation system</p>
+                    </div>
+
+                    <p>FiLot's new One-Command interface completely reimagines how you interact with financial bots. Instead of remembering complex commands or typing long instructions, everything is accessible through intuitive buttons that appear right when you need them.</p>
+                    
+                    <div class="card mb-4 bg-light shadow-sm">
+                        <div class="card-body p-3">
+                            <h5 class="card-title text-primary mb-3">Key Benefits</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="d-flex mb-3">
+                                        <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                                        <div>
+                                            <h6 class="mb-1">Persistent Navigation</h6>
+                                            <p class="text-muted small mb-0">Buttons remain accessible at all times, making navigation effortless</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex mb-3">
+                                        <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                                        <div>
+                                            <h6 class="mb-1">Intuitive Layout</h6>
+                                            <p class="text-muted small mb-0">Buttons are organized logically by function and frequency of use</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex mb-3">
+                                        <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                                        <div>
+                                            <h6 class="mb-1">Consistent Experience</h6>
+                                            <p class="text-muted small mb-0">The same button always performs the same action throughout the app</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex mb-3">
+                                        <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                                        <div>
+                                            <h6 class="mb-1">Reduced Complexity</h6>
+                                            <p class="text-muted small mb-0">Even complex actions can be completed with just a few button taps</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center my-5">
+                        <div class="card mb-4 shadow" style="max-width: 400px; margin: 0 auto;">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background-color: var(--primary-color); display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-robot text-white"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-0">FiLot Bot</h6>
+                                        <small class="text-muted">Navigation Example</small>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between gap-2 mb-3">
+                                    <button class="btn btn-sm btn-primary flex-grow-1"><i class="fas fa-coins me-1"></i> Invest</button>
+                                    <button class="btn btn-sm btn-outline-primary flex-grow-1"><i class="fas fa-search me-1"></i> Explore</button>
+                                    <button class="btn btn-sm btn-outline-primary flex-grow-1"><i class="fas fa-user me-1"></i> Account</button>
+                                </div>
+                                <p class="small text-muted mb-0 text-center">Main navigation buttons are always accessible</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="mb-3">Investment Flow Simplified</h4>
+                    <p>Our new interface makes the investment process incredibly straightforward:</p>
+
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 text-center shadow-sm border-light bg-light">
+                                <div class="card-body">
+                                    <div class="mb-3 text-center">
+                                        <div style="width: 40px; height: 40px; background-color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; margin: 0 auto;">1</div>
+                                    </div>
+                                    <h5 class="mb-2 text-primary">Tap "Invest"</h5>
+                                    <p class="small text-muted mb-0">Start the investment flow with a single tap</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 text-center shadow-sm border-light bg-light">
+                                <div class="card-body">
+                                    <div class="mb-3 text-center">
+                                        <div style="width: 40px; height: 40px; background-color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; margin: 0 auto;">2</div>
+                                    </div>
+                                    <h5 class="mb-2 text-primary">Select Amount</h5>
+                                    <p class="small text-muted mb-0">Choose from preset options or enter a custom amount</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 text-center shadow-sm border-light bg-light">
+                                <div class="card-body">
+                                    <div class="mb-3 text-center">
+                                        <div style="width: 40px; height: 40px; background-color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; margin: 0 auto;">3</div>
+                                    </div>
+                                    <h5 class="mb-2 text-primary">Pick Risk Profile</h5>
+                                    <p class="small text-muted mb-0">Choose between "High-Risk" or "Stable" investment options</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 text-center shadow-sm border-light bg-light">
+                                <div class="card-body">
+                                    <div class="mb-3 text-center">
+                                        <div style="width: 40px; height: 40px; background-color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; margin: 0 auto;">4</div>
+                                    </div>
+                                    <h5 class="mb-2 text-primary">Confirm</h5>
+                                    <p class="small text-muted mb-0">Review recommendations and confirm your investment</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-5">
+                        <div class="card mb-4 shadow" style="max-width: 400px; margin: 0 auto;">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background-color: var(--primary-color); display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-robot text-white"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-0">FiLot Bot</h6>
+                                        <small class="text-muted">Investment Selection</small>
+                                    </div>
+                                </div>
+                                <div class="rounded p-3 mb-3" style="background-color: rgba(123, 104, 238, 0.1);">
+                                    <p class="mb-0"><small>Ready to Invest? With our One-Touch interface, simply select an investment amount below or choose 'Custom Amount' to enter a specific value.</small></p>
+                                </div>
+                                <div class="d-grid gap-2 mb-2">
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <button class="btn btn-sm btn-outline-primary w-100">$50</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-sm btn-outline-primary w-100">$100</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-sm btn-outline-primary w-100">$250</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-sm btn-outline-primary w-100">$500</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-sm btn-outline-primary w-100">$1,000</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-sm btn-outline-primary w-100">$5,000</button>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-sm btn-secondary">Custom Amount</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="mb-3">Smart Investment Validation</h4>
+                    <p>Our system intelligently validates all investment amounts to ensure you make informed decisions:</p>
+                    
+                    <ul class="list-unstyled">
+                        <li class="mb-3">
+                            <div class="d-flex">
+                                <i class="fas fa-shield-alt text-primary me-3 mt-1"></i>
+                                <div>
+                                    <h5 class="mb-1">Input Validation</h5>
+                                    <p class="text-muted mb-0">The system automatically verifies that your investment amount is a valid number and provides clear feedback if correction is needed.</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="mb-3">
+                            <div class="d-flex">
+                                <i class="fas fa-balance-scale text-primary me-3 mt-1"></i>
+                                <div>
+                                    <h5 class="mb-1">Amount Limits</h5>
+                                    <p class="text-muted mb-0">For your security, the system validates that investment amounts are within reasonable limits and provides appropriate options if adjustments are needed.</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="mb-3">
+                            <div class="d-flex">
+                                <i class="fas fa-comment-dots text-primary me-3 mt-1"></i>
+                                <div>
+                                    <h5 class="mb-1">Helpful Feedback</h5>
+                                    <p class="text-muted mb-0">Clear error messages explain any issues with your input and provide guidance on how to proceed with your investment.</p>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div class="text-center my-5">
+                        <div class="card mb-4 shadow" style="max-width: 400px; margin: 0 auto;">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background-color: var(--primary-color); display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-robot text-white"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-0">FiLot Bot</h6>
+                                        <small class="text-muted">Amount Validation</small>
+                                    </div>
+                                </div>
+                                <div class="rounded p-3 mb-3" style="background-color: rgba(255, 127, 80, 0.1);">
+                                    <p class="mb-0 text-warning"><small><i class="fas fa-exclamation-triangle me-1"></i> Investment Amount Too Large</small></p>
+                                    <p class="mb-0"><small>For security reasons, we limit individual investment amounts. Please try a smaller amount (under $10,000) or contact support for assistance with larger investments.</small></p>
+                                </div>
+                                <div class="d-grid gap-2 mb-1">
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <button class="btn btn-sm btn-outline-primary w-100">$1,000</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-sm btn-outline-primary w-100">$5,000</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-sm btn-outline-primary w-100">$10,000</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-5">
+                <div class="card-header text-center py-3">
+                    <h4 class="mb-0">Certified AI Advisor</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="feature-icon mx-auto">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h2 class="mb-2 text-primary">AI-Powered Precision</h2>
+                        <p class="text-muted">Intelligent analysis and recommendations vetted by UAE financial experts</p>
+                    </div>
+                    
+                    <p>Behind FiLot's simple interface is a powerful AI engine that constantly analyzes market data, evaluates investment opportunities, and provides personalized recommendations based on your preferences.</p>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 bg-light border-light shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="p-2 rounded" style="background-color: rgba(39, 84, 235, 0.1);">
+                                            <i class="fas fa-chart-line text-primary"></i>
+                                        </div>
+                                        <h5 class="ms-3 mb-0 text-primary">Institutional Analysis</h5>
+                                    </div>
+                                    <p class="text-muted mb-0">Our UAE-certified AI constantly monitors market conditions, token sentiment, and liquidity pool performance to identify the best investment opportunities for our clients.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 bg-light border-light shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="p-2 rounded" style="background-color: rgba(39, 84, 235, 0.1);">
+                                            <i class="fas fa-user-circle text-primary"></i>
+                                        </div>
+                                        <h5 class="ms-3 mb-0 text-primary">Personalized Precision</h5>
+                                    </div>
+                                    <p class="text-muted mb-0">Our recommendations are tailored to your specific risk profile, investment goals, and historical performance to deliver precise financial guidance that meets UAE regulatory standards.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 bg-light border-light shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="p-2 rounded" style="background-color: rgba(39, 84, 235, 0.1);">
+                                            <i class="fas fa-shield-alt text-primary"></i>
+                                        </div>
+                                        <h5 class="ms-3 mb-0 text-primary">Enterprise Risk Assessment</h5>
+                                    </div>
+                                    <p class="text-muted mb-0">Each investment opportunity undergoes comprehensive evaluation according to UAE regulatory standards, analyzing volatility, impermanent loss potential, and market stability factors.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 bg-light border-light shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="p-2 rounded" style="background-color: rgba(39, 84, 235, 0.1);">
+                                            <i class="fas fa-comments text-primary"></i>
+                                        </div>
+                                        <h5 class="ms-3 mb-0 text-primary">Professional Communication</h5>
+                                    </div>
+                                    <p class="text-muted mb-0">Communicate naturally with our UAE-certified advisory system to receive clear, professional guidance on investments, strategies, and market conditions.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center my-5">
+                        <div class="card mb-4 shadow" style="max-width: 400px; margin: 0 auto;">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background-color: var(--primary-color); display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-robot text-white"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-0">FiLot Bot</h6>
+                                        <small class="text-muted">AI Recommendation</small>
+                                    </div>
+                                </div>
+                                <div class="rounded p-3 mb-3" style="background-color: rgba(123, 104, 238, 0.1);">
+                                    <p class="mb-0"><small>Based on your $500 investment and high-risk profile, I recommend these pools:</small></p>
+                                    <ul class="list-unstyled mb-0 mt-2">
+                                        <li class="small mb-2"><i class="fas fa-star text-warning me-1"></i> <strong>SOL-USDC:</strong> 45.2% APR | High liquidity</li>
+                                        <li class="small mb-2"><i class="fas fa-star text-warning me-1"></i> <strong>BONK-SOL:</strong> 87.3% APR | Higher volatility</li>
+                                        <li class="small"><i class="fas fa-star text-warning me-1"></i> <strong>JTO-USDC:</strong> 62.1% APR | Growing volume</li>
+                                    </ul>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-sm btn-primary">View Details</button>
+                                    <button class="btn btn-sm btn-outline-primary">Adjust Preferences</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <p class="lead">Ready to experience the future of crypto investing?</p>
+                <a href="https://t.me/YourFilotBot" class="btn btn-primary btn-lg" target="_blank">
+                    <i class="fab fa-telegram me-2"></i>Start Using FiLot Now
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

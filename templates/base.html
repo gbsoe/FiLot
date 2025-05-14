@@ -3,46 +3,384 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}FiLot Bot{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <title>{% block title %}FiLot | Agentic Investment Advisor{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom styles */
+        :root {
+            --primary-color: #2754EB;  /* FiLot Blue from logo - updated to exact match */
+            --secondary-color: #3F6DFF; /* Slightly lighter blue */
+            --accent-color: #1A43D8;   /* Slightly darker blue */
+            --light-bg: #ffffff;
+            --card-bg: #f5f8ff;        /* Very light blue background */
+            --text-primary: #0f172a;
+            --text-secondary: #1e293b;
+            --text-muted: #475569;
+            --border-color: #e2e8f0;
+            --gradient-primary: linear-gradient(45deg, #2754EB, #3F6DFF);
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .navbar {
+            background: linear-gradient(90deg, #ffffff, #f5f8ff) !important;
+            box-shadow: 0 4px 12px rgba(39, 84, 235, 0.08);
+            padding: 1rem;
+            border-bottom: 1px solid rgba(39, 84, 235, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #2754EB !important;
+            letter-spacing: -0.02em;
+        }
+        
+        .navbar-tagline {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            letter-spacing: 0.05rem;
+            margin-left: 0.5rem;
+            font-weight: 500;
+            position: relative;
+            top: 2px;
+        }
+        
+        .nav-link {
+            font-weight: 500;
+            margin: 0 0.3rem;
+            position: relative;
+        }
+        
+        .nav-link:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: #2754EB;
+            transition: width 0.3s ease;
+            border-radius: 2px;
+        }
+        
+        .nav-link:hover:after {
+            width: 100%;
+        }
+        
+        .nav-link {
+            color: var(--text-secondary) !important;
+            transition: color 0.3s;
+        }
+        
+        .nav-link:hover {
+            color: #2754EB !important;
+        }
+        
+        .card {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background-color: var(--light-bg);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(39, 84, 235, 0.1);
+            border-color: rgba(39, 84, 235, 0.2);
+        }
+        
+        .card-header {
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            border-radius: 12px 12px 0 0 !important;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background-color: #2754EB;
+            border-color: #2754EB;
+            font-weight: 500;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2754EB, #3F6DFF);
+            border-color: #3F6DFF;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(39, 84, 235, 0.4);
+            color: white;
+        }
+        
+        .btn-outline-primary {
+            color: #2754EB;
+            border-color: #2754EB;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .btn-outline-primary:hover {
+            background: linear-gradient(135deg, #2754EB, #3F6DFF);
+            border-color: #3F6DFF;
+            color: white;
+            box-shadow: 0 4px 12px rgba(39, 84, 235, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline-light {
+            color: #2754EB;
+            border-color: rgba(39, 84, 235, 0.15);
+            background-color: rgba(39, 84, 235, 0.03);
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-light:hover {
+            background-color: rgba(39, 84, 235, 0.08);
+            color: #2754EB;
+            border-color: rgba(39, 84, 235, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(39, 84, 235, 0.1);
+        }
+        
+        .text-muted {
+            color: var(--text-muted) !important;
+        }
+        
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.6rem;
+            background: linear-gradient(135deg, #2754EB, #3F6DFF);
+            color: white;
+            box-shadow: 0 4px 15px rgba(39, 84, 235, 0.2);
+        }
+        
+        footer {
+            background: linear-gradient(90deg, #f8fafc, #f0f7ff) !important;
+            border-top: 1px solid var(--border-color);
+            padding: 2rem 0;
+            color: var(--text-secondary);
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-links a {
+            color: var(--text-muted);
+            margin: 0 1rem;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary-color);
+        }
+        
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        
+        .social-icons a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--card-bg);
+            color: #2754EB;
+            margin: 0 0.5rem;
+            transition: all 0.3s;
+            border: 1px solid rgba(39, 84, 235, 0.2);
+        }
+        
+        .social-icons a:hover {
+            background: linear-gradient(135deg, #2754EB, #3F6DFF);
+            color: white;
+            transform: translateY(-3px);
+            border-color: #2754EB;
+            box-shadow: 0 5px 15px rgba(39, 84, 235, 0.2);
+        }
+        
+        .badge-custom {
+            background-color: rgba(39, 84, 235, 0.1);
+            color: #2754EB;
+            font-weight: 600;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            border: 1px solid rgba(39, 84, 235, 0.15);
+        }
+        
+        .hero-section {
+            padding: 5rem 0;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f0f7ff, #ffffff);
+            border-bottom: 1px solid rgba(39, 84, 235, 0.08);
+        }
+        
+        .stats-card {
+            border-left: 4px solid #2754EB;
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(39, 84, 235, 0.06);
+            height: 100%;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(39, 84, 235, 0.1);
+        }
+        
+        .code-block {
+            background-color: rgba(39, 84, 235, 0.03);
+            border-radius: 8px;
+            padding: 1.2rem;
+            border: 1px solid rgba(39, 84, 235, 0.1);
+            color: var(--text-secondary);
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .investment-simulator {
+            border: 1px solid rgba(39, 84, 235, 0.1);
+            border-radius: 12px;
+            background-color: rgba(39, 84, 235, 0.03);
+            padding: 2rem;
+            box-shadow: 0 8px 20px rgba(39, 84, 235, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .investment-simulator:hover {
+            box-shadow: 0 12px 25px rgba(39, 84, 235, 0.08);
+            transform: translateY(-5px);
+            border-color: rgba(39, 84, 235, 0.15);
+        }
+        
+        .result-box {
+            background-color: white;
+            border: 1px solid rgba(39, 84, 235, 0.1);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 4px 12px rgba(39, 84, 235, 0.06);
+            transition: all 0.3s ease;
+        }
+        
+        .result-box:hover {
+            border-color: rgba(39, 84, 235, 0.2);
+            box-shadow: 0 6px 15px rgba(39, 84, 235, 0.1);
+        }
+        
+        .bg-success {
+            background-color: #2754EB !important;
+        }
+        
+        .text-success {
+            color: #2754EB !important;
+        }
+    </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
-            <a class="navbar-brand" href="/">FiLot Bot</a>
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-robot me-2"></i>FiLot <span class="navbar-tagline">| Precision Investing</span>
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/">Home</a>
+                        <a class="nav-link" href="/"><i class="fas fa-home me-1"></i> Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/pools">Pools</a>
+                        <a class="nav-link" href="/features"><i class="fas fa-star me-1"></i> Features</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/users">Users</a>
+                        <a class="nav-link" href="/pools"><i class="fas fa-chart-line me-1"></i> Pools</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/status">Status</a>
+                        <a class="nav-link" href="/users"><i class="fas fa-users me-1"></i> Users</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/docs">API Docs</a>
+                        <a class="nav-link" href="/status"><i class="fas fa-server me-1"></i> Status</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/docs"><i class="fas fa-book me-1"></i> API Docs</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
 
+    {% block hero %}{% endblock %}
+
     <div class="container mt-4">
         {% block content %}{% endblock %}
     </div>
 
-    <footer class="footer mt-5 py-3 bg-dark">
-        <div class="container text-center">
-            <span class="text-muted">FiLot Bot © 2025. All rights reserved.</span>
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3" style="color: #2154E3"><i class="fas fa-robot me-2"></i>FiLot <span class="text-muted small">| Precision Investing</span></h5>
+                    <p class="text-muted">Your trusted investment advisor making crypto investing safer, simpler, and more profitable through proven investment strategies and advanced technology.</p>
+                    <div class="mt-3 mb-3 mb-md-0">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/UAE_PASS_logo.svg/2560px-UAE_PASS_logo.svg.png" alt="UAE Certification" class="img-fluid me-2" style="height: 30px; opacity: 0.7;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Dubai_DET_logo.svg/1200px-Dubai_DET_logo.svg.png" alt="Dubai Certification" class="img-fluid" style="height: 30px; opacity: 0.7;">
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3 text-primary">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="text-muted"><i class="fas fa-angle-right me-2 text-primary"></i>Home</a></li>
+                        <li><a href="/features" class="text-muted"><i class="fas fa-angle-right me-2 text-primary"></i>Features</a></li>
+                        <li><a href="/pools" class="text-muted"><i class="fas fa-angle-right me-2 text-primary"></i>Pools</a></li>
+                        <li><a href="/status" class="text-muted"><i class="fas fa-angle-right me-2 text-primary"></i>Status</a></li>
+                        <li><a href="/docs" class="text-muted"><i class="fas fa-angle-right me-2 text-primary"></i>API Docs</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-3 text-primary">Connect With Us</h5>
+                    <div class="social-icons">
+                        <a href="#" title="Telegram"><i class="fab fa-telegram"></i></a>
+                        <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" title="Discord"><i class="fab fa-discord"></i></a>
+                        <a href="#" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                    <p class="mt-3 text-muted">Get support: <a href="mailto:support@filot.finance" class="text-decoration-none text-primary">support@filot.finance</a></p>
+                </div>
+            </div>
+            <hr class="mt-4 mb-4" style="background-color: var(--border-color)">
+            <div class="text-center">
+                <p class="text-muted mb-0">FiLot © 2025. All rights reserved. <span class="small">Licensed and regulated by the UAE Financial Regulatory Authority</span></p>
+            </div>
         </div>
     </footer>
 
