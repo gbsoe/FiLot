@@ -96,11 +96,45 @@ async def process_invest_amount(update: Update, context: ContextTypes.DEFAULT_TY
     try:
         # First check if we have a clean number
         amount = float(text.strip())
+        
+        # Check if amount is ridiculously large (prevent potential issues)
+        if amount > 10000000:  # 10 million USD limit
+            await message.reply_markdown(
+                "⚠️ *Amount too large*\n\n"
+                "The maximum investment amount we can process is $10,000,000. "
+                "Please enter a smaller amount or select from the options below:",
+                reply_markup=InlineKeyboardMarkup([
+                    [
+                        InlineKeyboardButton("$50,000", callback_data="amount_50000"),
+                        InlineKeyboardButton("$100,000", callback_data="amount_100000"),
+                        InlineKeyboardButton("$500,000", callback_data="amount_500000")
+                    ],
+                    [InlineKeyboardButton("⬅️ Back to Main Menu", callback_data="back_to_main")]
+                ])
+            )
+            return
     except ValueError:
         # Try to extract amount from text
         match = re.search(r'\$?(\d+(?:\.\d+)?)', text)
         if match:
             amount = float(match.group(1))
+            
+            # Check if amount is ridiculously large (prevent potential issues)
+            if amount > 10000000:  # 10 million USD limit
+                await message.reply_markdown(
+                    "⚠️ *Amount too large*\n\n"
+                    "The maximum investment amount we can process is $10,000,000. "
+                    "Please enter a smaller amount or select from the options below:",
+                    reply_markup=InlineKeyboardMarkup([
+                        [
+                            InlineKeyboardButton("$50,000", callback_data="amount_50000"),
+                            InlineKeyboardButton("$100,000", callback_data="amount_100000"),
+                            InlineKeyboardButton("$500,000", callback_data="amount_500000")
+                        ],
+                        [InlineKeyboardButton("⬅️ Back to Main Menu", callback_data="back_to_main")]
+                    ])
+                )
+                return
         else:
             # Create the amount keyboard for a more button-focused approach
             keyboard = [

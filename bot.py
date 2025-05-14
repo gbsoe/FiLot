@@ -1805,6 +1805,36 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             db_utils.log_user_activity(user.id, "predefined_response", details=f"Question: {message_text[:50]}")
             return
         
+        # First, check if this might be a number input (investment amount)
+        try:
+            if message_text.strip().isdigit() or (message_text.strip().replace(',', '').isdigit()):
+                # This looks like a pure number input, try to handle it as an investment amount
+                logger.info(f"Detected numeric input: {message_text} - checking if in investment flow")
+                
+                # Check if we're in an ongoing investment flow again (double-check)
+                if hasattr(context, 'user_data') and 'state' in context.user_data:
+                    state = context.user_data['state']
+                    if state == STATE_AWAITING_AMOUNT:
+                        # We're waiting for an amount input
+                        from investment_flow import process_invest_amount
+                        await process_invest_amount(update, context)
+                        return
+                else:
+                    # Even if not in a state, treat number inputs as investment attempts
+                    logger.info(f"Treating numeric input {message_text} as investment amount")
+                    # Initialize user_data if needed
+                    if not hasattr(context, 'user_data'):
+                        context.user_data = {}
+                    
+                    # Set state to await investment amount
+                    context.user_data['state'] = STATE_AWAITING_AMOUNT
+                    from investment_flow import process_invest_amount
+                    await process_invest_amount(update, context)
+                    return
+        except Exception as e:
+            logger.error(f"Error handling potential numeric input: {e}")
+            # Continue with normal processing if error occurs
+        
         # No predefined response available, use Anthropic AI for specialized financial advice
         logger.info(f"No predefined response for: {message_text}, using AI advisor")
         
@@ -1962,10 +1992,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         logger.error(f"Error handling message: {e}")
         logger.error(traceback.format_exc())
         from keyboard_utils import MAIN_KEYBOARD
-        await update.message.reply_text(
-            "Sorry, I encountered an error while processing your request. Please try again later.",
-            reply_markup=MAIN_KEYBOARD
-        )
+        
+        # Special handling for large investment amounts
+        if "500000" in message_text or "50000" in message_text:
+            await update.message.reply_markdown(
+                "⚠️ *Investment Amount Too Large*\n\n"
+                "For security reasons, we limit individual investment amounts. "
+                "Please try a smaller amount (under $10,000) or contact support for assistance with larger investments.",
+                reply_markup=MAIN_KEYBOARD
+            )
+        else:
+            await update.message.reply_text(
+                "Sorry, I encountered an error while processing your request. Please try again later.",
+                reply_markup=MAIN_KEYBOARD
+            )
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle errors in updates."""
