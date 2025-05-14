@@ -749,7 +749,7 @@ def run_telegram_bot():
                         # Explore menu options
                         "explore_pools", "explore_simulate", "explore_info", "explore_faq", "back_to_explore",
                         # Main menu
-                        "menu_explore", "menu_invest", "menu_account", "menu_faq",
+                        "menu_explore", "menu_invest", "menu_account", "menu_faq", "back_to_main",
                         # Simulate options 
                         "simulate_50", "simulate_100", "simulate_250", "simulate_500", "simulate_1000", "simulate_5000",
                         # Account menu options
