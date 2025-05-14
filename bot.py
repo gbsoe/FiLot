@@ -2546,20 +2546,6 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                         "Sorry, an error occurred while retrieving pool data. Please try again later."
                     )
                 
-            elif explore_action == "simulate":
-                # Show investment simulation options
-                # Import at function level to avoid circular imports
-                from menus import get_simulate_menu
-                
-                # Updated to use the simulation menu not the investment menu
-                await query.message.reply_markdown(
-                    "💰 *Investment Return Simulator* 💰\n\n"
-                    "Choose an investment amount to simulate potential returns "
-                    "based on current APRs and liquidity pool data:\n\n"
-                    "_This is a simulation only and not financial advice._",
-                    reply_markup=get_simulate_menu()
-                )
-                
             elif explore_action == "faq":
                 # Show FAQ information with updated text from main.py
                 faq_text = (
