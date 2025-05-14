@@ -1116,10 +1116,13 @@ def run_telegram_bot():
                                     if amount_str == "custom":
                                         send_response(
                                             chat_id,
-                                            "To simulate with a custom amount, please use the command format:\n"
-                                            "`/simulate <amount>`\n\n"
-                                            "For example: `/simulate 2500`",
-                                            parse_mode="Markdown"
+                                            "✏️ *Custom Simulation Amount* ✏️\n\n"
+                                            "Please enter the amount you want to simulate in USD.\n"
+                                            "For example: `$500` or `1000`",
+                                            parse_mode="Markdown",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("⬅️ Back to Simulate", callback_data="explore_simulate")]
+                                            ])
                                         )
                                         logger.info("Sent custom simulation instructions")
                                         return
@@ -1147,7 +1150,7 @@ def run_telegram_bot():
                                     # We'll implement a simplified simulation response directly
                                     # Get predefined pool data for simulation
                                     from response_data import get_pool_data as get_predefined_pool_data
-                                    from utils import format_simulation_results
+                                    from pool_formatter import format_simulation_results
                                     
                                     # Get predefined pool data directly as dictionaries
                                     predefined_data = get_predefined_pool_data()
@@ -1170,11 +1173,11 @@ def run_telegram_bot():
                                     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
                                     keyboard = [
                                         [
-                                            InlineKeyboardButton("Connect Wallet (Address)", callback_data="enter_address"),
-                                            InlineKeyboardButton("Connect Wallet (QR Code)", callback_data="walletconnect")
+                                            InlineKeyboardButton("Connect Wallet (Address)", callback_data="wallet_connect_address"),
+                                            InlineKeyboardButton("Connect Wallet (QR Code)", callback_data="wallet_connect_qr")
                                         ],
                                         [
-                                            InlineKeyboardButton("⬅️ Back to Explore", callback_data="menu_explore")
+                                            InlineKeyboardButton("⬅️ Back to Explore", callback_data="back_to_explore")
                                         ]
                                     ]
                                     wallet_markup = InlineKeyboardMarkup(keyboard)
