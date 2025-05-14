@@ -2788,7 +2788,7 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                         return
                     
                     # For simulation, we use the top performing pools (2 pools)
-                    from pool_formatter import format_simulation_results
+                    from utils import format_simulation_results
                     
                     formatted_simulation = format_simulation_results(pool_list, amount)
                     

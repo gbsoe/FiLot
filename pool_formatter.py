@@ -157,6 +157,7 @@ async def get_top_pools(limit: int = 5, profile: Optional[str] = None, min_tvl: 
         List of pool dictionaries
     """
     # Import here to avoid circular imports
+    import random
     from api_mock_data import get_mock_pools
     
     # For now, use mock data - this will be replaced with real API
