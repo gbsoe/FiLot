@@ -85,7 +85,18 @@ def is_message_looping(chat_id: int, message_text: Optional[str] = None,
         if callback_id:
             # Whitelist for navigation buttons that should bypass anti-loop protection
             # These buttons are exempt from loop detection because they're used for core navigation
-            navigation_buttons = ['menu_explore', 'menu_invest', 'menu_account', 'back_to_explore', 'explore_simulate']
+            navigation_buttons = [
+                'menu_explore', 'menu_invest', 'menu_account', 'back_to_explore', 'explore_simulate',
+                # Add all account menu options
+                'walletconnect', 'subscribe', 'unsubscribe', 'status', 'menu_faq',
+                # Add profile settings
+                'profile_high-risk', 'profile_stable',
+                # Add explore menu buttons
+                'explore_pools', 'explore_info', 'explore_faq'
+            ]
+            
+            # Add prefixed buttons to whitelist
+            button_prefixes = ['amount_', 'account_', 'explore_', 'profile_', 'wallet_', 'invest_']
             
             # Get callback data if available (for additional checks)
             callback_data = None
@@ -93,7 +104,10 @@ def is_message_looping(chat_id: int, message_text: Optional[str] = None,
                 callback_data = message_text
             
             # Skip looping check for navigation buttons
-            if callback_data and any(callback_data == nav_btn for nav_btn in navigation_buttons):
+            if callback_data and (
+                any(callback_data == nav_btn for nav_btn in navigation_buttons) or
+                any(callback_data.startswith(prefix) for prefix in button_prefixes)
+            ):
                 logger.info(f"Navigation button pressed: {callback_data} - bypassing anti-loop protection")
                 return False
             

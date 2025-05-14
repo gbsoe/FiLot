@@ -745,13 +745,26 @@ def run_telegram_bot():
                     data_track_id = f"cb_data_{chat_id}_{hashlib.md5(callback_data.encode()).hexdigest()[:8]}"
                     
                     # Special handling for navigation buttons to allow them to be pressed multiple times
-                    navigational_callbacks = ["explore_pools", "explore_simulate", "back_to_explore", 
-                                             "menu_explore", "menu_invest", "menu_account", 
-                                             "simulate_50", "simulate_100", "simulate_250", 
-                                             "simulate_500", "simulate_1000", "simulate_5000",
-                                             "walletconnect", "profile_high-risk", "profile_stable"]
+                    navigational_callbacks = [
+                        # Explore menu options
+                        "explore_pools", "explore_simulate", "explore_info", "explore_faq", "back_to_explore",
+                        # Main menu
+                        "menu_explore", "menu_invest", "menu_account", "menu_faq",
+                        # Simulate options 
+                        "simulate_50", "simulate_100", "simulate_250", "simulate_500", "simulate_1000", "simulate_5000",
+                        # Account menu options
+                        "walletconnect", "status", "subscribe", "unsubscribe",
+                        # Profile options
+                        "profile_high-risk", "profile_stable"
+                    ]
                     
-                    if callback_data in navigational_callbacks:
+                    # Check if this is a navigation button or button with navigation prefixes
+                    is_navigation_button = callback_data in navigational_callbacks
+                    has_navigation_prefix = any(callback_data.startswith(prefix) for prefix in [
+                        'account_', 'profile_', 'explore_', 'menu_', 'back_', 'simulate_', 'amount_', 'wallet_', 'invest_'
+                    ])
+                    
+                    if is_navigation_button or has_navigation_prefix:
                         # These buttons should always work, don't skip based on content
                         # Just mark the callback ID as processed to avoid duplicates in very quick succession
                         is_message_processed(chat_id, query_track_id)

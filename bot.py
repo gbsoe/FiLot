@@ -389,8 +389,12 @@ async def account_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         from keyboard_utils import MAIN_KEYBOARD
         from menus import get_account_menu
         
-        # Show the account menu with inline buttons and attach persistent keyboard
-        await message.reply_markdown(response, reply_markup=MAIN_KEYBOARD)
+        # Show the account menu with inline buttons (for account options) and attach persistent keyboard
+        # First message with the account options menu
+        await message.reply_markdown(response, reply_markup=get_account_menu())
+        
+        # Second message to ensure the persistent keyboard stays
+        await message.reply_text("Use the buttons above to manage your account 👆", reply_markup=MAIN_KEYBOARD)
         
     except Exception as e:
         logger.error(f"Error in account_command: {e}", exc_info=True)
