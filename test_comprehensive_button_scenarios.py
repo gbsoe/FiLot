@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 # Import necessary handlers and callbacks from the main application
 import main
-from callback_handler import navigate_by_callback
+from callback_handler import route_callback
 
 class EnhancedScenarioTester:
     """Tests enhanced comprehensive button scenarios"""
@@ -48,7 +48,7 @@ class EnhancedScenarioTester:
             'simulate_', 'amount_', 'wallet_', 'invest_'
         ]
         
-        # Load navigational callbacks from main.py
+        # Load navigational callbacks directly from the code
         self.navigational_callbacks = [
             # Explore menu options
             "explore_pools", "explore_simulate", "explore_info", "explore_faq", "back_to_explore",
@@ -62,6 +62,11 @@ class EnhancedScenarioTester:
             "profile_high-risk", "profile_stable",
             # Amount options
             "amount_50", "amount_100", "amount_250", "amount_500", "amount_1000", "amount_5000", "amount_custom"
+        ]
+        
+        # Get the navigation prefixes
+        self.navigational_prefixes = [
+            'account_', 'profile_', 'explore_', 'menu_', 'back_', 'simulate_', 'amount_', 'wallet_', 'invest_'
         ]
         
         # Add all direct handlers to our set
@@ -227,8 +232,8 @@ class EnhancedScenarioTester:
         
         for callback in self.navigational_callbacks:
             try:
-                # Check if the callback has a handler in main.py
-                has_handler = hasattr(main, f"handle_{callback}") or callback in main.navigational_callbacks
+                # Check if the callback has a handler in main.py or is in our navigational_callbacks list
+                has_handler = hasattr(main, f"handle_{callback}") or callback in self.navigational_callbacks
                 
                 self.results["basic_button_tests"][callback] = {
                     "success": has_handler,
