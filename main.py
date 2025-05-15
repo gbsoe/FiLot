@@ -755,7 +755,9 @@ def run_telegram_bot():
                         # Account menu options
                         "walletconnect", "status", "subscribe", "unsubscribe",
                         # Profile options
-                        "profile_high-risk", "profile_stable"
+                        "profile_high-risk", "profile_stable",
+                        # Amount options
+                        "amount_50", "amount_100", "amount_250", "amount_500", "amount_1000", "amount_5000", "amount_custom"
                     ]
                     
                     # Check if this is a navigation button or button with navigation prefixes
@@ -1917,6 +1919,25 @@ Share your experiences and learn from others!
                                     # No need to send additional messages about the keyboard
                                     
                                     logger.info("Successfully displayed simplified explore menu")
+                                
+                                elif menu_action == "account":
+                                    # Handle account menu item
+                                    logger.info(f"Triggering account menu from menu_account button")
+                                    
+                                    # Import from menus to ensure consistency
+                                    from menus import get_account_menu
+                                    reply_markup = get_account_menu()
+                                    
+                                    # Send account menu directly
+                                    send_response(
+                                        chat_id,
+                                        "👤 *Account Management* 👤\n\n"
+                                        "Manage your FiLot account settings and preferences:",
+                                        parse_mode="Markdown",
+                                        reply_markup=reply_markup
+                                    )
+                                    
+                                    logger.info("Successfully displayed account menu via menu_account callback")
                                 
                                 
                                 elif menu_action == "positions":
