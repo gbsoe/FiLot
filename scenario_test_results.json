@@ -1,0 +1,288 @@
+{
+  "summary": {
+    "total_scenarios": 18,
+    "fully_supported": 18,
+    "partially_supported": 0,
+    "unsupported": 0,
+    "direct_handlers": 13,
+    "prefix_handlers": 5,
+    "missing_handlers": 0,
+    "direct_handler_list": [
+      "amount_100",
+      "amount_1000",
+      "amount_250",
+      "amount_50",
+      "amount_500",
+      "amount_5000",
+      "explore_pools",
+      "explore_simulate",
+      "menu_account",
+      "menu_explore",
+      "menu_invest",
+      "profile_high-risk",
+      "profile_stable"
+    ],
+    "prefix_handler_list": [
+      "account_help",
+      "account_status",
+      "account_subscribe",
+      "account_unsubscribe",
+      "account_wallet"
+    ],
+    "missing_handler_list": []
+  },
+  "detailed_results": [
+    {
+      "scenario": 1,
+      "category": "invest",
+      "title": "Invest Scenario 1",
+      "callbacks_tested": [
+        {
+          "callback": "menu_invest",
+          "has_handler": true,
+          "method": "direct"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 2,
+      "category": "invest",
+      "title": "Invest Scenario 2",
+      "callbacks_tested": [
+        {
+          "callback": "amount_50",
+          "has_handler": true,
+          "method": "direct"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 3,
+      "category": "invest",
+      "title": "Invest Scenario 3",
+      "callbacks_tested": [
+        {
+          "callback": "amount_100",
+          "has_handler": true,
+          "method": "direct"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 4,
+      "category": "invest",
+      "title": "Invest Scenario 4",
+      "callbacks_tested": [
+        {
+          "callback": "amount_250",
+          "has_handler": true,
+          "method": "direct"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 5,
+      "category": "invest",
+      "title": "Invest Scenario 5",
+      "callbacks_tested": [
+        {
+          "callback": "amount_500",
+          "has_handler": true,
+          "method": "direct"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 6,
+      "category": "invest",
+      "title": "Invest Scenario 6",
+      "callbacks_tested": [
+        {
+          "callback": "amount_1000",
+          "has_handler": true,
+          "method": "direct"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 7,
+      "category": "invest",
+      "title": "Invest Scenario 7",
+      "callbacks_tested": [
+        {
+          "callback": "amount_5000",
+          "has_handler": true,
+          "method": "direct"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 8,
+      "category": "invest",
+      "title": "Invest Scenario 8",
+      "callbacks_tested": [
+        {
+          "callback": "profile_high-risk",
+          "has_handler": true,
+          "method": "direct"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 9,
+      "category": "invest",
+      "title": "Invest Scenario 9",
+      "callbacks_tested": [
+        {
+          "callback": "profile_stable",
+          "has_handler": true,
+          "method": "direct"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 1,
+      "category": "explore",
+      "title": "Explore Scenario 1",
+      "callbacks_tested": [
+        {
+          "callback": "menu_explore",
+          "has_handler": true,
+          "method": "direct"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 2,
+      "category": "explore",
+      "title": "Explore Scenario 2",
+      "callbacks_tested": [
+        {
+          "callback": "explore_pools",
+          "has_handler": true,
+          "method": "direct"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 3,
+      "category": "explore",
+      "title": "Explore Scenario 3",
+      "callbacks_tested": [
+        {
+          "callback": "explore_simulate",
+          "has_handler": true,
+          "method": "direct"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 1,
+      "category": "account",
+      "title": "Account Scenario 1",
+      "callbacks_tested": [
+        {
+          "callback": "menu_account",
+          "has_handler": true,
+          "method": "direct"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 2,
+      "category": "account",
+      "title": "Account Scenario 2",
+      "callbacks_tested": [
+        {
+          "callback": "account_wallet",
+          "has_handler": true,
+          "method": "prefix"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 3,
+      "category": "account",
+      "title": "Account Scenario 3",
+      "callbacks_tested": [
+        {
+          "callback": "account_subscribe",
+          "has_handler": true,
+          "method": "prefix"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 4,
+      "category": "account",
+      "title": "Account Scenario 4",
+      "callbacks_tested": [
+        {
+          "callback": "account_unsubscribe",
+          "has_handler": true,
+          "method": "prefix"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 5,
+      "category": "account",
+      "title": "Account Scenario 5",
+      "callbacks_tested": [
+        {
+          "callback": "account_help",
+          "has_handler": true,
+          "method": "prefix"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    },
+    {
+      "scenario": 6,
+      "category": "account",
+      "title": "Account Scenario 6",
+      "callbacks_tested": [
+        {
+          "callback": "account_status",
+          "has_handler": true,
+          "method": "prefix"
+        }
+      ],
+      "all_handled": true,
+      "missing": []
+    }
+  ]
+}
