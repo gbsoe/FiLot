@@ -1,0 +1,488 @@
+{
+  "summary": {
+    "total_tests": 60,
+    "total_passed": 60,
+    "pass_rate": 100.0,
+    "basic_buttons": {
+      "total": 29,
+      "passed": 29,
+      "pass_rate": 100.0
+    },
+    "prefix_handlers": {
+      "total": 17,
+      "passed": 17,
+      "pass_rate": 100.0
+    },
+    "flows": {
+      "total": 9,
+      "passed": 9,
+      "pass_rate": 100.0
+    },
+    "cross_flows": {
+      "total": 3,
+      "passed": 3,
+      "pass_rate": 100.0
+    },
+    "edge_cases": {
+      "total": 2,
+      "passed": 2,
+      "pass_rate": 100.0
+    },
+    "direct_handlers": 29,
+    "prefix_handling": 17,
+    "missing_handlers": 0
+  },
+  "results": {
+    "basic_button_tests": {
+      "explore_pools": {
+        "success": true,
+        "method": "direct"
+      },
+      "explore_simulate": {
+        "success": true,
+        "method": "direct"
+      },
+      "explore_info": {
+        "success": true,
+        "method": "direct"
+      },
+      "explore_faq": {
+        "success": true,
+        "method": "direct"
+      },
+      "back_to_explore": {
+        "success": true,
+        "method": "direct"
+      },
+      "menu_explore": {
+        "success": true,
+        "method": "direct"
+      },
+      "menu_invest": {
+        "success": true,
+        "method": "direct"
+      },
+      "menu_account": {
+        "success": true,
+        "method": "direct"
+      },
+      "menu_faq": {
+        "success": true,
+        "method": "direct"
+      },
+      "back_to_main": {
+        "success": true,
+        "method": "direct"
+      },
+      "simulate_50": {
+        "success": true,
+        "method": "direct"
+      },
+      "simulate_100": {
+        "success": true,
+        "method": "direct"
+      },
+      "simulate_250": {
+        "success": true,
+        "method": "direct"
+      },
+      "simulate_500": {
+        "success": true,
+        "method": "direct"
+      },
+      "simulate_1000": {
+        "success": true,
+        "method": "direct"
+      },
+      "simulate_5000": {
+        "success": true,
+        "method": "direct"
+      },
+      "walletconnect": {
+        "success": true,
+        "method": "direct"
+      },
+      "status": {
+        "success": true,
+        "method": "direct"
+      },
+      "subscribe": {
+        "success": true,
+        "method": "direct"
+      },
+      "unsubscribe": {
+        "success": true,
+        "method": "direct"
+      },
+      "profile_high-risk": {
+        "success": true,
+        "method": "direct"
+      },
+      "profile_stable": {
+        "success": true,
+        "method": "direct"
+      },
+      "amount_50": {
+        "success": true,
+        "method": "direct"
+      },
+      "amount_100": {
+        "success": true,
+        "method": "direct"
+      },
+      "amount_250": {
+        "success": true,
+        "method": "direct"
+      },
+      "amount_500": {
+        "success": true,
+        "method": "direct"
+      },
+      "amount_1000": {
+        "success": true,
+        "method": "direct"
+      },
+      "amount_5000": {
+        "success": true,
+        "method": "direct"
+      },
+      "amount_custom": {
+        "success": true,
+        "method": "direct"
+      }
+    },
+    "flow_tests": {
+      "Basic Investment Flow": {
+        "success": true,
+        "steps": [
+          "menu_invest",
+          "amount_100",
+          "profile_stable"
+        ],
+        "handler_methods": [
+          "direct",
+          "direct",
+          "direct"
+        ],
+        "missing_steps": []
+      },
+      "High-Risk Investment Flow": {
+        "success": true,
+        "steps": [
+          "menu_invest",
+          "amount_1000",
+          "profile_high-risk"
+        ],
+        "handler_methods": [
+          "direct",
+          "direct",
+          "direct"
+        ],
+        "missing_steps": []
+      },
+      "Custom Amount Investment Flow": {
+        "success": true,
+        "steps": [
+          "menu_invest",
+          "amount_custom",
+          "profile_stable"
+        ],
+        "handler_methods": [
+          "direct",
+          "direct",
+          "direct"
+        ],
+        "missing_steps": []
+      },
+      "Top Pools Exploration Flow": {
+        "success": true,
+        "steps": [
+          "menu_explore",
+          "explore_pools",
+          "back_to_explore",
+          "back_to_main"
+        ],
+        "handler_methods": [
+          "direct",
+          "direct",
+          "direct",
+          "direct"
+        ],
+        "missing_steps": []
+      },
+      "Simulate Returns Flow": {
+        "success": true,
+        "steps": [
+          "menu_explore",
+          "explore_simulate",
+          "simulate_100",
+          "back_to_explore",
+          "back_to_main"
+        ],
+        "handler_methods": [
+          "direct",
+          "direct",
+          "direct",
+          "direct",
+          "direct"
+        ],
+        "missing_steps": []
+      },
+      "Account Status Flow": {
+        "success": true,
+        "steps": [
+          "menu_account",
+          "account_status",
+          "back_to_main"
+        ],
+        "handler_methods": [
+          "direct",
+          "prefix",
+          "direct"
+        ],
+        "missing_steps": []
+      },
+      "Subscription Management Flow": {
+        "success": true,
+        "steps": [
+          "menu_account",
+          "account_subscribe",
+          "account_unsubscribe",
+          "back_to_main"
+        ],
+        "handler_methods": [
+          "direct",
+          "prefix",
+          "prefix",
+          "direct"
+        ],
+        "missing_steps": []
+      },
+      "Wallet Connection Flow": {
+        "success": true,
+        "steps": [
+          "menu_account",
+          "account_wallet",
+          "back_to_main"
+        ],
+        "handler_methods": [
+          "direct",
+          "prefix",
+          "direct"
+        ],
+        "missing_steps": []
+      },
+      "Help and Support Flow": {
+        "success": true,
+        "steps": [
+          "menu_account",
+          "account_help",
+          "back_to_main"
+        ],
+        "handler_methods": [
+          "direct",
+          "prefix",
+          "direct"
+        ],
+        "missing_steps": []
+      }
+    },
+    "edge_case_tests": {
+      "Repeated Button Press": {
+        "success": true,
+        "steps": [
+          "menu_invest",
+          "menu_invest",
+          "back_to_main"
+        ],
+        "handler_methods": [
+          "direct",
+          "direct",
+          "direct"
+        ],
+        "missing_steps": []
+      },
+      "Quick Menu Navigation": {
+        "success": true,
+        "steps": [
+          "menu_invest",
+          "back_to_main",
+          "menu_explore",
+          "back_to_main",
+          "menu_account",
+          "back_to_main"
+        ],
+        "handler_methods": [
+          "direct",
+          "direct",
+          "direct",
+          "direct",
+          "direct",
+          "direct"
+        ],
+        "missing_steps": []
+      }
+    },
+    "cross_flow_tests": {
+      "Invest to Explore Cross-Flow": {
+        "success": true,
+        "steps": [
+          "menu_invest",
+          "back_to_main",
+          "menu_explore",
+          "back_to_main"
+        ],
+        "handler_methods": [
+          "direct",
+          "direct",
+          "direct",
+          "direct"
+        ],
+        "missing_steps": []
+      },
+      "Account to Invest Cross-Flow": {
+        "success": true,
+        "steps": [
+          "menu_account",
+          "back_to_main",
+          "menu_invest",
+          "back_to_main"
+        ],
+        "handler_methods": [
+          "direct",
+          "direct",
+          "direct",
+          "direct"
+        ],
+        "missing_steps": []
+      },
+      "Full Circle Navigation": {
+        "success": true,
+        "steps": [
+          "menu_invest",
+          "back_to_main",
+          "menu_explore",
+          "back_to_main",
+          "menu_account",
+          "back_to_main"
+        ],
+        "handler_methods": [
+          "direct",
+          "direct",
+          "direct",
+          "direct",
+          "direct",
+          "direct"
+        ],
+        "missing_steps": []
+      }
+    },
+    "prefix_handler_tests": {
+      "account_wallet": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "account_"
+      },
+      "account_subscribe": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "account_"
+      },
+      "account_unsubscribe": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "account_"
+      },
+      "account_help": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "account_"
+      },
+      "account_status": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "account_"
+      },
+      "explore_detailed": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "explore_"
+      },
+      "explore_historical": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "explore_"
+      },
+      "menu_settings": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "menu_"
+      },
+      "menu_help": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "menu_"
+      },
+      "back_to_settings": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "back_"
+      },
+      "back_to_help": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "back_"
+      },
+      "simulate_25": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "simulate_"
+      },
+      "simulate_75": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "simulate_"
+      },
+      "invest_now": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "invest_"
+      },
+      "invest_later": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "invest_"
+      },
+      "wallet_connect": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "wallet_"
+      },
+      "wallet_disconnect": {
+        "success": true,
+        "method": "prefix",
+        "prefix": "wallet_"
+      }
+    }
+  },
+  "missing_handlers": [],
+  "prefix_handlers": {
+    "account_wallet": "account_",
+    "account_subscribe": "account_",
+    "account_unsubscribe": "account_",
+    "account_help": "account_",
+    "account_status": "account_",
+    "explore_detailed": "explore_",
+    "explore_historical": "explore_",
+    "menu_settings": "menu_",
+    "menu_help": "menu_",
+    "back_to_settings": "back_",
+    "back_to_help": "back_",
+    "simulate_25": "simulate_",
+    "simulate_75": "simulate_",
+    "invest_now": "invest_",
+    "invest_later": "invest_",
+    "wallet_connect": "wallet_",
+    "wallet_disconnect": "wallet_"
+  }
+}
