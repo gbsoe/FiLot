@@ -184,13 +184,14 @@ class ButtonTester:
         logger.info("Testing Invest menu buttons...")
         
         # Get the investment menu
-        invest_menu = get_investment_menu()
+        invest_menu = get_invest_menu()
         
         # Expected buttons in the investment menu
         expected_buttons = [
-            ("$100 💸", "amount_100"),
-            ("$250 💸", "amount_250"),
-            ("$500 💸", "amount_500"),
+            ("$50 💰", "amount_50"),
+            ("$100 💰", "amount_100"),
+            ("$250 💰", "amount_250"),
+            ("$500 💰", "amount_500"),
             ("$1,000 💰", "amount_1000"),
             ("$5,000 💰", "amount_5000"),
             ("👁️ View My Positions", "menu_positions"),
@@ -200,7 +201,7 @@ class ButtonTester:
         
         # Test each button
         for button_text, callback_data in expected_buttons:
-            exists = await self.test_button_exists(get_investment_menu, button_text, callback_data)
+            exists = await self.test_button_exists(get_invest_menu, button_text, callback_data)
             handler_exists = await self.verify_callback_handler_exists(callback_data)
             
             self.test_results.append({
@@ -253,9 +254,9 @@ class ButtonTester:
         
         # Expected buttons in the main menu
         expected_buttons = [
-            ("💰 Invest", "menu_invest"),
-            ("🔍 Explore", "menu_explore"),
-            ("👤 Account", "menu_account"),
+            ("💰 INVEST NOW", "menu_invest"),
+            ("🔍 Explore Options", "menu_explore"),
+            ("👤 My Account", "menu_account"),
         ]
         
         # Test each button
