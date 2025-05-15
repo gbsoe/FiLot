@@ -392,29 +392,56 @@
 </div>
 
 <script>
+    // Wait for DOM to be fully loaded before attaching events
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if we're on the Pro Analytics page with calculator functionality
+        const calculateButton = document.querySelector('button[onclick="calculateROI()"]');
+        if (calculateButton) {
+            // Remove the inline onclick handler to prevent errors
+            calculateButton.removeAttribute('onclick');
+            // Add event listener properly
+            calculateButton.addEventListener('click', calculateROI);
+        }
+    });
+    
     function calculateROI() {
         try {
             console.log("Starting ROI calculation...");
             
             // Safely get input values with fallbacks
-            const investmentAmountEl = document.getElementById('investment-amount');
-            console.log("Investment amount element:", investmentAmountEl);
+            const defaultValues = {
+                'investment-amount': 1000,
+                'apy-rate': 30,
+                'investment-period': 12,
+                'compound-frequency': 7,
+                'token-a-volatility': 15,
+                'token-b-volatility': 2
+            };
             
-            const apyRateEl = document.getElementById('apy-rate');
-            console.log("APY rate element:", apyRateEl);
+            // Helper function to safely get input values
+            function getInputValue(id, defaultValue) {
+                const element = document.getElementById(id);
+                if (!element) {
+                    console.warn(`Element with ID '${id}' not found, using default value: ${defaultValue}`);
+                    return defaultValue;
+                }
+                
+                const value = element.value;
+                if (value === undefined || value === null || value === '') {
+                    console.warn(`Element with ID '${id}' has no value, using default: ${defaultValue}`);
+                    return defaultValue;
+                }
+                
+                return value;
+            }
             
-            const investmentPeriodEl = document.getElementById('investment-period');
-            const compoundFrequencyEl = document.getElementById('compound-frequency');
-            const tokenAVolatilityEl = document.getElementById('token-a-volatility');
-            const tokenBVolatilityEl = document.getElementById('token-b-volatility');
-            
-            // Use default values if elements don't exist (for debugging purposes)
-            const investmentAmount = investmentAmountEl ? parseFloat(investmentAmountEl.value) : 1000;
-            const apyRate = apyRateEl ? parseFloat(apyRateEl.value) : 30;
-            const investmentPeriod = investmentPeriodEl ? parseInt(investmentPeriodEl.value) : 12;
-            const compoundFrequency = compoundFrequencyEl ? parseInt(compoundFrequencyEl.value) : 7;
-            const tokenAVolatility = tokenAVolatilityEl ? parseFloat(tokenAVolatilityEl.value) : 15;
-            const tokenBVolatility = tokenBVolatilityEl ? parseFloat(tokenBVolatilityEl.value) : 2;
+            // Get all input values safely
+            const investmentAmount = parseFloat(getInputValue('investment-amount', defaultValues['investment-amount']));
+            const apyRate = parseFloat(getInputValue('apy-rate', defaultValues['apy-rate']));
+            const investmentPeriod = parseInt(getInputValue('investment-period', defaultValues['investment-period']));
+            const compoundFrequency = parseInt(getInputValue('compound-frequency', defaultValues['compound-frequency']));
+            const tokenAVolatility = parseFloat(getInputValue('token-a-volatility', defaultValues['token-a-volatility']));
+            const tokenBVolatility = parseFloat(getInputValue('token-b-volatility', defaultValues['token-b-volatility']));
             
             console.log("Using values:", { 
                 investmentAmount, apyRate, investmentPeriod, 
@@ -446,20 +473,31 @@
             const totalReturn = finalValue - investmentAmount;
             const roiPercentage = (totalReturn / investmentAmount) * 100;
             
-            // Safely update display elements
-            const finalValueEl = document.getElementById('final-value');
-            const totalReturnEl = document.getElementById('total-return');
-            const roiPercentageEl = document.getElementById('roi-percentage');
-            const resultsContainer = document.getElementById('results-container');
+            // Helper function to safely update element text
+            function updateElementText(id, text) {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.innerText = text;
+                } else {
+                    console.warn(`Element with ID '${id}' not found, cannot update text to: ${text}`);
+                }
+            }
             
-            if (finalValueEl) finalValueEl.innerText = '$' + finalValue.toFixed(2);
-            if (totalReturnEl) totalReturnEl.innerText = '$' + totalReturn.toFixed(2);
-            if (roiPercentageEl) roiPercentageEl.innerText = roiPercentage.toFixed(2) + '%';
+            // Safely update display elements
+            updateElementText('final-value', '$' + finalValue.toFixed(2));
+            updateElementText('total-return', '$' + totalReturn.toFixed(2));
+            updateElementText('roi-percentage', roiPercentage.toFixed(2) + '%');
             
             // Show the results container
-            if (resultsContainer) resultsContainer.style.display = 'block';
+            const resultsContainer = document.getElementById('results-container');
+            if (resultsContainer) {
+                resultsContainer.style.display = 'block';
+            } else {
+                console.warn("Results container not found");
+            }
         } catch (error) {
             console.error("Error in ROI calculator:", error);
+            alert("There was an error calculating the ROI. Please check the console for details.");
         }
     }
 </script>
