@@ -1678,15 +1678,46 @@ Share your experiences and learn from others!
                                 # Import keyboard for consistent UI
                                 from keyboard_utils import MAIN_KEYBOARD
                                 
-                                send_response(
-                                    chat_id,
-                                    "❗ *Subscription Deactivated*\n\n"
-                                    "You have been unsubscribed from daily updates.\n\n"
-                                    "You can resubscribe at any time from the Account menu.",
-                                    parse_mode="Markdown",
-                                    reply_markup=MAIN_KEYBOARD
-                                )
-                                logger.info(f"User {update_obj.callback_query.from_user.id} unsubscribed from daily updates")
+                                # Actually update the database with unsubscription status
+                                try:
+                                    import db_utils
+                                    user_id = update_obj.callback_query.from_user.id
+                                    
+                                    # Import app context to handle database operations
+                                    from app import app
+                                    with app.app_context():
+                                        success = db_utils.unsubscribe_user(user_id)
+                                        if success:
+                                            db_utils.log_user_activity(user_id, "unsubscribe")
+                                    
+                                    # Message differs based on success
+                                    if success:
+                                        send_response(
+                                            chat_id,
+                                            "❗ *Subscription Deactivated*\n\n"
+                                            "You have been unsubscribed from daily updates.\n\n"
+                                            "You can resubscribe at any time from the Account menu.",
+                                            parse_mode="Markdown",
+                                            reply_markup=MAIN_KEYBOARD
+                                        )
+                                    else:
+                                        send_response(
+                                            chat_id,
+                                            "❗ *Not Subscribed*\n\n"
+                                            "You are not currently subscribed to daily updates.\n\n"
+                                            "You can subscribe at any time from the Account menu.",
+                                            parse_mode="Markdown",
+                                            reply_markup=MAIN_KEYBOARD
+                                        )
+                                except Exception as e:
+                                    logger.error(f"Error handling unsubscribe callback: {e}", exc_info=True)
+                                    send_response(
+                                        chat_id,
+                                        "Sorry, there was an error updating your subscription status. Please try again later.",
+                                        reply_markup=MAIN_KEYBOARD
+                                    )
+                                
+                                logger.info(f"User {update_obj.callback_query.from_user.id} attempted to unsubscribe from daily updates")
                                 
                             # NOTE: Profile selection callbacks are handled by the earlier handler
                             # This duplicate handler is removed to fix the conflict
@@ -1695,35 +1726,80 @@ Share your experiences and learn from others!
                             elif callback_data == "status":
                                 # Import keyboard for consistent UI
                                 from keyboard_utils import MAIN_KEYBOARD
+                                from datetime import datetime
                                 
-                                # Get real system status data if possible
+                                # Get user information and system status
                                 try:
+                                    import db_utils
                                     from coingecko_utils import is_api_accessible
                                     from raydium_client import get_client
                                     
-                                    # Check various services
+                                    # Get user information from database
+                                    user_id = update_obj.callback_query.from_user.id
+                                    from app import app
+                                    
+                                    # Default values
+                                    subscription_status = "❌ Not Subscribed"
+                                    verification_status = "❌ Not Verified"
+                                    risk_profile = "Not Set"
+                                    created_date = "Unknown"
+                                    wallet_status = "❌ Not Connected"
+                                    
+                                    # Get user data from database
+                                    with app.app_context():
+                                        # Get user record
+                                        db_user = db_utils.get_or_create_user(user_id)
+                                        
+                                        # Update status information
+                                        if db_user:
+                                            subscription_status = "✅ Subscribed" if db_user.is_subscribed else "❌ Not Subscribed"
+                                            verification_status = "✅ Verified" if db_user.is_verified else "❌ Not Verified"
+                                            risk_profile = db_user.risk_profile.capitalize() if db_user.risk_profile else "Not Set"
+                                            created_date = db_user.created_at.strftime('%Y-%m-%d') if db_user.created_at else "Unknown"
+                                        
+                                        # Log this activity
+                                        db_utils.log_user_activity(user_id, "status_command")
+                                    
+                                    # Check system services
                                     coingecko_status = "✅ Connected" if is_api_accessible() else "❌ Disconnected"
                                     
                                     # Try to get a Raydium client and check connection
                                     raydium_client = get_client()
                                     raydium_status = "✅ Connected" if raydium_client else "❌ Disconnected"
                                     
-                                except Exception:
-                                    coingecko_status = "⚠️ Status Unknown"
-                                    raydium_status = "⚠️ Status Unknown"
+                                    # Combine system and user status
+                                    status_message = (
+                                        "📊 *FiLot Status* 📊\n\n"
+                                        "*System Status:*\n"
+                                        "• Bot: ✅ Operational\n"
+                                        f"• CoinGecko: {coingecko_status}\n"
+                                        f"• Raydium API: {raydium_status}\n\n"
+                                        "*Your Account:*\n"
+                                        f"• User ID: {user_id}\n"
+                                        f"• Subscription: {subscription_status}\n"
+                                        f"• Verification: {verification_status}\n"
+                                        f"• Risk Profile: {risk_profile}\n"
+                                        f"• Account Created: {created_date}\n\n"
+                                        f"Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                                        "If you're experiencing issues, please try:\n"
+                                        "1. Restarting the conversation with /start\n"
+                                        "2. Checking your internet connection\n"
+                                        "3. Contacting support if problems persist"
+                                    )
+                                except Exception as e:
+                                    logger.error(f"Error handling status callback: {e}", exc_info=True)
+                                    
+                                    # Fallback simple status message on error
+                                    status_message = (
+                                        "📊 *FiLot Status* 📊\n\n"
+                                        "✅ Bot: Operational\n\n"
+                                        "If you're experiencing issues, please try:\n"
+                                        "1. Restarting the conversation with /start\n"
+                                        "2. Checking your internet connection\n"
+                                        "3. Contacting support if problems persist"
+                                    )
                                 
-                                status_message = (
-                                    "📊 *System Status* 📊\n\n"
-                                    "✅ Bot: Operational\n"
-                                    f"CoinGecko: {coingecko_status}\n"
-                                    f"Raydium API: {raydium_status}\n\n"
-                                    f"Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                                    "If you're experiencing issues, please try:\n"
-                                    "1. Restarting the conversation with /start\n"
-                                    "2. Checking your internet connection\n"
-                                    "3. Contacting support if problems persist"
-                                )
-                                
+                                # Send the status message
                                 send_response(
                                     chat_id,
                                     status_message,
