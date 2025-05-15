@@ -112,9 +112,12 @@ class ButtonTester:
             "account_wallet", "account_subscribe", "account_unsubscribe", 
             "account_help", "account_status",
             
+            # Main menu buttons
+            "menu_account", "menu_explore", "menu_invest", "menu_faq",
+            
             # Invest section
             "menu_invest", "menu_positions",
-            "amount_100", "amount_250", "amount_500", "amount_1000", "amount_5000", 
+            "amount_50", "amount_100", "amount_250", "amount_500", "amount_1000", "amount_5000", 
             "amount_custom",
             
             # Explore section
