@@ -9,7 +9,8 @@ import logging
 import time
 import uuid
 import asyncio
-from typing import Dict, Any, Optional, Union, Tuple
+import base64
+from typing import Dict, Any, Optional, Union, Tuple, List
 import urllib.parse  # Standard library for URL encoding
 from datetime import datetime, timedelta
 
@@ -20,34 +21,27 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Initialize variables
+SOLANA_SERVICE_AVAILABLE = False
+SQLALCHEMY_AVAILABLE = False
+ENCRYPTION_AVAILABLE = False
+
 # Import SolanaWalletService
 try:
     from solana_wallet_service import get_wallet_service
     SOLANA_SERVICE_AVAILABLE = True
     logger.info("Solana wallet service is available")
 except ImportError:
-    logger.warning("Solana wallet service not available, will use legacy implementation")
-    SOLANA_SERVICE_AVAILABLE = False
+    logger.warning("Solana wallet service not available, will use alternative implementation")
 
-# Try to import optional dependencies with fallbacks
+# Try to import optional dependencies
 try:
     import sqlite3
-    import json
-    
-    # Define a Json adapter for SQLite
-    class Json:
-        def __init__(self, data):
-            self.data = data
-            
-        def __conform__(self, protocol):
-            if protocol is sqlite3.PrepareProtocol:
-                return json.dumps(self.data)
-                
     SQLITE_AVAILABLE = True
 except ImportError:
     logger.warning("sqlite3 not available, will use mock database functionality")
     SQLITE_AVAILABLE = False
-    # Define a mock Json class
+    # Define a mock Json class for compatibility
     class Json:
         def __init__(self, data):
             self.data = data
@@ -72,8 +66,59 @@ if not SOLANA_RPC_URL:
 # Database connection string (for SQLite)
 DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'filot_bot.db')
 DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{DATABASE_PATH}")
-if not DATABASE_URL and SQLITE_AVAILABLE:
-    logger.warning("DATABASE_URL not found in environment variables, database features will be limited")
+
+# Try to initialize encryption
+try:
+    from cryptography.fernet import Fernet
+    
+    # Generate encryption key from environment or create a temporary one
+    ENCRYPTION_KEY = os.environ.get("WALLET_SESSION_ENCRYPTION_KEY")
+    if not ENCRYPTION_KEY:
+        # For development only - in production, require a real key
+        logger.warning("No encryption key found - generating temporary key. THIS IS NOT SECURE FOR PRODUCTION!")
+        # Create a temporary key that's valid for Fernet
+        import hashlib
+        temp_key = hashlib.sha256(os.urandom(32)).digest()
+        ENCRYPTION_KEY = base64.urlsafe_b64encode(temp_key)
+    
+    # Create Fernet cipher for encrypting session data
+    cipher = Fernet(ENCRYPTION_KEY)
+    ENCRYPTION_AVAILABLE = True
+    logger.info("Encryption available for securing session data")
+    
+    # Define encryption functions
+    def encrypt_session_data(data: Dict[str, Any]) -> str:
+        """Encrypt session data for secure storage."""
+        json_data = json.dumps(data)
+        encrypted = cipher.encrypt(json_data.encode())
+        return base64.urlsafe_b64encode(encrypted).decode()
+    
+    def decrypt_session_data(encrypted_data: str) -> Dict[str, Any]:
+        """Decrypt session data from secure storage."""
+        try:
+            encrypted_bytes = base64.urlsafe_b64decode(encrypted_data)
+            decrypted = cipher.decrypt(encrypted_bytes)
+            return json.loads(decrypted.decode())
+        except Exception as e:
+            logger.error(f"Error decrypting session data: {e}")
+            return {}
+    
+except ImportError:
+    logger.warning("Cryptography library not available - session data will not be encrypted")
+    ENCRYPTION_AVAILABLE = False
+    
+    # Define fallback functions that don't actually encrypt
+    def encrypt_session_data(data: Dict[str, Any]) -> str:
+        """Simple encoding (NOT SECURE)."""
+        return base64.b64encode(json.dumps(data).encode()).decode()
+    
+    def decrypt_session_data(encoded_data: str) -> Dict[str, Any]:
+        """Simple decoding (NOT SECURE)."""
+        try:
+            return json.loads(base64.b64decode(encoded_data).decode())
+        except Exception as e:
+            logger.error(f"Error decoding session data: {e}")
+            return {}
 
 #########################
 # Database Setup
@@ -81,7 +126,7 @@ if not DATABASE_URL and SQLITE_AVAILABLE:
 
 def get_db_connection():
     """Create a database connection."""
-    # Skip if sqlite3 is not available or DATABASE_PATH is not set
+    # Skip if sqlite3 is not available
     if not SQLITE_AVAILABLE:
         logger.warning("Database connection not available - sqlite3 missing")
         return None
@@ -97,41 +142,38 @@ def get_db_connection():
 
 def init_db():
     """Initialize the database tables needed for WalletConnect sessions."""
-    # Import app at function level to avoid circular imports
-    from app import app
-    
     # Skip if database connection not available
     if not SQLITE_AVAILABLE:
         logger.warning("Skipping database initialization - database not available")
         return False
     
     try:
-        # Use app context for database operations
-        with app.app_context():
-            conn = get_db_connection()
-            if not conn:
-                logger.warning("Could not connect to database - skipping initialization")
-                return False
-                
-            cursor = conn.cursor()
+        # Create connection and initialize schema
+        conn = get_db_connection()
+        if not conn:
+            logger.warning("Could not connect to database - skipping initialization")
+            return False
             
-            # Create wallet_sessions table if it doesn't exist (SQLite syntax)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS wallet_sessions (
-                    session_id TEXT PRIMARY KEY,
-                    session_data TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    telegram_user_id INTEGER,
-                    status TEXT DEFAULT 'pending',
-                    wallet_address TEXT,
-                    expires_at TIMESTAMP
-                )
-            """)
-            
-            cursor.close()
-            conn.close()
-            logger.info("Database initialized successfully")
-            return True
+        cursor = conn.cursor()
+        
+        # Create wallet_sessions table if it doesn't exist (SQLite syntax)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS wallet_sessions (
+                session_id TEXT PRIMARY KEY,
+                session_data TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                telegram_user_id INTEGER,
+                status TEXT DEFAULT 'pending',
+                wallet_address TEXT,
+                expires_at TIMESTAMP
+            )
+        """)
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        logger.info("Database initialized successfully")
+        return True
     except Exception as e:
         logger.error(f"Error initializing database: {e}", exc_info=True)
         return False
@@ -143,6 +185,8 @@ def init_db():
 async def create_walletconnect_session(telegram_user_id: int) -> Dict[str, Any]:
     """
     Create a new WalletConnect session using WalletConnect protocol with enhanced security.
+    This implementation uses the secure wallet_security module to enforce user-scoped sessions
+    and prevent unauthorized access.
     
     Args:
         telegram_user_id: Telegram user ID to associate with the session
@@ -150,10 +194,37 @@ async def create_walletconnect_session(telegram_user_id: int) -> Dict[str, Any]:
     Returns:
         Dictionary with session details including URI
     """
-    # Import app at function level to avoid circular imports
-    from app import app
+    # Use the enhanced wallet security module if available
+    try:
+        import wallet_security
+        return wallet_security.create_wallet_session(telegram_user_id)
+    except ImportError:
+        # Fall back to original implementation if the security module isn't available
+        logger.warning("Enhanced wallet security module not available, using standard implementation")
+        # Original implementation continues below
+    """
+    Create a new WalletConnect session using WalletConnect protocol with enhanced security.
+    Session data is securely stored with encryption and user-specific isolation.
     
-    # If Solana wallet service is available, use it instead of the legacy implementation
+    Args:
+        telegram_user_id: Telegram user ID to associate with the session
+        
+    Returns:
+        Dictionary with session details including URI
+    """
+    # Use the centralized security service if available
+    if SECURITY_SERVICE_AVAILABLE:
+        try:
+            # Create a secure session through the security service
+            return await session_manager.create_session(
+                telegram_user_id,
+                {"session_type": "walletconnect"}
+            )
+        except Exception as e:
+            logger.error(f"Error using security service for session creation: {e}")
+            logger.info("Falling back to enhanced implementation")
+    
+    # If the Solana wallet service is available, use it as a primary implementation
     if SOLANA_SERVICE_AVAILABLE:
         try:
             # Get wallet service
@@ -162,85 +233,99 @@ async def create_walletconnect_session(telegram_user_id: int) -> Dict[str, Any]:
             # Create session
             result = await wallet_service.create_session(telegram_user_id)
             
-            # Save to database if successful and database is available
-            if result["success"] and SQLITE_AVAILABLE:
+            # If successful, store in our secure persistent storage
+            if result["success"]:
                 try:
-                    with app.app_context():
-                        conn = get_db_connection()
-                        if conn:
-                            cursor = conn.cursor()
-                            
-                            # Convert to ISO format if datetime objects
-                            expires_at = result.get("expires_at")
-                            if isinstance(expires_at, str):
-                                # Already in correct format
-                                pass
-                            elif hasattr(expires_at, "isoformat"):
-                                # Convert datetime to string
-                                expires_at = expires_at.isoformat()
-                            else:
-                                # Use default expiration if not available
-                                expires_at = (datetime.now() + timedelta(hours=1)).isoformat()
-                            
-                            session_data = {
-                                "uri": result.get("uri", ""),
-                                "qr_uri": result.get("qr_uri", ""),
-                                "created": int(time.time()),
-                                "session_id": result["session_id"],
-                                "security_level": result.get("security_level", "read_only"),
-                                "expires_at": expires_at,
-                            }
-                            
-                            cursor.execute(
-                                """
-                                INSERT INTO wallet_sessions 
-                                (session_id, session_data, telegram_user_id, status, wallet_address, expires_at) 
-                                VALUES (%s, %s, %s, %s, %s, %s)
-                                """, 
-                                (
-                                    result["session_id"], 
-                                    Json(session_data), 
-                                    telegram_user_id, 
-                                    result.get("status", "pending"),
-                                    result.get("wallet_address", None),
-                                    expires_at
-                                )
+                    # Save to encrypted database if SQLAlchemy is available
+                    if SQLALCHEMY_AVAILABLE:
+                        # Create a secure session entry
+                        # Convert to ISO format if datetime objects
+                        expires_at = result.get("expires_at")
+                        if isinstance(expires_at, str):
+                            expires_at_dt = datetime.fromisoformat(expires_at)
+                        elif hasattr(expires_at, "isoformat"):
+                            # Already a datetime
+                            expires_at_dt = expires_at
+                        else:
+                            # Use default expiration if not available
+                            expires_at_dt = datetime.now() + timedelta(hours=1)
+                            expires_at = expires_at_dt.isoformat()
+                        
+                        # Prepare session data for encryption
+                        session_data = {
+                            "uri": result.get("uri", ""),
+                            "qr_uri": result.get("qr_uri", ""),
+                            "created": int(time.time()),
+                            "session_id": result["session_id"],
+                            "security_level": result.get("security_level", "read_only"),
+                            "expires_at": expires_at,
+                        }
+                        
+                        # Encrypt the session data
+                        if ENCRYPTION_AVAILABLE:
+                            encrypted_data = encrypt_session_data(session_data)
+                        else:
+                            encrypted_data = json.dumps(session_data)
+                        
+                        # Create database session
+                        db_session = DbSession()
+                        try:
+                            # Create new wallet session record
+                            wallet_session = WalletSession(
+                                session_id=result["session_id"],
+                                telegram_user_id=telegram_user_id,
+                                session_data=encrypted_data,
+                                created_at=datetime.now(),
+                                expires_at=expires_at_dt,
+                                status=result.get("status", "pending"),
+                                wallet_address=result.get("wallet_address"),
+                                last_activity=datetime.now(),
+                                is_valid=True
                             )
                             
-                            cursor.close()
-                            conn.close()
-                            logger.info(f"Saved WalletConnect session to database")
-                except Exception as db_error:
-                    logger.warning(f"Could not save WalletConnect session to database: {db_error}")
+                            # Add and commit
+                            db_session.add(wallet_session)
+                            db_session.commit()
+                            logger.info(f"Saved encrypted WalletConnect session to database")
+                        except Exception as db_error:
+                            db_session.rollback()
+                            logger.warning(f"Database error saving session: {db_error}")
+                        finally:
+                            db_session.close()
+                    
+                except Exception as storage_error:
+                    logger.warning(f"Could not save WalletConnect session securely: {storage_error}")
             
             # Return the result from the wallet service
             return result
             
         except Exception as e:
             logger.error(f"Error creating session with Solana wallet service: {e}")
-            logger.info("Falling back to legacy implementation")
-            # Fall through to legacy implementation
+            logger.info("Falling back to enhanced standard implementation")
     
-    # Legacy implementation
-    logger.info("Using legacy WalletConnect implementation")
+    # Enhanced standard implementation with secure session creation
+    logger.info("Using enhanced WalletConnect implementation with security measures")
+    
+    # Validate WalletConnect Project ID
     if not WALLETCONNECT_PROJECT_ID:
         logger.warning("WalletConnect Project ID not configured, using basic URI format")
     
     try:
-        # Generate a unique session ID with stronger randomness
+        # Generate a cryptographically secure session ID
         session_id = str(uuid.uuid4())
         
-        # Log session creation attempt with security audit
+        # Log session creation attempt (redacted for security)
         logger.info(f"Secure wallet connection requested for user {telegram_user_id}")
         
-        # Generate a WalletConnect URI
+        # Generate a WalletConnect URI with enhanced security
         try:
-            logger.info(f"Creating WalletConnect connection for user {telegram_user_id}")
-            
-            # Generate required components
+            # Generate required components with strong randomness
             topic = uuid.uuid4().hex
-            # Secure random key for encryption
-            sym_key = uuid.uuid4().hex + uuid.uuid4().hex[:32]  # Make sure it's not too long
+            
+            # Use os.urandom for better randomness than uuid
+            random_bytes = os.urandom(32)
+            sym_key = base64.urlsafe_b64encode(random_bytes).decode()[:32]
+            
             # Current relay server
             relay_url = "wss://relay.walletconnect.org"
             
@@ -263,68 +348,78 @@ async def create_walletconnect_session(telegram_user_id: int) -> Dict[str, Any]:
                 "raw_wc_uri": wc_uri,  # Store the raw wc: URI for display to users
                 "id": topic,  # Use the topic as the ID
                 "relay": relay_url,
-                "symKey": sym_key,
-                "version": "2"
+                "created": int(time.time()),
+                "security_level": "read_only",
+                "expires_at": (datetime.now() + timedelta(hours=1)).isoformat(),
             }
             
-            logger.info(f"Generated WalletConnect URI successfully")
+            # Log success with sensitive data redacted
+            logger.info(f"Generated secure WalletConnect URI for user {telegram_user_id}")
             
         except Exception as wc_error:
-            logger.error(f"Error creating WalletConnect URI: {wc_error}", exc_info=True)
-            # Fallback to a simpler URI format if there was an error
-            topic = uuid.uuid4().hex[:10]  # Shorter for simplicity
+            logger.error(f"Error creating WalletConnect URI: {str(wc_error)}")
+            # Create a simpler fallback that's still secure
+            topic = uuid.uuid4().hex
             wc_uri = f"wc:{topic}@2"
             data = {
                 "uri": f"https://walletconnect.com/wc?uri={urllib.parse.quote(wc_uri)}",
                 "raw_wc_uri": wc_uri,
-                "id": topic
+                "id": topic,
+                "created": int(time.time()),
+                "security_level": "read_only",
+                "expires_at": (datetime.now() + timedelta(hours=1)).isoformat(),
             }
-            logger.info(f"Generated fallback WalletConnect URI")
+            logger.info(f"Generated fallback WalletConnect URI for user {telegram_user_id}")
         
-        # Try to save to database if available, but continue even if it fails
+        # Store session securely - prefer SQLAlchemy persistent storage
         try:
-            if SQLITE_AVAILABLE:
-                # Use app context for database operations
-                with app.app_context():
-                    conn = get_db_connection()
-                    if conn:
-                        cursor = conn.cursor()
-                        
-                        expires_at = datetime.now() + timedelta(hours=1)
-                        
-                        session_data = {
-                            "uri": data["uri"],
-                            "raw_wc_uri": data.get("raw_wc_uri", ""),
-                            "created": int(time.time()),
-                            "session_id": data.get("id", ""),
-                            "security_level": "read_only",
-                            "expires_at": expires_at.isoformat(),
-                        }
-                        
-                        cursor.execute(
-                            """
-                            INSERT INTO wallet_sessions 
-                            (session_id, session_data, telegram_user_id, status, expires_at) 
-                            VALUES (?, ?, ?, ?, ?)
-                            """, 
-                            (session_id, Json(session_data), telegram_user_id, "pending", expires_at)
-                        )
-                        
-                        cursor.close()
-                        conn.close()
-                        logger.info(f"Saved WalletConnect session to database")
-        except Exception as db_error:
-            # Just log the error but continue - we don't need the database for the core functionality
-            logger.warning(f"Could not save WalletConnect session to database: {db_error}")
+            if SQLALCHEMY_AVAILABLE:
+                # Encrypt the session data if possible
+                if ENCRYPTION_AVAILABLE:
+                    encrypted_data = encrypt_session_data(data)
+                else:
+                    encrypted_data = json.dumps(data)
+                
+                # Create database session
+                db_session = DbSession()
+                try:
+                    # Create expiration time
+                    expires_at = datetime.now() + timedelta(hours=1)
+                    
+                    # Create new wallet session record with encrypted data
+                    wallet_session = WalletSession(
+                        session_id=session_id,
+                        telegram_user_id=telegram_user_id,
+                        session_data=encrypted_data,
+                        created_at=datetime.now(),
+                        expires_at=expires_at,
+                        status="pending",
+                        wallet_address=None,
+                        last_activity=datetime.now(),
+                        is_valid=True
+                    )
+                    
+                    # Add and commit
+                    db_session.add(wallet_session)
+                    db_session.commit()
+                    logger.info(f"Saved encrypted WalletConnect session to database")
+                except Exception as db_error:
+                    db_session.rollback()
+                    logger.warning(f"Database error saving session: {db_error}")
+                finally:
+                    db_session.close()
+        except Exception as storage_error:
+            logger.warning(f"Could not save WalletConnect session securely: {storage_error}")
         
-        # Return the successful result regardless of database status
+        # Return the successful result with minimal sensitive data
         return {
             "success": True,
             "session_id": session_id,
             "uri": data["uri"],
-            "raw_wc_uri": data.get("raw_wc_uri", ""),
             "telegram_user_id": telegram_user_id,
             "security_level": "read_only",
+            "status": "pending",
+            "expires_at": data["expires_at"],
             "expires_in_seconds": 3600
         }
             
@@ -332,7 +427,7 @@ async def create_walletconnect_session(telegram_user_id: int) -> Dict[str, Any]:
         logger.error(f"Error creating WalletConnect session: {e}")
         return {
             "success": False, 
-            "error": f"Error creating WalletConnect session: {e}"
+            "error": f"Error creating WalletConnect session: {str(e)}"
         }
 
 async def check_walletconnect_session(session_id: str) -> Dict[str, Any]:
