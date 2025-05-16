@@ -281,6 +281,11 @@ def route_callback(callback_data: str, handler_context: Dict[str, Any]) -> Optio
             logger.error(f"Invalid wallet_connect callback format: {callback_data}")
             return {"error": "Invalid wallet connect format"}
     
+    # ---------- Explore Actions ----------
+    elif callback_data.startswith("explore_"):
+        explore_action = callback_data.replace("explore_", "")
+        return handle_explore_action(explore_action, handler_context)
+        
     # ---------- Simulation Actions ----------
     elif callback_data.startswith("simulate_"):
         try:
@@ -439,6 +444,16 @@ def handle_wallet_connect_with_amount(amount: float, context: Dict[str, Any]) ->
     return {
         "action": "wallet_connect_with_amount",
         "amount": amount,
+        "chat_id": context.get("chat_id")
+    }
+
+def handle_explore_action(action: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle explore-related actions."""
+    logger.info(f"Handling explore action: {action}")
+    
+    return {
+        "action": "explore_action",
+        "explore_type": action,
         "chat_id": context.get("chat_id")
     }
 
