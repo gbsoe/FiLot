@@ -12,8 +12,17 @@ import time
 from typing import Dict, Any, Set, Optional, List
 import random
 
-# Import our enhanced navigation context system
-from navigation_context import record_navigation, is_duplicate, detect_pattern
+# Import enhanced navigation systems - try both for backward compatibility
+try:
+    # First try our new improved system
+    import fix_navigation
+    IMPROVED_NAVIGATION = True
+    logger.info("Using improved navigation system")
+except ImportError:
+    # Fall back to original system if not available
+    from navigation_context import record_navigation, is_duplicate, detect_pattern
+    IMPROVED_NAVIGATION = False
+    logger.info("Using original navigation system")
 
 # Configure logging
 logging.basicConfig(
@@ -159,7 +168,7 @@ class CallbackRegistry:
 # Initialize registry
 callback_registry = CallbackRegistry()
 
-def route_callback(callback_data: str, handler_context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def route_callback(handler_context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """
     Route a callback to the appropriate handler based on the callback_data.
     
