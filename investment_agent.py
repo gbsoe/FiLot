@@ -640,6 +640,52 @@ class InvestmentAgent:
             # Get user's portfolio for context
             portfolio = await self._get_user_portfolio()
             
+            # Check if we should use direct RL interface for enhanced recommendations
+            if self.use_rl and self.rl_advisor:
+                try:
+                    logger.info(f"Using RL-based recommendations for user {self.user_id}")
+                    
+                    # Get user data in the format expected by the RL advisor
+                    user_data = {
+                        'balance': amount or portfolio.get('available_balance', 1000),
+                        'positions': portfolio.get('positions', {}),
+                        'risk_profile': self.risk_profile
+                    }
+                    
+                    # Get RL-powered recommendations
+                    rl_ranked_pools = await self.rl_advisor.get_investment_recommendations(
+                        pools=pools,
+                        amount=float(amount) if amount is not None else 1000.0
+                    )
+                    
+                    # Get market timing from RL advisor
+                    market_timing = await self.rl_advisor.get_market_timing()
+                    
+                    # If RL recommendations are available, use them directly
+                    if rl_ranked_pools:
+                        # Still get position sizing from the traditional model
+                        balance_to_allocate = amount if amount is not None else portfolio.get('available_balance', 1000)
+                        position_recommendations = await self.models['position_sizing'].calculate_position_sizes(
+                            available_balance=balance_to_allocate,
+                            ranked_pools=rl_ranked_pools,
+                            user_data=portfolio,
+                            risk_profile=self.risk_profile
+                        )
+                        
+                        # Return early with RL-based recommendations
+                        return {
+                            'ranked_pools': rl_ranked_pools,
+                            'timing': market_timing,
+                            'position_sizing': position_recommendations,
+                            'portfolio': portfolio,
+                            'method': 'reinforcement_learning'
+                        }
+                except Exception as e:
+                    logger.error(f"Error getting RL recommendations: {e}")
+                    logger.info("Falling back to traditional recommendation method")
+                    # Fall through to traditional method
+            
+            # Traditional recommendation method (fallback if RL fails or not enabled)
             # Rank pools according to user profile
             ranked_pools = await self.models['pool_ranking'].rank_pools(
                 pools=pools,

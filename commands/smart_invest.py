@@ -7,7 +7,8 @@ from typing import Dict, List, Any, Optional
 import os
 import asyncio
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, ParseMode
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.constants import ChatAction, ParseMode
 from telegram.ext import ContextTypes
 
 from keyboard_utils import BACK_KEYBOARD
