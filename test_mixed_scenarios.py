@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 import main
 from callback_handler import route_callback, CallbackRegistry
 from anti_loop import reset_all_locks
-from debug_message_tracking import reset_tracking
+# Use the available cleanup function instead of reset_tracking
+from debug_message_tracking import cleanup_tracking
 
 class MixedScenarioTester:
     """Advanced tester that simulates mixed button + command interactions."""
@@ -274,7 +275,7 @@ class MixedScenarioTester:
         
         # Reset any tracking or locks between tests
         reset_all_locks()
-        reset_tracking()
+        cleanup_tracking()  # Clean up message tracking instead of reset
         CallbackRegistry.prune_old_data()
         
         # Create a context object to simulate update context
