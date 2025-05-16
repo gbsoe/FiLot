@@ -20,7 +20,7 @@ With our new simplified One-Command interface and persistent navigation buttons,
 
 - **Telegram Bot**: Core user interface via Telegram messaging platform
 - **Flask Web Server**: Administrative interface and background services
-- **AI Services**: Integrated AI models for financial advice and decision-making
+- **AI Services**: Integrated AI models for financial advice and reinforcement learning-based investment recommendations
 - **Database**: PostgreSQL database for storing user profiles, transactions, and market data
 - **Blockchain Integration**: Services for interacting with Solana blockchain and liquidity pools
 
@@ -49,6 +49,9 @@ With our new simplified One-Command interface and persistent navigation buttons,
 - `anthropic_service.py`: Anthropic Claude AI for financial advice
 - `intent_detector.py`: User message intent classification
 - `recommendation_agent.py`: Investment recommendation engine
+- `rl_integration.py`: Reinforcement learning system for optimized investment decisions
+- `rl_agent.py`: Deep Q-Network implementation for investment strategy learning
+- `rl_environment.py`: Simulated environment for training investment agents
 
 ## Installation and Setup
 
@@ -101,6 +104,7 @@ FiLot features a simplified One-Command interface with persistent buttons for ea
 - `/explore`: Access pool information, simulations, and FAQ
 - `/account`: Manage wallet, profile settings, and subscriptions
 - `/invest`: View recommended pools and investment opportunities
+- `/smart_invest`: Get AI-powered investment recommendations using reinforcement learning
 
 ### Navigation Features
 - **Persistent Buttons**: Consistent navigation throughout the experience
@@ -116,6 +120,33 @@ FiLot features a simplified One-Command interface with persistent buttons for ea
 - **Mobile-Optimized**: Designed specifically for comfortable mobile device usage
 
 Commands can also be entered manually, but the button-based interface provides a more intuitive experience.
+
+## Reinforcement Learning Investment System
+
+FiLot features an advanced AI-powered investment recommendation system using reinforcement learning (RL) techniques:
+
+### Key Features
+
+- **Smart Investment Commands**: Get optimized recommendations with the `/smart_invest` command
+- **Risk-Profile Adaptation**: Investment recommendations tailored to conservative, moderate, or aggressive profiles
+- **Market Timing Analysis**: AI-driven insights about when to enter or exit positions
+- **Confidence Ratings**: Transparency about the AI's confidence level in each recommendation
+- **Comprehensive Metrics**: Balances APR, TVL, impermanent loss risk, and market volatility
+- **Explanation System**: Clear reasoning for why each pool is recommended
+
+### How It Works
+
+1. The RL system analyzes multiple factors including APR, liquidity, token volatility, and market conditions
+2. It learns from historical performance data to optimize investment returns
+3. Recommendations are balanced based on your risk profile
+4. The system continuously improves as it gathers more data
+
+### Benefits Over Traditional Approaches
+
+- **More Balanced Recommendations**: Better risk-adjusted returns compared to simply chasing the highest APR
+- **Impermanent Loss Protection**: Considers correlation between tokens to minimize impermanent loss risk
+- **Dynamic Adaptation**: Adjusts to changing market conditions rather than using static rules
+- **Personalized Strategies**: Tailored to your specific investment goals and risk tolerance
 
 ## Understanding Liquidity Pools
 
