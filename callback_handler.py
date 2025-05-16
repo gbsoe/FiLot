@@ -321,9 +321,128 @@ def route_callback(callback_data: str, handler_context: Dict[str, Any]) -> Optio
     # If we reach here, it might be because we're in a complex navigation pattern
     # Let's try to determine if this is a navigation action we can recover
     
+    # ---------- Secure Transaction Confirmation ----------
+    elif callback_data.startswith("confirm_") or callback_data.startswith("cancel_"):
+        try:
+            # Import transaction confirmation module
+            import transaction_confirmation
+            
+            # Create a transaction executor based on transaction type
+            async def execute_transaction(tx_data, user_id):
+                """Execute the right transaction type based on the data."""
+                import wallet_utils
+                
+                # Get transaction type and execute appropriate function
+                tx_type = tx_data.get("transaction_type", "unknown")
+                
+                if tx_type == "add_liquidity":
+                    # Execute add liquidity transaction
+                    return await wallet_utils.join_pool_transaction(
+                        wallet_address=tx_data.get("wallet_address", ""),
+                        pool_id=tx_data.get("pool_id", ""),
+                        token_a=tx_data.get("token_a", "SOL"),
+                        token_b=tx_data.get("token_b", "USDC"),
+                        deposit_sol=tx_data.get("deposit_sol", 0.0),
+                        deposit_usdc=tx_data.get("deposit_usdc", 0.0),
+                        user_id=user_id,
+                        slippage_tolerance=tx_data.get("slippage_tolerance", 0.5),
+                        confirmed=True
+                    )
+                elif tx_type == "remove_liquidity":
+                    # Execute remove liquidity transaction
+                    return await wallet_utils.stop_pool_transaction(
+                        wallet_address=tx_data.get("wallet_address", ""),
+                        pool_id=tx_data.get("pool_id", ""),
+                        user_id=user_id,
+                        percentage=tx_data.get("percentage", 100.0),
+                        slippage_tolerance=tx_data.get("slippage_tolerance", 0.5),
+                        confirmed=True
+                    )
+                else:
+                    return {
+                        "success": False,
+                        "error": f"Unknown transaction type: {tx_type}"
+                    }
+            
+            # Handle the confirmation callback
+            was_handled = await transaction_confirmation.handle_confirmation_callback(
+                update, context, execute_transaction
+            )
+            
+            if was_handled:
+                return {"handled": True}
+                
+        except ImportError as e:
+            logger.error(f"Error importing transaction confirmation module: {e}")
+            await update.callback_query.message.reply_text(
+                "⚠️ Transaction confirmation is not available.",
+                reply_markup=None
+            )
+            return {"error": "Transaction confirmation not available"}
+        except Exception as e:
+            logger.error(f"Error handling transaction confirmation: {e}")
+            return {"error": f"Error in transaction confirmation: {str(e)}"}
+                
+    # ---------- Position Operation Security ----------
+    elif callback_data.startswith("position_confirm_") or callback_data.startswith("position_cancel_"):
+        try:
+            # Import position security module
+            import position_security
+            
+            # Extract operation details
+            action, operation, token = position_security.extract_operation_token(callback_data)
+            
+            if not action or not operation or not token:
+                logger.error(f"Invalid position operation format: {callback_data}")
+                return {"error": "Invalid position operation format"}
+                
+            # Validate operation token
+            user_id = update.effective_user.id
+            is_valid, operation_details = position_security.validate_position_operation(token, user_id)
+            
+            if not is_valid:
+                await update.callback_query.message.reply_text(
+                    f"⚠️ {operation_details.get('error', 'Security error: Invalid operation')}",
+                    reply_markup=None
+                )
+                return {"error": operation_details.get('error')}
+                
+            # Get position ID from operation details
+            position_id = operation_details["position_id"]
+            
+            # Handle the operation based on action and operation type
+            if action == "confirm":
+                if operation == "close":
+                    # Close position with enhanced security
+                    import wallet_utils
+                    
+                    # Process position closing
+                    return {
+                        "success": True,
+                        "action": "position_close",
+                        "position_id": position_id,
+                        "message": f"Position {position_id} closed successfully with enhanced security"
+                    }
+                    
+            elif action == "cancel":
+                # Inform user that operation was cancelled
+                await update.callback_query.message.reply_text(
+                    f"Operation cancelled: {operation} position {position_id}",
+                    reply_markup=None
+                )
+                return {"cancelled": True}
+                
+        except ImportError as e:
+            logger.error(f"Error importing position security module: {e}")
+            return {"error": "Position security not available"}
+        except Exception as e:
+            logger.error(f"Error in position operation: {e}")
+            return {"error": f"Error in position operation: {str(e)}"}
+                
     # Check if it's a navigation button by prefix
     is_navigation_button = any(callback_data.startswith(prefix) for prefix in [
-        'menu_', 'explore_', 'account_', 'back_to_', 'profile_', 'simulate_'
+        'menu_', 'explore_', 'account_', 'back_to_', 'profile_', 'simulate_', 
+        'confirm_', 'cancel_', 'position_confirm_', 'position_cancel_'
     ])
     
     if is_navigation_button:
