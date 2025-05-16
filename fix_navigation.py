@@ -1,225 +1,173 @@
 """
 Improved navigation system for FiLot Telegram bot.
 
-This module enhances the navigation system to ensure smooth transitions
-between main menu items (Invest, Explore, Account) and prevents duplicate
-responses when buttons are pressed multiple times.
+This module provides enhanced navigation tracking and duplicate detection
+to ensure smooth button navigation, especially for main menu buttons.
 """
 
-import logging
 import time
+import logging
 from typing import Dict, Any, List, Optional, Set
 
 # Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-# Navigation history
-# Format: {chat_id: [{"callback_data": data, "timestamp": time, "context": context}]}
-NAVIGATION_HISTORY = {}
+# Global navigation tracking
+user_navigation = {}
+MAX_NAVIGATION_HISTORY = 50
+DUPLICATE_WINDOW = 0.5  # 500ms window for duplicate detection by default
 
-# Maximum number of navigation actions to keep in history per chat
-MAX_HISTORY_SIZE = 20
-
-# Set of main navigation buttons
-MAIN_BUTTONS = {
-    "menu_invest",
-    "menu_explore", 
-    "menu_account",
-    "back_to_main"
-}
-
-# Button sequence patterns to detect
-BUTTON_SEQUENCES = {
-    "menu_invest,menu_explore": "invest_to_explore",
-    "menu_explore,menu_invest": "explore_to_invest",
-    "menu_invest,menu_account": "invest_to_account",
-    "menu_account,menu_invest": "account_to_invest",
-    "menu_explore,menu_account": "explore_to_account",
-    "menu_account,menu_explore": "account_to_explore"
-}
-
-def record_navigation(chat_id: int, callback_data: str, context: Optional[Dict[str, Any]] = None) -> None:
+def record_navigation(chat_id: int, action: str) -> None:
     """
-    Record a navigation action in the history.
+    Record a navigation action for a chat.
     
     Args:
-        chat_id: Chat ID
-        callback_data: Callback data
-        context: Optional context information
+        chat_id: The chat ID
+        action: The action/button that was pressed
     """
-    if chat_id not in NAVIGATION_HISTORY:
-        NAVIGATION_HISTORY[chat_id] = []
+    global user_navigation
+    
+    # Initialize if needed
+    if chat_id not in user_navigation:
+        user_navigation[chat_id] = []
         
-    # Add to history
-    NAVIGATION_HISTORY[chat_id].append({
-        "callback_data": callback_data,
-        "timestamp": time.time(),
-        "context": context or {}
+    # Record this action
+    user_navigation[chat_id].append({
+        "action": action,
+        "timestamp": time.time()
     })
     
     # Limit history size
-    if len(NAVIGATION_HISTORY[chat_id]) > MAX_HISTORY_SIZE:
-        NAVIGATION_HISTORY[chat_id] = NAVIGATION_HISTORY[chat_id][-MAX_HISTORY_SIZE:]
+    if len(user_navigation[chat_id]) > MAX_NAVIGATION_HISTORY:
+        user_navigation[chat_id] = user_navigation[chat_id][-MAX_NAVIGATION_HISTORY:]
         
-    logger.debug(f"Recorded navigation for chat {chat_id}: {callback_data}")
+    logger.debug(f"Recorded navigation for {chat_id}: {action}")
 
-def is_duplicate(chat_id: int, callback_data: str, window: float = 0.5) -> bool:
+def is_duplicate(chat_id: int, action: str, window: float = DUPLICATE_WINDOW) -> bool:
     """
-    Check if this navigation action is a duplicate within the time window.
-    Using a shorter window (0.5s) to allow legitimate sequential navigation.
+    Check if a navigation action is a duplicate (same action within time window).
     
     Args:
-        chat_id: Chat ID
-        callback_data: Callback data
+        chat_id: The chat ID
+        action: The action/button to check
         window: Time window in seconds to consider for duplicates
         
     Returns:
-        True if duplicate, False otherwise
+        True if the action is a duplicate, False otherwise
     """
-    if chat_id not in NAVIGATION_HISTORY:
+    global user_navigation
+    
+    # No history for this chat
+    if chat_id not in user_navigation:
         return False
         
-    recent_actions = NAVIGATION_HISTORY[chat_id]
-    if not recent_actions:
-        return False
-        
+    # Check recent actions
     current_time = time.time()
+    history = user_navigation[chat_id]
     
-    # For main navigation buttons (Invest, Explore, Account), use special handling
-    if callback_data in MAIN_BUTTONS:
-        # For main navigation, check if we're already on this page
-        # and the last action was less than 2 seconds ago
-        last_action = recent_actions[-1]
-        if last_action["callback_data"] == callback_data:
-            time_diff = current_time - last_action["timestamp"]
-            if time_diff < 2.0:  # Longer window for main navigation
-                logger.info(f"Detected duplicate main navigation: {callback_data} within {time_diff:.2f}s")
-                return True
-        return False  # Always allow main navigation otherwise
-        
-    # Check for exact duplicates within the window
-    for action in recent_actions:
-        if action["callback_data"] == callback_data:
-            time_diff = current_time - action["timestamp"]
-            if time_diff < window:
-                logger.info(f"Detected duplicate navigation: {callback_data} within {time_diff:.2f}s")
-                return True
-    
+    # Check for duplicate actions within the time window
+    for entry in reversed(history):
+        # Skip if this is not the same action
+        if entry["action"] != action:
+            continue
+            
+        # Check if this action happened within the time window
+        time_diff = current_time - entry["timestamp"]
+        if time_diff < window:
+            logger.info(f"Duplicate action detected: {action} (within {time_diff:.2f}s)")
+            return True
+            
     return False
 
-def detect_pattern(chat_id: int, depth: int = 3) -> Optional[str]:
+def detect_pattern(chat_id: int) -> Optional[str]:
     """
-    Detect navigation patterns to handle special cases.
+    Detect special navigation patterns that might need special handling.
     
     Args:
-        chat_id: Chat ID
-        depth: How many recent actions to consider
+        chat_id: The chat ID
         
     Returns:
-        Detected pattern name or None
+        Pattern name if detected, None otherwise
     """
-    if chat_id not in NAVIGATION_HISTORY:
+    global user_navigation
+    
+    # No history for this chat
+    if chat_id not in user_navigation or len(user_navigation[chat_id]) < 3:
         return None
         
-    actions = NAVIGATION_HISTORY[chat_id]
-    if len(actions) < 2:
-        return None
+    # Get the most recent actions
+    history = user_navigation[chat_id][-3:]
+    actions = [entry["action"] for entry in history]
+    
+    # Check for ping-pong pattern (A -> B -> A)
+    if actions[0] == actions[2] and actions[0] != actions[1]:
+        return "ping_pong"
         
-    # Get recent actions limited by depth
-    recent = actions[-depth:]
-    
-    # Extract just the callback data
-    recent_callbacks = [action["callback_data"] for action in recent]
-    
-    # Check for button sequences
-    for i in range(len(recent_callbacks) - 1):
-        pair = f"{recent_callbacks[i]},{recent_callbacks[i+1]}"
-        if pair in BUTTON_SEQUENCES:
-            pattern = BUTTON_SEQUENCES[pair]
-            logger.info(f"Detected navigation pattern: {pattern}")
-            return pattern
-    
-    # Check for back-and-forth pattern (ping-pong)
-    if len(recent_callbacks) >= 3:
-        if recent_callbacks[-3] == recent_callbacks[-1] and recent_callbacks[-2] != recent_callbacks[-1]:
-            logger.info("Detected ping-pong navigation pattern")
-            return "ping_pong"
-    
+    # Check for rapid switching between main menu items
+    main_menu_actions = ["menu_invest", "menu_explore", "menu_account"]
+    if all(action in main_menu_actions for action in actions):
+        # If all recent actions are main menu items
+        return "menu_switching"
+        
     return None
 
-def get_current_menu(chat_id: int) -> Optional[str]:
-    """
-    Get the current menu for a chat based on navigation history.
-    
-    Args:
-        chat_id: Chat ID
-        
-    Returns:
-        Current menu or None if not available
-    """
-    if chat_id not in NAVIGATION_HISTORY or not NAVIGATION_HISTORY[chat_id]:
-        return None
-        
-    # Find the most recent main menu navigation
-    for action in reversed(NAVIGATION_HISTORY[chat_id]):
-        callback = action["callback_data"]
-        if callback.startswith("menu_"):
-            return callback[5:]  # Remove "menu_" prefix
-            
-    return None
-
-def should_force_refresh(chat_id: int, callback_data: str) -> bool:
-    """
-    Determine if we should force a menu refresh based on navigation patterns.
-    
-    Args:
-        chat_id: Chat ID
-        callback_data: Current callback data
-        
-    Returns:
-        True if we should force refresh, False otherwise
-    """
-    pattern = detect_pattern(chat_id)
-    
-    # Force refresh on ping-pong pattern
-    if pattern == "ping_pong":
-        return True
-        
-    # Force refresh when user explicitly returns to the same menu
-    current_menu = get_current_menu(chat_id)
-    if current_menu and callback_data == f"menu_{current_menu}":
-        return True
-        
-    return False
-
-def clean_navigation_history() -> None:
-    """Clean up old navigation history to prevent memory leaks."""
-    # Get current time
-    current_time = time.time()
-    
-    # Remove any history older than 1 hour
-    cutoff_time = current_time - 3600
-    
-    chats_to_remove = []
-    
-    for chat_id, actions in NAVIGATION_HISTORY.items():
-        # Check if all actions are old
-        if actions and actions[-1]["timestamp"] < cutoff_time:
-            chats_to_remove.append(chat_id)
-            
-    # Remove old chat histories
-    for chat_id in chats_to_remove:
-        del NAVIGATION_HISTORY[chat_id]
-        
-    logger.debug(f"Cleaned up navigation history for {len(chats_to_remove)} chats")
-
-def reset_chat_navigation(chat_id: int) -> None:
+def reset_navigation(chat_id: int) -> None:
     """
     Reset navigation history for a specific chat.
     
     Args:
-        chat_id: Chat ID to reset
+        chat_id: The chat ID to reset
     """
-    if chat_id in NAVIGATION_HISTORY:
-        del NAVIGATION_HISTORY[chat_id]
+    global user_navigation
+    
+    if chat_id in user_navigation:
+        user_navigation[chat_id] = []
         logger.info(f"Reset navigation history for chat {chat_id}")
+
+def get_user_path(chat_id: int, limit: int = 10) -> List[str]:
+    """
+    Get the recent navigation path for a user.
+    
+    Args:
+        chat_id: The chat ID
+        limit: Maximum number of steps to return
+        
+    Returns:
+        List of recent actions
+    """
+    global user_navigation
+    
+    if chat_id not in user_navigation:
+        return []
+        
+    # Get the most recent actions (up to limit)
+    history = user_navigation[chat_id][-limit:]
+    return [entry["action"] for entry in history]
+
+def cleanup_old_data(max_age: int = 3600) -> None:
+    """
+    Clean up old navigation data to prevent memory leaks.
+    
+    Args:
+        max_age: Maximum age in seconds to keep navigation data
+    """
+    global user_navigation
+    current_time = time.time()
+    
+    # Check each chat
+    for chat_id in list(user_navigation.keys()):
+        # Filter out old entries
+        user_navigation[chat_id] = [
+            entry for entry in user_navigation[chat_id]
+            if current_time - entry["timestamp"] < max_age
+        ]
+        
+        # Remove empty chats
+        if not user_navigation[chat_id]:
+            del user_navigation[chat_id]
+            
+    logger.debug(f"Cleaned up navigation data, tracking {len(user_navigation)} chats")

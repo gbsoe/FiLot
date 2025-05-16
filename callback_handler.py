@@ -12,6 +12,35 @@ import time
 from typing import Dict, Any, Set, Optional, List
 import random
 
+# Configure logging first
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Import button debug logger
+try:
+    from button_debug_logger import log_button_interaction
+    BUTTON_LOGGING_ENABLED = True
+    logger.info("Button debug logging is enabled")
+except ImportError:
+    logger.warning("Button debug logger not available")
+    BUTTON_LOGGING_ENABLED = False
+    
+    # Create a dummy function if the real one is not available
+    def log_button_interaction(*args, **kwargs):
+        pass
+
+# Import wallet button fix
+try:
+    from fix_wallet_button import fix_connect_wallet
+    WALLET_FIX_ENABLED = True
+    logger.info("Wallet button fix is enabled")
+except ImportError:
+    logger.warning("Wallet button fix not available")
+    WALLET_FIX_ENABLED = False
+
 # Import enhanced navigation systems - try both for backward compatibility
 try:
     # First try our new improved system
@@ -20,7 +49,7 @@ try:
     logger.info("Using improved navigation system")
 except ImportError:
     # Fall back to original system if not available
-    from navigation_context import record_navigation, is_duplicate, detect_pattern
+    import navigation_context
     IMPROVED_NAVIGATION = False
     logger.info("Using original navigation system")
 
@@ -199,20 +228,46 @@ def route_callback(handler_context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             callback_id = f"default_{time.time()}"
             logger.warning(f"Invalid callback_id type, using generated: {callback_id}")
     
-    # Enhanced duplicate detection using navigation context
-    if is_duplicate(chat_id, callback_data):
-        logger.info(f"Navigation context detected duplicate: {callback_data}")
-        return None
+    # Get the callback data from the context
+    callback_data = handler_context.get('callback_data', '')
+    user_id = handler_context.get('user_id', 0)
+    
+    # Log this button interaction
+    if BUTTON_LOGGING_ENABLED:
+        log_button_interaction(
+            user_id=user_id,
+            chat_id=chat_id,
+            callback_data=callback_data,
+            context=handler_context
+        )
+    
+    # Enhanced duplicate detection using navigation context - only for non-wallet buttons
+    if callback_data not in ['connect_wallet', 'disconnect_wallet']:
+        if IMPROVED_NAVIGATION:
+            if fix_navigation.is_duplicate(chat_id, callback_data):
+                logger.info(f"Navigation context detected duplicate: {callback_data}")
+                return None
+        else:
+            if is_duplicate(chat_id, callback_data):
+                logger.info(f"Navigation context detected duplicate: {callback_data}")
+                return None
     
     # Also use the legacy processing check to ensure backward compatibility
     if callback_registry.is_callback_processed(callback_id, chat_id, callback_data):
         return None
     
     # Record this navigation step in our enhanced tracking system
-    record_navigation(chat_id, callback_data)
+    if IMPROVED_NAVIGATION:
+        fix_navigation.record_navigation(chat_id, callback_data)
+    else:
+        navigation_context.record_navigation(chat_id, callback_data)
     
     # Detect if we're in a special navigation pattern that needs handling
-    pattern = detect_pattern(chat_id)
+    pattern = None
+    if IMPROVED_NAVIGATION:
+        pattern = fix_navigation.detect_pattern(chat_id)
+    else:
+        pattern = navigation_context.detect_pattern(chat_id)
     if pattern:
         handler_context['navigation_pattern'] = pattern
         logger.info(f"Detected navigation pattern: {pattern} for chat_id: {chat_id}")
