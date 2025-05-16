@@ -65,6 +65,23 @@ def is_duplicate(chat_id: int, action: str, window: float = DUPLICATE_WINDOW) ->
     if chat_id not in user_navigation:
         return False
         
+    # Adjust window based on button type for better responsiveness
+    adjusted_window = window
+    
+    # Special handling for different button types
+    if action == "back_to_main":
+        # Main menu button needs longer protection
+        adjusted_window = 1.0  # 1 second
+    elif action.startswith("profile_"):
+        # Risk profile buttons need longer protection
+        adjusted_window = 1.0  # 1 second
+        # Special case: high-risk and stable profiles need even more protection
+        if action in ["profile_high-risk", "profile_stable"]:
+            adjusted_window = 1.5  # 1.5 seconds
+    elif "wallet" in action or "connect" in action:
+        # Wallet buttons need longer protection
+        adjusted_window = 1.5  # 1.5 seconds
+    
     # Check recent actions
     current_time = time.time()
     history = user_navigation[chat_id]
@@ -75,10 +92,10 @@ def is_duplicate(chat_id: int, action: str, window: float = DUPLICATE_WINDOW) ->
         if entry["action"] != action:
             continue
             
-        # Check if this action happened within the time window
+        # Check if this action happened within the adjusted time window
         time_diff = current_time - entry["timestamp"]
-        if time_diff < window:
-            logger.info(f"Duplicate action detected: {action} (within {time_diff:.2f}s)")
+        if time_diff < adjusted_window:
+            logger.info(f"Duplicate action detected: {action} (within {time_diff:.2f}s, window: {adjusted_window}s)")
             return True
             
     return False

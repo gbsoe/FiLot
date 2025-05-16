@@ -1,16 +1,17 @@
 """
-Comprehensive button debug logger for FiLot Telegram bot.
+Button interaction debug logger for the FiLot Telegram bot.
 
-This module provides detailed logging of button interactions to help identify
-navigation issues and button-related errors.
+This module tracks button interactions to help diagnose issues
+with the button handling system. It provides a simple way to
+log button presses and their results.
 """
 
-import os
-import json
 import time
+import json
 import logging
+import os
+from typing import Dict, Any, List, Optional
 from datetime import datetime
-from typing import Dict, Any, List, Optional, Union
 
 # Configure logging
 logging.basicConfig(
@@ -19,38 +20,35 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Constants
-DEBUG_LOG_FILE = "button_debug_log.json"
-MAX_LOG_ENTRIES = 1000
+# Maximum number of button interactions to store
+MAX_BUTTON_LOGS = 100
 
-# Global storage for button interactions
+# Global tracking for button interactions
 button_interactions = []
 
-def log_button_interaction(
-    user_id: int,
-    chat_id: int,
-    callback_data: str,
-    context: Optional[Dict[str, Any]] = None,
-    result: Optional[Dict[str, Any]] = None,
-    error: Optional[str] = None
-) -> None:
+def log_button_interaction(user_id: int, 
+                          chat_id: int, 
+                          callback_data: str, 
+                          context: Optional[Dict[str, Any]] = None, 
+                          result: Optional[Dict[str, Any]] = None, 
+                          error: Optional[str] = None) -> None:
     """
-    Log a button interaction with detailed context.
+    Log a button interaction for debugging purposes.
     
     Args:
-        user_id: Telegram user ID
-        chat_id: Telegram chat ID
-        callback_data: Button callback data
-        context: Optional context data
-        result: Optional result data
-        error: Optional error message
+        user_id: The user ID
+        chat_id: The chat ID
+        callback_data: The callback data from the button
+        context: Optional additional context
+        result: Optional result of the callback handling
+        error: Optional error message if handling failed
     """
     global button_interactions
     
     # Create log entry
-    entry = {
-        "timestamp": time.time(),
-        "datetime": datetime.now().isoformat(),
+    log_entry = {
+        "timestamp": datetime.now().isoformat(),
+        "unix_time": time.time(),
         "user_id": user_id,
         "chat_id": chat_id,
         "callback_data": callback_data,
@@ -60,151 +58,93 @@ def log_button_interaction(
         "success": error is None
     }
     
-    # Add to in-memory log
-    button_interactions.append(entry)
+    # Add to log
+    button_interactions.append(log_entry)
     
-    # Trim log if needed
-    if len(button_interactions) > MAX_LOG_ENTRIES:
-        button_interactions = button_interactions[-MAX_LOG_ENTRIES:]
-    
-    # Log to console as well
+    # Limit log size
+    if len(button_interactions) > MAX_BUTTON_LOGS:
+        button_interactions = button_interactions[-MAX_BUTTON_LOGS:]
+        
+    # Log to logger as well
     if error:
-        logger.error(f"Button error: {callback_data} - {error}")
+        logger.error(f"Button interaction error: {callback_data} - {error}")
     else:
-        logger.info(f"Button interaction: {callback_data}")
-    
-    # Write to debug log file
-    try:
-        save_debug_log()
-    except Exception as e:
-        logger.error(f"Error saving debug log: {e}")
-
-def save_debug_log() -> None:
-    """Save the current debug log to a file."""
-    with open(DEBUG_LOG_FILE, 'w') as f:
-        json.dump({
-            "generated_at": datetime.now().isoformat(),
-            "entries": button_interactions
-        }, f, indent=2)
-    
-    logger.debug(f"Debug log saved with {len(button_interactions)} entries")
-
-def get_button_logs(
-    user_id: Optional[int] = None,
-    callback_data_prefix: Optional[str] = None,
-    limit: int = 100,
-    include_errors_only: bool = False
-) -> List[Dict[str, Any]]:
+        logger.info(f"Button interaction success: {callback_data}")
+        
+def save_logs(filename: str = "button_debug_logs.json") -> None:
     """
-    Get filtered button interaction logs.
+    Save button interaction logs to a file.
     
     Args:
-        user_id: Optional filter by user ID
-        callback_data_prefix: Optional filter by callback data prefix
-        limit: Maximum number of entries to return
-        include_errors_only: Whether to include only error entries
+        filename: The filename to save logs to
+    """
+    global button_interactions
+    
+    try:
+        with open(filename, 'w') as f:
+            json.dump(button_interactions, f, indent=2)
+        logger.info(f"Saved {len(button_interactions)} button interaction logs to {filename}")
+    except Exception as e:
+        logger.error(f"Failed to save button logs: {str(e)}")
+        
+def get_recent_interactions(user_id: Optional[int] = None, 
+                           limit: int = 10,
+                           filter_callback: Optional[str] = None) -> List[Dict[str, Any]]:
+    """
+    Get recent button interactions, optionally filtered by user ID.
+    
+    Args:
+        user_id: Optional user ID to filter by
+        limit: Maximum number of interactions to return
+        filter_callback: Optional callback data prefix to filter by
         
     Returns:
-        Filtered log entries
+        List of recent button interactions
     """
+    global button_interactions
+    
+    # Filter interactions
     filtered = button_interactions
     
-    # Filter by user ID if specified
     if user_id is not None:
-        filtered = [entry for entry in filtered if entry["user_id"] == user_id]
-    
-    # Filter by callback data prefix if specified
-    if callback_data_prefix is not None:
-        filtered = [entry for entry in filtered if entry["callback_data"].startswith(callback_data_prefix)]
-    
-    # Filter by errors if specified
-    if include_errors_only:
-        filtered = [entry for entry in filtered if entry.get("error")]
-    
-    # Return the most recent entries up to the limit
+        filtered = [i for i in filtered if i["user_id"] == user_id]
+        
+    if filter_callback:
+        filtered = [i for i in filtered if i["callback_data"].startswith(filter_callback)]
+        
+    # Return most recent
     return filtered[-limit:]
-
-def generate_summary_report() -> str:
+    
+def analyze_failures() -> Dict[str, Any]:
     """
-    Generate a readable summary report of button interactions.
+    Analyze button interaction failures to identify patterns.
     
     Returns:
-        Formatted summary report
+        Analysis results containing failure patterns and statistics
     """
-    # Count total interactions
+    global button_interactions
+    
+    # Count failures by callback type
+    failure_counts = {}
+    total_failures = 0
     total_interactions = len(button_interactions)
     
-    # Count successful and failed interactions
-    successful = len([e for e in button_interactions if e.get("success", False)])
-    failed = total_interactions - successful
+    for interaction in button_interactions:
+        if not interaction["success"]:
+            # Extract button type (first part of callback data)
+            callback_parts = interaction["callback_data"].split("_")
+            button_type = callback_parts[0] if callback_parts else "unknown"
+            
+            # Count this failure
+            failure_counts[button_type] = failure_counts.get(button_type, 0) + 1
+            total_failures += 1
+            
+    # Prepare analysis results
+    results = {
+        "total_interactions": total_interactions,
+        "total_failures": total_failures,
+        "failure_rate": total_failures / total_interactions if total_interactions > 0 else 0,
+        "failure_by_type": failure_counts,
+    }
     
-    # Count interactions by button type
-    button_counts = {}
-    for entry in button_interactions:
-        callback_data = entry["callback_data"]
-        
-        # Extract button type (part before first underscore or whole string)
-        button_type = callback_data.split("_")[0] + "_" if "_" in callback_data else callback_data
-        
-        button_counts[button_type] = button_counts.get(button_type, 0) + 1
-    
-    # Count errors by type
-    error_counts = {}
-    for entry in button_interactions:
-        error = entry.get("error")
-        if error:
-            error_type = error.split(":")[0] if ":" in error else error
-            error_counts[error_type] = error_counts.get(error_type, 0) + 1
-    
-    # Generate report
-    report = []
-    report.append("====== BUTTON INTERACTION SUMMARY ======")
-    report.append(f"Total interactions: {total_interactions}")
-    report.append(f"Successful: {successful} ({(successful/total_interactions*100) if total_interactions else 0:.1f}%)")
-    report.append(f"Failed: {failed} ({(failed/total_interactions*100) if total_interactions else 0:.1f}%)")
-    
-    report.append("\n--- Button Types ---")
-    for button_type, count in sorted(button_counts.items(), key=lambda x: x[1], reverse=True):
-        report.append(f"{button_type}: {count} interactions")
-    
-    if error_counts:
-        report.append("\n--- Error Types ---")
-        for error_type, count in sorted(error_counts.items(), key=lambda x: x[1], reverse=True):
-            report.append(f"{error_type}: {count} occurrences")
-    
-    report.append("\n--- Recent Errors ---")
-    recent_errors = get_button_logs(include_errors_only=True, limit=5)
-    if recent_errors:
-        for i, entry in enumerate(recent_errors):
-            report.append(f"{i+1}. {entry['callback_data']} - {entry['error']}")
-    else:
-        report.append("No recent errors")
-    
-    report.append("=======================================")
-    
-    return "\n".join(report)
-
-def clear_logs() -> None:
-    """Clear all button interaction logs."""
-    global button_interactions
-    button_interactions = []
-    
-    # Delete log file if it exists
-    if os.path.exists(DEBUG_LOG_FILE):
-        os.remove(DEBUG_LOG_FILE)
-    
-    logger.info("Button interaction logs cleared")
-
-# Initialize when module is loaded
-if os.path.exists(DEBUG_LOG_FILE):
-    try:
-        with open(DEBUG_LOG_FILE, 'r') as f:
-            data = json.load(f)
-            button_interactions = data.get("entries", [])
-        logger.info(f"Loaded {len(button_interactions)} button interactions from debug log")
-    except Exception as e:
-        logger.error(f"Error loading debug log: {e}")
-        button_interactions = []
-else:
-    logger.info("No existing debug log found, starting fresh")
-    button_interactions = []
+    return results
