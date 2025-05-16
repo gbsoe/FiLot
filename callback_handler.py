@@ -487,10 +487,32 @@ def route_callback(handler_context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     # ---------- Menu Navigation ----------
     if callback_data == "back_to_main":
         # Special case for main menu button
-        return {
-            "action": "back_to_main",
-            "chat_id": handler_context.get("chat_id")
-        }
+        try:
+            # Try using our button fix system if available
+            import button_fix
+            user_id = handler_context.get('user_id', 0)
+            logger.info(f"Using button fix system for back_to_main from user {user_id}")
+            
+            if not button_fix.is_wallet_button_click_allowed(user_id, "back_to_main"):
+                logger.info(f"Throttling back_to_main button click for user {user_id}")
+                return {
+                    "action": "back_to_main",
+                    "message": "Returning to main menu...",
+                    "chat_id": handler_context.get("chat_id")
+                }
+                
+            result = {
+                "action": "back_to_main",
+                "chat_id": handler_context.get("chat_id")
+            }
+            return button_fix.fix_wallet_button_action(result)
+        except ImportError:
+            # Default behavior if button_fix not available
+            logger.info("Button fix system not available for back_to_main button")
+            return {
+                "action": "back_to_main",
+                "chat_id": handler_context.get("chat_id")
+            }
     elif callback_data == "back_to_explore":
         # Special case for back to explore menu button
         return {
@@ -1100,8 +1122,37 @@ def handle_profile_action(profile_type: str, context: Dict[str, Any]) -> Dict[st
     """Handle profile-related actions."""
     logger.info(f"Handling profile action: {profile_type}")
     
-    return {
-        "action": "profile",
-        "profile_type": profile_type,
-        "chat_id": context.get("chat_id")
-    }
+    user_id = context.get('user_id', 0)
+    chat_id = context.get('chat_id', 0)
+    
+    # Try using our button fix system if available
+    try:
+        import button_fix
+        logger.info(f"Using button fix system for profile_{profile_type} from user {user_id}")
+        
+        # Check if this is a rapid repeated click
+        if not button_fix.is_wallet_button_click_allowed(user_id, f"profile_{profile_type}"):
+            logger.info(f"Throttling profile button click for user {user_id}")
+            return {
+                "action": "profile",
+                "profile_type": profile_type,
+                "message": f"Processing your {profile_type} risk profile selection...",
+                "chat_id": chat_id
+            }
+        
+        # Apply standard response with fixes
+        result = {
+            "action": "profile",
+            "profile_type": profile_type,
+            "chat_id": chat_id
+        }
+        return button_fix.fix_wallet_button_action(result)
+        
+    except ImportError:
+        # Standard response without fixes if button_fix not available
+        logger.info("Button fix system not available for profile buttons")
+        return {
+            "action": "profile",
+            "profile_type": profile_type,
+            "chat_id": chat_id
+        }
