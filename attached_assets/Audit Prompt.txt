@@ -1,0 +1,68 @@
+Please perform a comprehensive security and vulnerability audit of my bot’s codebase, with a focus on protecting user wallets and preventing malicious exploits. My bot uses WalletConnect for signing and interacting with user wallets. Evaluate the system against the following threat categories:
+
+1. Wallet & Signing Security
+
+Is there any possibility of a malicious or unintended transaction being triggered by the bot on behalf of the user?
+
+Are all signed transactions initiated only by explicit user actions, not automatic or timed logic?
+
+Are WalletConnect sessions securely managed, expired correctly, and never reused across users?
+
+Are transaction payloads clean, verified, and not vulnerable to injection or manipulation?
+
+
+
+
+> 2. API & Endpoint Security
+
+Could an attacker spoof API requests (e.g., APR or pool data) to trick the bot into recommending or executing harmful actions?
+
+Are the Express endpoints and Telegram bot inputs protected against command injection, parameter tampering, or rate abuse?
+
+Are any sensitive operations (like investment decisions or withdrawals) locked behind user validation and signature, not just API calls?
+
+
+
+
+> 3. Session, User & Message Safety
+
+Is there any risk that users can interfere with other users’ sessions, wallets, or data?
+
+Are session identifiers and user contexts stored and scoped strictly per Telegram user ID or wallet address?
+
+Are system commands sanitized and validated to prevent spoofed input from malicious messages or forwarded commands?
+
+
+
+
+> 4. Data Handling & Key Security
+
+Are any private keys, seed phrases, or API keys stored or exposed anywhere in the backend, logs, or responses?
+
+Are WalletConnect connection URIs protected from being hijacked or logged in plaintext?
+
+
+
+
+> 5. Smart Contract & On-Chain Interaction Risks
+
+Does the bot validate the pool addresses, token pairs, and contract interactions before suggesting or executing trades?
+
+Could an attacker substitute a malicious liquidity pool to phish user funds?
+
+Is any pool recommendation logic vulnerable to data source manipulation or front-running?
+
+
+
+
+> Deliverables:
+
+Please provide:
+
+A detailed list of any vulnerabilities found, with risk levels (high/medium/low)
+
+Explanation of attack vectors or scenarios
+
+Code-level or architectural fixes to mitigate each vulnerability
+
+Suggestions to improve the bot’s trust, wallet safety, and defense against manipulation
