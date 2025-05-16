@@ -1,16 +1,17 @@
 """
-Improved wallet connection system for FiLot Telegram bot.
+Fixed wallet connection handler for FiLot Telegram bot.
 
-This module provides enhanced wallet connection handling with robust error handling
-to prevent JavaScript errors like "Cannot read properties of null (reading 'value')".
+This module provides a specialized wallet handler that prevents the JavaScript error
+"Cannot read properties of null (reading 'value')" by ensuring all return values
+have properly initialized value properties.
 """
 
-import os
 import logging
-import json
-import time
 import traceback
-from typing import Dict, Any, List, Optional, Union
+import time
+from typing import Dict, Any, Optional
+import json
+import base64
 
 # Configure logging
 logging.basicConfig(
@@ -19,112 +20,98 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Track wallet connection attempts to prevent rapid repeated clicks
-connection_attempts = {}
+# Keep track of connection attempts to prevent rapid clicking
+connection_attempts = {}  # {user_id: last_attempt_time}
 CONNECTION_ATTEMPT_THRESHOLD = 2.0  # seconds
 
-def is_wallet_connected(user_id: int) -> bool:
+def handle_wallet_connection(user_id: int, chat_id: int) -> Dict[str, Any]:
     """
-    Check if a user has a wallet connected.
+    Handle a wallet connection request with enhanced error handling.
     
     Args:
         user_id: The Telegram user ID
+        chat_id: The Telegram chat ID
         
     Returns:
-        True if the user has a connected wallet, False otherwise
+        Dict with response data
     """
     try:
-        # Try to import wallet module safely
-        try:
-            import wallet_utils
-            if hasattr(wallet_utils, 'is_wallet_connected'):
-                return wallet_utils.is_wallet_connected(user_id)
-        except ImportError:
-            pass
+        logger.info(f"User {user_id} requested wallet connection")
+        
+        # Check for rate limiting (prevent rapid clicks)
+        current_time = time.time()
+        if user_id in connection_attempts:
+            time_diff = current_time - connection_attempts[user_id]
             
-        # Try to import walletconnect module safely
-        try:
-            import walletconnect_utils
-            if hasattr(walletconnect_utils, 'check_walletconnect_session'):
-                session = walletconnect_utils.check_walletconnect_session(user_id)
-                return session and session.get('connected', False)
-        except ImportError:
-            pass
+            # If clicking too rapidly, throttle
+            if time_diff < CONNECTION_ATTEMPT_THRESHOLD:
+                logger.warning(f"User {user_id} clicking wallet connect button too rapidly ({time_diff:.2f}s)")
+                return {
+                    "success": False,
+                    "action": "error",
+                    "message": "Please wait a moment before trying to connect again.",
+                    "throttled": True,
+                    "chat_id": chat_id
+                }
+        
+        # Record this attempt
+        connection_attempts[user_id] = current_time
+        
+        # Generate wallet connection data
+        connection_data = generate_connection_data(user_id)
+        
+        if isinstance(connection_data, dict) and connection_data.get("error"):
+            logger.error(f"Error generating wallet connection: {connection_data.get('error')}")
+            return {
+                "success": False,
+                "action": "error",
+                "message": connection_data.get("error", "Could not generate wallet connection."),
+                "chat_id": chat_id,
+                "error_source": "wallet_connection_generator"
+            }
             
-        # If no modules available, check our database directly
-        try:
-            from models import User, db
-            with db.session() as session:
-                user = session.query(User).filter(User.telegram_id == user_id).first()
-                return user and user.wallet_address is not None
-        except Exception:
-            pass
-            
-        # Default: no wallet connected
-        return False
+        # Create the success response
+        result = {
+            "success": True,
+            "action": "connect_wallet",
+            "message": "Please connect your wallet using the link below.",
+            "connection_data": connection_data,
+            "chat_id": chat_id
+        }
+        
+        # Ensure the value field exists in connection_data to prevent JavaScript error
+        if "connection_data" in result and isinstance(result["connection_data"], dict):
+            if "value" not in result["connection_data"]:
+                result["connection_data"]["value"] = {
+                    "address": None,
+                    "balance": 0,
+                    "status": "pending"
+                }
+        
+        logger.info(f"Generated wallet connection for user {user_id}")
+        return result
         
     except Exception as e:
-        logger.error(f"Error checking wallet connection: {e}")
-        return False
-
-def get_wallet_info(user_id: int) -> Dict[str, Any]:
-    """
-    Get information about a user's connected wallet.
-    
-    Args:
-        user_id: The Telegram user ID
+        logger.error(f"Error handling wallet connection: {e}")
+        logger.error(traceback.format_exc())
         
-    Returns:
-        Dictionary with wallet information or empty dict if no wallet
-    """
-    try:
-        wallet_info = {}
-        
-        # Try to import wallet module safely
-        try:
-            import wallet_utils
-            if hasattr(wallet_utils, 'get_wallet_info'):
-                wallet_info = wallet_utils.get_wallet_info(user_id) or {}
-            elif hasattr(wallet_utils, 'get_user_wallet'):
-                wallet_info = wallet_utils.get_user_wallet(user_id) or {}
-        except ImportError:
-            pass
-            
-        # Try to import walletconnect module safely
-        if not wallet_info:
-            try:
-                import walletconnect_utils
-                if hasattr(walletconnect_utils, 'check_walletconnect_session'):
-                    session = walletconnect_utils.check_walletconnect_session(user_id)
-                    if session and session.get('connected'):
-                        wallet_info = {
-                            'address': session.get('wallet_address', 'Unknown'),
-                            'connected_since': session.get('connected_since', 'Unknown'),
-                            'provider': session.get('provider', 'WalletConnect')
-                        }
-            except ImportError:
-                pass
-                
-        # If no modules available, check our database directly
-        if not wallet_info:
-            try:
-                from models import User, db
-                with db.session() as session:
-                    user = session.query(User).filter(User.telegram_id == user_id).first()
-                    if user and user.wallet_address:
-                        wallet_info = {
-                            'address': user.wallet_address,
-                            'connected_since': user.created_at.isoformat() if hasattr(user, 'created_at') else 'Unknown',
-                            'provider': 'Database'
-                        }
-            except Exception:
-                pass
-                
-        return wallet_info
-        
-    except Exception as e:
-        logger.error(f"Error getting wallet info: {e}")
-        return {}
+        # Fallback message if something goes wrong
+        return {
+            "success": False,
+            "action": "error",
+            "message": "Sorry, there was an error connecting to your wallet. Please try again in a moment.",
+            "error": str(e),
+            "chat_id": chat_id,
+            # Add a value field to prevent JavaScript error
+            "connection_data": {
+                "error": str(e),
+                "value": {
+                    "address": None,
+                    "balance": 0,
+                    "status": "error"
+                }
+            }
+        }
 
 def generate_connection_data(user_id: int) -> Dict[str, Any]:
     """
@@ -145,7 +132,13 @@ def generate_connection_data(user_id: int) -> Dict[str, Any]:
             return {
                 "error": "Please wait a moment before trying again",
                 "rate_limited": True,
-                "retry_after": int(CONNECTION_ATTEMPT_THRESHOLD - time_since_last) + 1
+                "retry_after": int(CONNECTION_ATTEMPT_THRESHOLD - time_since_last) + 1,
+                # Ensure value field exists to prevent JavaScript error
+                "value": {
+                    "address": None,
+                    "balance": 0,
+                    "status": "pending"
+                }
             }
     
     # Record this attempt
@@ -185,6 +178,14 @@ def generate_connection_data(user_id: int) -> Dict[str, Any]:
                 "fallback": True
             }
             
+        # Ensure the value field exists to prevent JavaScript error
+        if "value" not in connection_data:
+            connection_data["value"] = {
+                "address": None,
+                "balance": 0,
+                "status": "pending"
+            }
+            
         return connection_data
         
     except Exception as e:
@@ -192,196 +193,83 @@ def generate_connection_data(user_id: int) -> Dict[str, Any]:
         logger.error(traceback.format_exc())
         return {
             "error": "Could not generate wallet connection",
-            "details": str(e)
+            "details": str(e),
+            # Ensure value field exists to prevent JavaScript error
+            "value": {
+                "address": None,
+                "balance": 0,
+                "status": "error"
+            }
         }
 
-def disconnect_wallet(user_id: int) -> bool:
+def handle_wallet_disconnection(user_id: int, chat_id: int) -> Dict[str, Any]:
     """
-    Disconnect a user's wallet.
+    Handle a wallet disconnection request with enhanced error handling.
     
     Args:
         user_id: The Telegram user ID
+        chat_id: The Telegram chat ID
         
     Returns:
-        True if disconnected successfully, False otherwise
+        Dict with response data
     """
     try:
-        success = False
+        logger.info(f"User {user_id} requested wallet disconnection")
         
-        # Try to import walletconnect module safely
+        # Try to disconnect using walletconnect_utils
         try:
             import walletconnect_utils
             if hasattr(walletconnect_utils, 'kill_walletconnect_session'):
-                walletconnect_utils.kill_walletconnect_session(user_id)
-                success = True
+                sessions = walletconnect_utils.get_user_walletconnect_sessions(user_id)
+                if sessions:
+                    for session_id in sessions:
+                        walletconnect_utils.kill_walletconnect_session(session_id)
+                    logger.info(f"Disconnected {len(sessions)} wallet sessions for user {user_id}")
         except ImportError:
             pass
             
-        # Try to import wallet module safely
+        # Try to disconnect using wallet_utils
         try:
             import wallet_utils
             if hasattr(wallet_utils, 'disconnect_wallet'):
-                success = wallet_utils.disconnect_wallet(user_id) or success
-            elif hasattr(wallet_utils, 'remove_user_wallet'):
-                success = wallet_utils.remove_user_wallet(user_id) or success
+                wallet_utils.disconnect_wallet(user_id)
+                logger.info(f"Disconnected wallet for user {user_id} using wallet_utils")
         except ImportError:
             pass
             
-        # If no modules available, update database directly
-        if not success:
-            try:
-                from models import User, db
-                with db.session() as session:
-                    user = session.query(User).filter(User.telegram_id == user_id).first()
-                    if user:
-                        user.wallet_address = None
-                        session.commit()
-                        success = True
-            except Exception:
-                pass
-                
-        return success
-        
-    except Exception as e:
-        logger.error(f"Error disconnecting wallet: {e}")
-        return False
-
-def handle_connect_wallet_callback(chat_id: int, user_id: int) -> Dict[str, Any]:
-    """
-    Handle the connect wallet button click.
-    
-    Args:
-        chat_id: Telegram chat ID
-        user_id: Telegram user ID
-        
-    Returns:
-        Response data for the handler
-    """
-    try:
-        logger.info(f"Processing connect wallet request from user {user_id}")
-        
-        # Check if wallet already connected
-        if is_wallet_connected(user_id):
-            wallet_info = get_wallet_info(user_id)
-            wallet_address = wallet_info.get('address', 'Unknown')
-            
-            message = (
-                f"✅ Your wallet is already connected\n\n"
-                f"Address: `{wallet_address}`\n\n"
-                f"What would you like to do with your wallet?"
-            )
-            
-            return {
-                "success": True,
-                "action": "wallet_already_connected",
-                "message": message,
-                "wallet_address": wallet_address,
-                "wallet_info": wallet_info
-            }
-            
-        # Generate connection data
-        connection_data = generate_connection_data(user_id)
-        
-        # Check for rate limiting or errors
-        if "error" in connection_data:
-            if connection_data.get("rate_limited"):
-                message = (
-                    f"⚠️ Please wait a moment before trying to connect again.\n\n"
-                    f"You can try again in {connection_data.get('retry_after', 2)} seconds."
-                )
-            else:
-                message = (
-                    f"⚠️ I'm having trouble setting up your wallet connection.\n\n"
-                    f"Error: {connection_data['error']}\n\n"
-                    f"Please try again later."
-                )
-                
-            return {
-                "success": False,
-                "action": "wallet_connection_error",
-                "message": message,
-                "error": connection_data.get("error")
-            }
-            
-        # We have connection data
-        message = (
-            "Please connect your wallet using the link below.\n\n"
-            "Your tokens will always remain under your control - "
-            "FiLot never takes custody of your funds."
-        )
-        
+        # Create the success response
         return {
             "success": True,
-            "action": "connect_wallet",
-            "message": message,
-            "connection_data": connection_data
+            "action": "disconnect_wallet",
+            "message": "Your wallet has been disconnected.",
+            "chat_id": chat_id
         }
-            
+        
     except Exception as e:
-        logger.error(f"Error in wallet connection handler: {e}")
+        logger.error(f"Error handling wallet disconnection: {e}")
         logger.error(traceback.format_exc())
         
-        message = (
-            "⚠️ Something went wrong when trying to connect your wallet.\n\n"
-            "Please try again later or contact support if the issue persists."
-        )
-        
-        return {
-            "success": False, 
-            "action": "error",
-            "message": message,
-            "error": str(e)
-        }
-            
-def handle_disconnect_wallet_callback(chat_id: int, user_id: int) -> Dict[str, Any]:
-    """
-    Handle the disconnect wallet button click.
-    
-    Args:
-        chat_id: Telegram chat ID
-        user_id: Telegram user ID
-        
-    Returns:
-        Response data for the handler
-    """
-    try:
-        logger.info(f"Processing disconnect wallet request from user {user_id}")
-        
-        # Check if wallet is connected first
-        if not is_wallet_connected(user_id):
-            message = "You don't have a wallet connected yet."
-            
-            return {
-                "success": True,
-                "action": "wallet_not_connected",
-                "message": message
-            }
-            
-        # Disconnect the wallet
-        success = disconnect_wallet(user_id)
-        
-        if success:
-            message = "✅ Your wallet has been disconnected successfully."
-        else:
-            message = "⚠️ I couldn't disconnect your wallet. Please try again later."
-            
-        return {
-            "success": success,
-            "action": "wallet_disconnected" if success else "wallet_disconnect_error",
-            "message": message
-        }
-            
-    except Exception as e:
-        logger.error(f"Error in wallet disconnection handler: {e}")
-        
-        message = (
-            "⚠️ Something went wrong when trying to disconnect your wallet.\n\n"
-            "Please try again later or contact support if the issue persists."
-        )
-        
+        # Fallback message if something goes wrong
         return {
             "success": False,
             "action": "error",
-            "message": message,
-            "error": str(e)
+            "message": "Sorry, there was an error disconnecting your wallet. Please try again in a moment.",
+            "error": str(e),
+            "chat_id": chat_id
         }
+
+def cleanup_connection_data(max_age: int = 3600) -> None:
+    """
+    Clean up old connection attempt data.
+    
+    Args:
+        max_age: Maximum age in seconds to keep connection data
+    """
+    current_time = time.time()
+    
+    for user_id in list(connection_attempts.keys()):
+        timestamp = connection_attempts[user_id]
+        if current_time - timestamp > max_age:
+            del connection_attempts[user_id]
+            
+    logger.debug(f"Cleaned up connection attempts data, now tracking {len(connection_attempts)} users")

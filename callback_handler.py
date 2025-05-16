@@ -580,6 +580,63 @@ def route_callback(handler_context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         user_id = handler_context.get('user_id', 0)
         chat_id = handler_context.get('chat_id', 0)
         
+        # First try using our specialized fixed wallet handler
+        try:
+            from fixed_wallet_connect import handle_wallet_connection
+            logger.info(f"Using specialized fixed wallet handler for connect_wallet from user {user_id}")
+            
+            # Use our specialized handler that prevents the "Cannot read properties of null (reading 'value')" error
+            result = handle_wallet_connection(user_id, chat_id)
+            
+            # If we have a valid result, return it
+            if result:
+                logger.info(f"Successfully used fixed wallet handler for user {user_id}")
+                return result
+        except ImportError:
+            logger.warning("Specialized fixed wallet handler not available, using fallback")
+            
+        # Next try using our JavaScript error fix system
+        try:
+            from fix_javascript_null_value_error import fix_wallet_connection_data
+            logger.info(f"Using JavaScript error fix system for connect_wallet from user {user_id}")
+            
+            # Try our button fix system if available
+            try:
+                import button_fix
+                logger.info(f"Using button fix system for connect_wallet from user {user_id}")
+                
+                if not button_fix.is_wallet_button_click_allowed(user_id, "connect_wallet"):
+                    logger.info(f"Throttling wallet button click for user {user_id}")
+                    return {
+                        "action": "error",
+                        "message": "Please wait a moment before trying to connect again."
+                    }
+                
+                # Try our old fixed wallet system if available
+                if HAS_FIXED_WALLET:
+                    logger.info(f"Using fixed wallet system for connect_wallet from user {user_id}")
+                    try:
+                        result = handle_connect_wallet_callback(chat_id, user_id)
+                        if result and "error" in result:
+                            logger.error(f"Error in fixed wallet system: {result['error']}")
+                        # Apply fixes to prevent JavaScript errors
+                        result = fix_wallet_connection_data(user_id, result)
+                        return button_fix.fix_wallet_button_action(result)
+                    except Exception as e:
+                        logger.error(f"Error in fixed wallet system: {e}")
+                        # Fall through to standard handler
+                
+                # Standard wallet connection handler with fixes applied
+                result = handle_wallet_connect(handler_context)
+                result = fix_wallet_connection_data(user_id, result)
+                return button_fix.fix_wallet_button_action(result)
+            except ImportError:
+                logger.warning("Button fix system not available")
+        except ImportError:
+            logger.warning("JavaScript error fix system not available")
+                
+        # If we get here, all our specialized approaches failed, use standard path
+        
         # First try using our button fix system
         try:
             import button_fix
@@ -592,7 +649,7 @@ def route_callback(handler_context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
                     "message": "Please wait a moment before trying to connect again."
                 }
             
-            # Try our fixed wallet system if available
+            # Try our old fixed wallet system if available
             if HAS_FIXED_WALLET:
                 logger.info(f"Using fixed wallet system for connect_wallet from user {user_id}")
                 try:
