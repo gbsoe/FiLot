@@ -21,7 +21,9 @@ logger = logging.getLogger(__name__)
 # Global tracking mechanisms
 processed_callbacks: Set[str] = set()
 callback_timestamps: Dict[str, float] = {}
+recent_navigation_contexts: Dict[int, List[Dict[str, Any]]] = {}  # Track navigation context by chat_id
 MAX_CALLBACKS_MEMORY = 1000
+MAX_CONTEXT_MEMORY = 20  # Keep track of last 20 navigation steps per chat
 
 class CallbackRegistry:
     """Registry of callbacks to prevent duplicate processing."""
@@ -39,7 +41,7 @@ class CallbackRegistry:
         Returns:
             bool: True if the callback has already been processed, False otherwise
         """
-        global processed_callbacks, callback_timestamps
+        global processed_callbacks, callback_timestamps, recent_navigation_contexts
         
         # Create multiple unique identifiers for this callback
         unique_id = f"cb_{callback_id}"
@@ -49,22 +51,69 @@ class CallbackRegistry:
         # Current time for timestamp tracking
         now = time.time()
         
-        # Check if we've already seen this callback by any ID
-        if unique_id in processed_callbacks or content_id in processed_callbacks:
-            logger.info(f"Callback already processed: {callback_data}")
+        # Check if we've already seen this exact callback by ID
+        if unique_id in processed_callbacks:
+            logger.info(f"Exact callback ID already processed: {callback_data}")
+            return True
+        
+        # Check for content-based duplication
+        # Only block if it's the exact same callback content in a very short window (1 second)
+        # This prevents actual duplicate button presses but allows sequential navigation
+        content_duplication = False
+        for existing_id, timestamp in callback_timestamps.items():
+            if existing_id.startswith(f"{chat_id}_") and existing_id.endswith(callback_data):
+                time_diff = now - timestamp
+                # Only consider duplicates if they happen within 1 second
+                if time_diff < 1.0:
+                    logger.info(f"Similar callback detected within 1s window: {callback_data}")
+                    content_duplication = True
+                    break
+        
+        if content_duplication:
             return True
             
-        # Also check for very similar callbacks in a short time window
-        for existing_id, timestamp in callback_timestamps.items():
-            # If identical callback_data within 10 seconds, consider it duplicate
-            if existing_id.endswith(callback_data) and now - timestamp < 10:
-                logger.info(f"Similar callback detected within time window: {callback_data}")
-                return True
+        # Get the navigation context for this chat
+        chat_context = recent_navigation_contexts.get(chat_id, [])
         
+        # Determine if this callback is part of a complex navigation pattern
+        is_navigation_button = any(callback_data.startswith(prefix) for prefix in 
+                                  ['menu_', 'back_to_', 'explore_', 'account_'])
+        
+        # Special handling for back-and-forth and complex navigation patterns
+        if is_navigation_button and chat_context:
+            # Get the last few navigation steps
+            last_steps = [step.get('callback_data') for step in chat_context[-3:] 
+                         if step.get('timestamp', 0) > now - 30]  # Consider only last 30 seconds
+            
+            # If this forms a back-and-forth pattern, make sure we process it
+            if len(last_steps) >= 2:
+                # Check if we're in an alternating A-B-A pattern
+                if last_steps[-2] == callback_data and len(last_steps) >= 3:
+                    # We have an A-B-A pattern, always allow this for improved navigation
+                    logger.info(f"Allowing back-forth navigation pattern: {last_steps[-2]} -> {last_steps[-1]} -> {callback_data}")
+                    # Don't mark as duplicate, fall through to processing
+                
         # Not processed yet, add to tracking
         processed_callbacks.add(unique_id)
+        
+        # We'll still add content_id but with a much shorter timeout for complex navigation
         processed_callbacks.add(content_id)
         callback_timestamps[combined_id] = now
+        
+        # Update navigation context for this chat
+        if chat_id not in recent_navigation_contexts:
+            recent_navigation_contexts[chat_id] = []
+            
+        # Add this step to the context
+        recent_navigation_contexts[chat_id].append({
+            'callback_data': callback_data,
+            'timestamp': now,
+            'context': 'navigation' if is_navigation_button else 'action'
+        })
+        
+        # Limit the context size
+        if len(recent_navigation_contexts[chat_id]) > MAX_CONTEXT_MEMORY:
+            recent_navigation_contexts[chat_id] = recent_navigation_contexts[chat_id][-MAX_CONTEXT_MEMORY:]
         
         # Prune old data to prevent memory leaks
         CallbackRegistry.prune_old_data()
