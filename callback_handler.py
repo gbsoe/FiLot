@@ -272,6 +272,15 @@ def route_callback(handler_context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         handler_context['navigation_pattern'] = pattern
         logger.info(f"Detected navigation pattern: {pattern} for chat_id: {chat_id}")
     
+    # Import our wallet fix if available
+    try:
+        from wallet_fix import WalletButtonHandler
+        HAS_WALLET_FIX = True
+        logger.info("Wallet button fix is available")
+    except ImportError:
+        HAS_WALLET_FIX = False
+        logger.warning("Wallet button fix not available")
+    
     # Add a test/debugging parameter to handler context
     handler_context['is_test'] = handler_context.get('test_mode', False)
     
