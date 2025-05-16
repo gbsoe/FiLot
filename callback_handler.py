@@ -488,6 +488,22 @@ def route_callback(handler_context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     if callback_data == "back_to_main":
         # Special case for main menu button
         try:
+            # First try using our specialized fixed main menu handler
+            from fixed_main_menu import handle_back_to_main_menu
+            user_id = handler_context.get('user_id', 0)
+            chat_id = handler_context.get('chat_id', 0)
+            logger.info(f"Using fixed main menu handler for back_to_main from user {user_id}")
+            
+            # Use the specialized handler
+            result = handle_back_to_main_menu(user_id, chat_id)
+            
+            # If we got a result, return it
+            if result:
+                return result
+        except ImportError:
+            logger.warning("Fixed main menu handler not available, falling back to button fix")
+            
+        try:
             # Try using our button fix system if available
             import button_fix
             user_id = handler_context.get('user_id', 0)
@@ -511,7 +527,9 @@ def route_callback(handler_context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             logger.info("Button fix system not available for back_to_main button")
             return {
                 "action": "back_to_main",
-                "chat_id": handler_context.get("chat_id")
+                "message": "🏠 Returning to main menu...",
+                "chat_id": handler_context.get("chat_id"),
+                "success": True
             }
     elif callback_data == "back_to_explore":
         # Special case for back to explore menu button
@@ -1125,7 +1143,25 @@ def handle_profile_action(profile_type: str, context: Dict[str, Any]) -> Dict[st
     user_id = context.get('user_id', 0)
     chat_id = context.get('chat_id', 0)
     
-    # Try using our button fix system if available
+    # First try using our specialized fixed profile handler if available
+    try:
+        # Import the fixed profile handler
+        from fixed_profile_handler import handle_profile_selection
+        logger.info(f"Using fixed profile handler for profile_{profile_type} from user {user_id}")
+        
+        # Use the specialized handler
+        result = handle_profile_selection(user_id, chat_id, profile_type)
+        
+        # If we got a result, return it
+        if result:
+            if not result.get("action"):
+                result["action"] = "profile"
+            return result
+    except ImportError:
+        logger.warning("Fixed profile handler not available, falling back to button fix")
+    
+    # If we get here, either the import failed or the handler returned None
+    # Try using our button fix system as fallback
     try:
         import button_fix
         logger.info(f"Using button fix system for profile_{profile_type} from user {user_id}")
@@ -1151,8 +1187,13 @@ def handle_profile_action(profile_type: str, context: Dict[str, Any]) -> Dict[st
     except ImportError:
         # Standard response without fixes if button_fix not available
         logger.info("Button fix system not available for profile buttons")
+        
+        # Make sure we have a valid response with all required fields
+        emoji = "🔴" if profile_type == "high-risk" else "🟢" if profile_type == "stable" else "🟡"
         return {
             "action": "profile",
             "profile_type": profile_type,
-            "chat_id": chat_id
+            "chat_id": chat_id,
+            "message": f"{emoji} You've selected the {profile_type} risk profile.",
+            "success": True
         }
