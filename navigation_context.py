@@ -205,16 +205,18 @@ class NavigationContextManager:
             callbacks = [step['callback_data'] for step in history]
             
             # Check for back-and-forth pattern (A-B-A)
-            if callbacks[0] == callbacks[2] and callbacks[0] != callbacks[1]:
+            if len(callbacks) >= 3 and callbacks[0] == callbacks[2] and callbacks[0] != callbacks[1]:
                 return "back_forth"
             
             # Check for circular navigation (A-B-C-A)
-            if callbacks[0] == callbacks[3] and len(set(callbacks[:4])) >= 3:
+            if len(callbacks) >= 4 and callbacks[0] == callbacks[3] and len(set(callbacks[:4])) >= 3:
                 return "circular"
             
             # Check for rapid menu switching
             menu_count = 0
-            for callback in callbacks[:3]:
+            # Make sure we only check what's available in the history
+            check_count = min(3, len(callbacks))
+            for callback in callbacks[:check_count]:
                 if callback.startswith("menu_"):
                     menu_count += 1
             
