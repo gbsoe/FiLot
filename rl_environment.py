@@ -223,13 +223,21 @@ class RLPoolEnv(gym.Env):
             
             return pd.DataFrame(synthetic_data)
     
-    def reset(self) -> np.ndarray:
+    def reset(self, seed=None, options=None) -> tuple:
         """
         Reset the environment to start a new episode.
         
+        Args:
+            seed: Optional random seed for reproducibility
+            options: Optional configuration options
+            
         Returns:
-            Initial observation
+            Tuple of (observation, info)
         """
+        # Set random seed if provided
+        if seed is not None:
+            np.random.seed(seed)
+            
         # Reset balances and positions
         self.balance = self.initial_balance
         self.positions = {pool_id: 0.0 for pool_id in self.pool_ids[:self.max_pools]}
@@ -257,9 +265,10 @@ class RLPoolEnv(gym.Env):
         # Get the initial observation
         observation = self._get_observation()
         
-        return observation
+        # Return observation and empty info dict to match Gym API
+        return observation, {}
     
-    def step(self, action: int) -> Tuple[np.ndarray, float, bool, Dict[str, Any]]:
+    def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
         """
         Take a step in the environment by executing an action.
         
@@ -270,7 +279,8 @@ class RLPoolEnv(gym.Env):
             Tuple containing:
             - Next observation
             - Reward
-            - Whether episode is done
+            - Whether episode is terminated
+            - Whether episode is truncated
             - Info dict with additional information
         """
         # Parse the action
@@ -372,7 +382,8 @@ class RLPoolEnv(gym.Env):
             self.current_date = all_dates[self.start_date_idx + self.current_step]
         
         # Check if episode is done
-        done = self.current_step >= self.episode_length
+        terminated = self.current_step >= self.episode_length
+        truncated = False  # We don't truncate episodes early in this environment
         
         # Get the new observation
         observation = self._get_observation()
@@ -383,7 +394,7 @@ class RLPoolEnv(gym.Env):
         info["step"] = self.current_step
         info["positions"] = self.positions.copy()
         
-        return observation, reward, done, info
+        return observation, reward, terminated, truncated, info
     
     def _parse_action(self, action: int) -> Tuple[Optional[int], Optional[str]]:
         """
