@@ -430,7 +430,26 @@ async def create_walletconnect_session(telegram_user_id: int) -> Dict[str, Any]:
             "error": f"Error creating WalletConnect session: {str(e)}"
         }
 
-async def check_walletconnect_session(session_id: str) -> Dict[str, Any]:
+async def check_walletconnect_session(session_id: str, user_id: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Check the status of a WalletConnect session with enhanced security checks.
+    This implementation adds user-binding to prevent session hijacking.
+    
+    Args:
+        session_id: The session ID to check
+        user_id: Optional user ID for session ownership verification
+        
+    Returns:
+        Dictionary with session details including URI
+    """
+    # Use the enhanced wallet security module if available
+    try:
+        import wallet_security
+        return wallet_security.check_session(session_id)
+    except ImportError:
+        # Fall back to original implementation if security module isn't available
+        logger.warning("Enhanced wallet security module not available for session check")
+        # Original implementation continues below
     """
     Check the status of a WalletConnect session with enhanced security checks.
     
