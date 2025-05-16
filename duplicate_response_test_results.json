@@ -1,0 +1,270 @@
+{
+  "summary": {
+    "total_tests": 12,
+    "successful_tests": 5,
+    "success_rate": 41.66666666666667,
+    "rapid_press": {
+      "total": 4,
+      "successful": 4,
+      "success_rate": 100.0
+    },
+    "menu_loops": {
+      "total": 2,
+      "successful": 0,
+      "success_rate": 0.0
+    },
+    "back_forth": {
+      "total": 3,
+      "successful": 0,
+      "success_rate": 0.0
+    },
+    "identical_sequences": {
+      "total": 3,
+      "successful": 1,
+      "success_rate": 33.33333333333333
+    }
+  },
+  "results": {
+    "rapid_press_tests": {
+      "Rapid press - menu_invest": {
+        "button": "menu_invest",
+        "presses": 5,
+        "responses": 1,
+        "duplicate_responses": 0,
+        "success": true,
+        "response_actions": [
+          "menu_navigation",
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "Rapid press - menu_explore": {
+        "button": "menu_explore",
+        "presses": 5,
+        "responses": 1,
+        "duplicate_responses": 0,
+        "success": true,
+        "response_actions": [
+          null,
+          "menu_navigation",
+          null,
+          null,
+          null
+        ]
+      },
+      "Rapid press - menu_account": {
+        "button": "menu_account",
+        "presses": 5,
+        "responses": 1,
+        "duplicate_responses": 0,
+        "success": true,
+        "response_actions": [
+          null,
+          null,
+          "menu_navigation",
+          null,
+          null
+        ]
+      },
+      "Rapid press - back_to_main": {
+        "button": "back_to_main",
+        "presses": 5,
+        "responses": 1,
+        "duplicate_responses": 0,
+        "success": true,
+        "response_actions": [
+          null,
+          null,
+          null,
+          "back_to_main",
+          null
+        ]
+      }
+    },
+    "menu_loop_tests": {
+      "Menu Loop - Main \u2192 Invest \u2192 Main \u2192 Explore \u2192 Main \u2192 Account": {
+        "buttons": [
+          "menu_invest",
+          "back_to_main",
+          "menu_explore",
+          "back_to_main",
+          "menu_account",
+          "back_to_main"
+        ],
+        "expected_responses": 6,
+        "actual_responses": 0,
+        "null_responses": 6,
+        "success": false,
+        "responses": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "Menu Loop - Complex Pattern": {
+        "buttons": [
+          "menu_invest",
+          "menu_explore",
+          "menu_account",
+          "menu_invest",
+          "back_to_main"
+        ],
+        "expected_responses": 5,
+        "actual_responses": 0,
+        "null_responses": 5,
+        "success": false,
+        "responses": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    "back_forth_tests": {
+      "Back-Forth - Invest \u2194 Main": {
+        "buttons": [
+          "menu_invest",
+          "back_to_main",
+          "menu_invest",
+          "back_to_main",
+          "menu_invest",
+          "back_to_main"
+        ],
+        "expected_responses": 6,
+        "actual_responses": 0,
+        "null_responses": 6,
+        "success": false,
+        "responses": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "Back-Forth - Explore \u2194 Main": {
+        "buttons": [
+          "menu_explore",
+          "back_to_main",
+          "menu_explore",
+          "back_to_main",
+          "menu_explore",
+          "back_to_main"
+        ],
+        "expected_responses": 6,
+        "actual_responses": 0,
+        "null_responses": 6,
+        "success": false,
+        "responses": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "Back-Forth - Account \u2194 Main": {
+        "buttons": [
+          "menu_account",
+          "back_to_main",
+          "menu_account",
+          "back_to_main",
+          "menu_account",
+          "back_to_main"
+        ],
+        "expected_responses": 6,
+        "actual_responses": 0,
+        "null_responses": 6,
+        "success": false,
+        "responses": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    "identical_sequence_tests": {
+      "Identical Sequence - Invest Flow": {
+        "sequence": [
+          "menu_invest",
+          "amount_100",
+          "profile_high-risk",
+          "back_to_main"
+        ],
+        "repetitions": 2,
+        "sequence_failures": 2,
+        "success": false,
+        "responses": [
+          [
+            null,
+            "amount_selected",
+            "profile",
+            null
+          ],
+          [
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      },
+      "Identical Sequence - Explore Flow": {
+        "sequence": [
+          "menu_explore",
+          "explore_pools",
+          "back_to_main"
+        ],
+        "repetitions": 2,
+        "sequence_failures": 1,
+        "success": false,
+        "responses": [
+          [
+            null,
+            null,
+            null
+          ],
+          [
+            null,
+            null,
+            null
+          ]
+        ]
+      },
+      "Identical Sequence - Account Flow": {
+        "sequence": [
+          "menu_account",
+          "account_status",
+          "back_to_main"
+        ],
+        "repetitions": 2,
+        "sequence_failures": 0,
+        "success": true,
+        "responses": [
+          [
+            null,
+            null,
+            null
+          ],
+          [
+            null,
+            null,
+            null
+          ]
+        ]
+      }
+    }
+  }
+}
