@@ -9,7 +9,11 @@ This module consolidates all callback handling to prevent duplicate processing.
 import logging
 import hashlib
 import time
-from typing import Dict, Any, Set, Optional
+from typing import Dict, Any, Set, Optional, List
+import random
+
+# Import our enhanced navigation context system
+from navigation_context import record_navigation, is_duplicate, detect_pattern
 
 # Configure logging
 logging.basicConfig(
@@ -123,20 +127,34 @@ class CallbackRegistry:
     @staticmethod
     def prune_old_data() -> None:
         """Prune old callbacks data to prevent memory leaks."""
-        global processed_callbacks, callback_timestamps
+        global processed_callbacks, callback_timestamps, recent_navigation_contexts
         
         # Limit the size of processed_callbacks
         if len(processed_callbacks) > MAX_CALLBACKS_MEMORY:
             processed_callbacks_list = list(processed_callbacks)
             processed_callbacks = set(processed_callbacks_list[-MAX_CALLBACKS_MEMORY:])
         
-        # Remove timestamps older than 30 seconds
+        # Current time for cleanup decisions
         now = time.time()
+        
+        # Remove timestamps older than 30 seconds
         old_callbacks = [cb_id for cb_id, timestamp in callback_timestamps.items() 
                          if now - timestamp > 30]
         
         for cb_id in old_callbacks:
             callback_timestamps.pop(cb_id, None)
+            
+        # Clean up old navigation contexts as well
+        for chat_id in list(recent_navigation_contexts.keys()):
+            # Keep only steps within the last 5 minutes (300 seconds)
+            recent_navigation_contexts[chat_id] = [
+                step for step in recent_navigation_contexts[chat_id]
+                if step.get('timestamp', 0) > now - 300
+            ]
+            
+            # If the list is empty, remove the chat_id entry
+            if not recent_navigation_contexts[chat_id]:
+                recent_navigation_contexts.pop(chat_id, None)
 
 # Initialize registry
 callback_registry = CallbackRegistry()
@@ -154,12 +172,44 @@ def route_callback(callback_data: str, handler_context: Dict[str, Any]) -> Optio
         Optional response data or None if no action was taken
     """
     # Extract key context values for easier access
-    chat_id = handler_context.get('chat_id')
-    callback_id = handler_context.get('callback_id')
+    chat_id = handler_context.get('chat_id', 0)  # Default to 0 if not provided
+    callback_id = handler_context.get('callback_id', f"default_{time.time()}")  # Generate a unique ID if not provided
     
-    # Skip if already processed
+    # Validate inputs to prevent type errors
+    if not isinstance(chat_id, int):
+        try:
+            chat_id = int(chat_id)
+        except (ValueError, TypeError):
+            chat_id = 0
+            logger.warning(f"Invalid chat_id type, using default: {chat_id}")
+    
+    if not isinstance(callback_id, str):
+        try:
+            callback_id = str(callback_id)
+        except (ValueError, TypeError):
+            callback_id = f"default_{time.time()}"
+            logger.warning(f"Invalid callback_id type, using generated: {callback_id}")
+    
+    # Enhanced duplicate detection using navigation context
+    if is_duplicate(chat_id, callback_data):
+        logger.info(f"Navigation context detected duplicate: {callback_data}")
+        return None
+    
+    # Also use the legacy processing check to ensure backward compatibility
     if callback_registry.is_callback_processed(callback_id, chat_id, callback_data):
         return None
+    
+    # Record this navigation step in our enhanced tracking system
+    record_navigation(chat_id, callback_data)
+    
+    # Detect if we're in a special navigation pattern that needs handling
+    pattern = detect_pattern(chat_id)
+    if pattern:
+        handler_context['navigation_pattern'] = pattern
+        logger.info(f"Detected navigation pattern: {pattern} for chat_id: {chat_id}")
+    
+    # Add a test/debugging parameter to handler context
+    handler_context['is_test'] = handler_context.get('test_mode', False)
     
     # Log the callback being handled
     logger.info(f"Routing callback: {callback_data} for chat_id: {chat_id}")
@@ -262,6 +312,54 @@ def route_callback(callback_data: str, handler_context: Dict[str, Any]) -> Optio
         profile_type = callback_data.replace("profile_", "")
         return handle_profile_action(profile_type, handler_context)
             
+    # ---------- Navigation pattern recovery ----------
+    # If we reach here, it might be because we're in a complex navigation pattern
+    # Let's try to determine if this is a navigation action we can recover
+    
+    # Check if it's a navigation button by prefix
+    is_navigation_button = any(callback_data.startswith(prefix) for prefix in [
+        'menu_', 'explore_', 'account_', 'back_to_', 'profile_', 'simulate_'
+    ])
+    
+    if is_navigation_button:
+        # For navigation buttons, try to determine the menu target
+        if callback_data.startswith('menu_'):
+            menu_target = callback_data[5:]  # Remove 'menu_' prefix
+            logger.info(f"Navigation recovery: Handling menu navigation to {menu_target}")
+            return {
+                "action": "menu_navigation",
+                "menu": menu_target,
+                "chat_id": chat_id,
+                "recovered": True
+            }
+        elif callback_data.startswith('explore_'):
+            action = callback_data[8:]  # Remove 'explore_' prefix
+            logger.info(f"Navigation recovery: Handling explore action {action}")
+            return {
+                "action": "explore_action",
+                "explore_type": action,
+                "chat_id": chat_id,
+                "recovered": True
+            }
+        elif callback_data.startswith('account_'):
+            action = callback_data[8:]  # Remove 'account_' prefix
+            logger.info(f"Navigation recovery: Handling account action {action}")
+            return {
+                "action": "account_action",
+                "account_type": action,
+                "chat_id": chat_id,
+                "recovered": True
+            }
+        elif callback_data.startswith('back_to_'):
+            target = callback_data[8:]  # Remove 'back_to_' prefix
+            logger.info(f"Navigation recovery: Handling back navigation to {target}")
+            return {
+                "action": "navigation_back",
+                "target": target,
+                "chat_id": chat_id,
+                "recovered": True
+            }
+    
     # ---------- Unknown Action ----------
     logger.warning(f"Unknown callback type: {callback_data}")
     return {
