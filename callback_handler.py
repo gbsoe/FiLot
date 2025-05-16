@@ -41,7 +41,7 @@ except ImportError:
     logger.warning("Wallet button fix not available")
     WALLET_FIX_ENABLED = False
 
-# Import enhanced navigation systems - try both for backward compatibility
+# Import enhanced navigation systems
 try:
     # First try our new improved system
     import fix_navigation
@@ -52,6 +52,203 @@ except ImportError:
     import navigation_context
     IMPROVED_NAVIGATION = False
     logger.info("Using original navigation system")
+
+# Define some helper handler functions
+def handle_wallet_connect(handler_context):
+    """Handle wallet connection request."""
+    logger.info("Standard wallet connect handler called")
+    
+    try:
+        user_id = handler_context.get('user_id', 0)
+        chat_id = handler_context.get('chat_id', 0)
+        
+        # Try to import wallet utils safely
+        try:
+            import wallet_utils
+            
+            # Check if wallet is connected
+            is_connected = False
+            wallet_address = None
+            
+            if hasattr(wallet_utils, 'is_wallet_connected'):
+                is_connected = wallet_utils.is_wallet_connected(user_id)
+                
+                if is_connected and hasattr(wallet_utils, 'get_wallet_info'):
+                    wallet_info = wallet_utils.get_wallet_info(user_id) or {}
+                    wallet_address = wallet_info.get('address', 'Unknown')
+            
+            # If already connected, show status instead
+            if is_connected:
+                logger.info(f"Wallet already connected for user {user_id}: {wallet_address}")
+                
+                return {
+                    "success": True,
+                    "action": "wallet_already_connected",
+                    "message": f"Your wallet is already connected:\n\nAddress: `{wallet_address}`",
+                    "wallet_address": wallet_address
+                }
+            
+            # Generate connection data safely
+            connection_data = None
+            if hasattr(wallet_utils, 'generate_connection_data'):
+                connection_data = wallet_utils.generate_connection_data(user_id)
+            
+            if not connection_data:
+                logger.error("Failed to generate wallet connection data")
+                return {
+                    "success": False,
+                    "action": "error",
+                    "message": "Could not generate wallet connection data. Please try again later."
+                }
+            
+            logger.info(f"Generated wallet connection data for user {user_id}")
+            return {
+                "success": True,
+                "action": "connect_wallet",
+                "message": "Please connect your wallet using the link below.",
+                "connection_data": connection_data
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in wallet connection: {e}")
+            return {
+                "success": False,
+                "action": "error",
+                "message": "An error occurred when trying to connect your wallet. Please try again later."
+            }
+            
+    except Exception as e:
+        logger.error(f"Critical error in wallet connection: {e}")
+        return {
+            "success": False,
+            "action": "error",
+            "message": "A system error occurred. Please try again later."
+        }
+
+def handle_wallet_disconnect(handler_context):
+    """Handle wallet disconnection request."""
+    logger.info("Standard wallet disconnect handler called")
+    
+    try:
+        user_id = handler_context.get('user_id', 0)
+        
+        # Try to import wallet utils safely
+        try:
+            import wallet_utils
+            
+            # Check if the wallet is connected
+            is_connected = False
+            if hasattr(wallet_utils, 'is_wallet_connected'):
+                is_connected = wallet_utils.is_wallet_connected(user_id)
+            
+            if not is_connected:
+                return {
+                    "success": True,
+                    "action": "wallet_not_connected",
+                    "message": "You don't have a wallet connected."
+                }
+            
+            # Disconnect the wallet
+            success = False
+            if hasattr(wallet_utils, 'disconnect_wallet'):
+                success = wallet_utils.disconnect_wallet(user_id)
+            
+            if success:
+                return {
+                    "success": True,
+                    "action": "wallet_disconnected",
+                    "message": "Your wallet has been disconnected successfully."
+                }
+            else:
+                return {
+                    "success": False,
+                    "action": "error",
+                    "message": "Could not disconnect the wallet. Please try again later."
+                }
+                
+        except Exception as e:
+            logger.error(f"Error in wallet disconnection: {e}")
+            return {
+                "success": False,
+                "action": "error",
+                "message": "An error occurred when trying to disconnect your wallet. Please try again later."
+            }
+            
+    except Exception as e:
+        logger.error(f"Critical error in wallet disconnection: {e}")
+        return {
+            "success": False,
+            "action": "error",
+            "message": "A system error occurred. Please try again later."
+        }
+
+def handle_wallet_session_check(session_id, handler_context):
+    """Handle checking wallet session status."""
+    logger.info(f"Checking wallet session: {session_id}")
+    
+    try:
+        # Import necessary modules
+        try:
+            import walletconnect_utils
+            
+            user_id = handler_context.get('user_id', 0)
+            
+            # Convert session_id to string if needed
+            if not isinstance(session_id, str):
+                session_id = str(session_id)
+            
+            # Check session status
+            session = walletconnect_utils.check_walletconnect_session(user_id, session_id)
+            
+            if not session:
+                return {
+                    "success": False,
+                    "action": "session_not_found",
+                    "message": "Wallet connection session not found or expired."
+                }
+            
+            # Check if connected
+            is_connected = session.get('connected', False)
+            
+            if is_connected:
+                wallet_address = session.get('wallet_address', 'Unknown')
+                return {
+                    "success": True,
+                    "action": "wallet_connected",
+                    "message": f"Your wallet is now connected:\n\nAddress: `{wallet_address}`",
+                    "wallet_address": wallet_address
+                }
+            else:
+                return {
+                    "success": True,
+                    "action": "session_pending",
+                    "message": "Waiting for wallet connection...",
+                    "session_id": session_id
+                }
+                
+        except ImportError:
+            logger.error("WalletConnect utils not available")
+            return {
+                "success": False,
+                "action": "error", 
+                "message": "Wallet connection feature is currently unavailable."
+            }
+            
+        except Exception as e:
+            logger.error(f"Error checking wallet session: {e}")
+            return {
+                "success": False,
+                "action": "error",
+                "message": "Error checking wallet connection status."
+            }
+            
+    except Exception as e:
+        logger.error(f"Critical error in session check: {e}")
+        return {
+            "success": False,
+            "action": "error",
+            "message": "A system error occurred. Please try again later."
+        }
 
 # Configure logging
 logging.basicConfig(
@@ -339,12 +536,149 @@ def route_callback(handler_context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         return handle_investment_option(callback_data, handler_context)
     
     # ---------- Wallet Actions ----------
+    elif callback_data == "connect_wallet":
+        user_id = handler_context.get('user_id', 0)
+        chat_id = handler_context.get('chat_id', 0)
+        
+        # First try using our button fix system
+        try:
+            import button_fix
+            logger.info(f"Using button fix system for connect_wallet from user {user_id}")
+            
+            if not button_fix.is_wallet_button_click_allowed(user_id, "connect_wallet"):
+                logger.info(f"Throttling wallet button click for user {user_id}")
+                return {
+                    "action": "error",
+                    "message": "Please wait a moment before trying to connect again."
+                }
+            
+            # Try our fixed wallet system if available
+            if HAS_FIXED_WALLET:
+                logger.info(f"Using fixed wallet system for connect_wallet from user {user_id}")
+                try:
+                    result = handle_connect_wallet_callback(chat_id, user_id)
+                    if result and "error" in result:
+                        logger.error(f"Error in fixed wallet system: {result['error']}")
+                    # Apply fixes to prevent JavaScript errors
+                    return button_fix.fix_wallet_button_action(result)
+                except Exception as e:
+                    logger.error(f"Error in fixed wallet system: {e}")
+                    # Fall through to standard handler
+            
+            # Standard wallet connection handler with fixes applied
+            result = handle_wallet_connect(handler_context)
+            return button_fix.fix_wallet_button_action(result)
+                
+        except ImportError:
+            logger.warning("Button fix system not available, using standard path")
+            
+            # Use our fixed wallet system if available
+            if HAS_FIXED_WALLET:
+                logger.info(f"Using fixed wallet system for connect_wallet from user {user_id}")
+                try:
+                    result = handle_connect_wallet_callback(chat_id, user_id)
+                    if result and "error" in result:
+                        logger.error(f"Error in fixed wallet system: {result['error']}")
+                    return result
+                except Exception as e:
+                    logger.error(f"Error in fixed wallet system: {e}")
+                    # Fall through to standard handler
+            
+            # Standard wallet connection handler
+            return handle_wallet_connect(handler_context)
+    
+    elif callback_data == "disconnect_wallet":
+        user_id = handler_context.get('user_id', 0)
+        chat_id = handler_context.get('chat_id', 0)
+        
+        # First try using our button fix system
+        try:
+            import button_fix
+            logger.info(f"Using button fix system for disconnect_wallet from user {user_id}")
+            
+            if not button_fix.is_wallet_button_click_allowed(user_id, "disconnect_wallet"):
+                logger.info(f"Throttling wallet disconnect button click for user {user_id}")
+                return {
+                    "action": "error",
+                    "message": "Please wait a moment before trying again."
+                }
+            
+            # Try our fixed wallet system if available
+            if HAS_FIXED_WALLET:
+                logger.info(f"Using fixed wallet system for disconnect_wallet from user {user_id}")
+                try:
+                    result = handle_disconnect_wallet_callback(chat_id, user_id)
+                    if result and "error" in result:
+                        logger.error(f"Error in fixed wallet system: {result['error']}")
+                    # Apply fixes to prevent JavaScript errors
+                    return button_fix.fix_wallet_button_action(result)
+                except Exception as e:
+                    logger.error(f"Error in fixed wallet system: {e}")
+                    # Fall through to standard handler
+            
+            # Standard wallet connection handler with fixes applied
+            result = handle_wallet_disconnect(handler_context)
+            return button_fix.fix_wallet_button_action(result)
+                
+        except ImportError:
+            logger.warning("Button fix system not available, using standard path")
+            
+            # Use our fixed wallet system if available
+            if HAS_FIXED_WALLET:
+                logger.info(f"Using fixed wallet system for disconnect_wallet from user {user_id}")
+                try:
+                    result = handle_disconnect_wallet_callback(chat_id, user_id)
+                    if result and "error" in result:
+                        logger.error(f"Error in fixed wallet system: {result['error']}")
+                    return result
+                except Exception as e:
+                    logger.error(f"Error in fixed wallet system: {e}")
+                    # Fall through to standard handler
+            
+            # Standard wallet disconnection handler
+            return handle_wallet_disconnect(handler_context)
+        
     elif callback_data == "walletconnect":
         return handle_wallet_connect(handler_context)
         
     elif callback_data.startswith("check_wc_"):
-        session_id = callback_data.replace("check_wc_", "")
-        return handle_wallet_session_check(session_id, handler_context)
+        # Get session ID safely
+        try:
+            session_id = callback_data.replace("check_wc_", "")
+            
+            # Try using our button fix system if available
+            try:
+                import button_fix
+                user_id = handler_context.get('user_id', 0)
+                chat_id = handler_context.get('chat_id', 0)
+                logger.info(f"Using button fix system for session check {session_id} from user {user_id}")
+                
+                # Check if this is a rapid repeated click
+                if not button_fix.is_wallet_button_click_allowed(user_id, f"check_wc_{session_id}"):
+                    logger.info(f"Throttling wallet session check button click for user {user_id}")
+                    return {
+                        "action": "session_pending",
+                        "message": "Still checking your wallet connection status. Please wait...",
+                        "session_id": session_id
+                    }
+                
+                # Call the regular handler but fix the response
+                result = handle_wallet_session_check(session_id, handler_context)
+                return button_fix.fix_wallet_button_action(result)
+                
+            except ImportError:
+                # Just use the standard handler if button_fix not available
+                logger.warning("Button fix system not available for session check")
+            
+            # Standard session check
+            return handle_wallet_session_check(session_id, handler_context)
+            
+        except Exception as e:
+            logger.error(f"Error in session check handler: {e}")
+            return {
+                "action": "error",
+                "message": "Error checking wallet connection status. Please try again."
+            }
         
     elif callback_data.startswith("wallet_connect_"):
         try:
