@@ -41,8 +41,8 @@ class RLInvestmentAdvisor:
             'aggressive': {'return': 0.9, 'risk': 0.3, 'volatility': 0.4}
         }
         
-        # Load the model if available
-        self.load_model()
+        # Initialize a simulated model (we'll skip loading since we don't have a trained model yet)
+        self._initialize_simulated_model()
     
     def load_model(self) -> bool:
         """
