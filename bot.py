@@ -3057,6 +3057,15 @@ def create_application():
     application.add_handler(CommandHandler("positions", positions_command))
     application.add_handler(CommandHandler("exit", exit_command))
     
+    # Register AI-powered investment commands
+    try:
+        from commands.smart_invest import smart_invest_command, handle_smart_invest_callback
+        application.add_handler(CommandHandler("smart_invest", smart_invest_command))
+        application.add_handler(CallbackQueryHandler(handle_smart_invest_callback, pattern="^(smart_invest_|smart_amount_|smart_confirm_|refresh_smart_invest)"))
+        logger.info("Registered AI-powered smart investment commands")
+    except Exception as e:
+        logger.error(f"Failed to register smart investment handlers: {e}")
+    
     # Register callback query handlers
     # We use separate handlers for standard and agentic callbacks to avoid conflicts
     application.add_handler(CallbackQueryHandler(handle_agentic_callback_query, pattern="^(execute_|exit_|confirm_|ignore_)"))
