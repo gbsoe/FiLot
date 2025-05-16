@@ -941,7 +941,7 @@ def run_telegram_bot():
                                         recommended_pools = pool_data.get('topTVL', [])[:3]
                                     
                                     # Format pool data for display
-                                    from utils import format_pool_recommendations
+                                    from pool_formatter import format_pool_recommendations
                                     recommendations = format_pool_recommendations(recommended_pools, profile)
                                     
                                     # Send recommendations
