@@ -75,12 +75,22 @@ async def handle_confirmation_callback(
     Returns:
         True if handled, False otherwise
     """
-    query = update.callback_query
-    if not query:
+    # Safety check for update
+    if not update:
+        logger.error("Missing update object in handle_confirmation_callback")
         return False
         
-    # Get callback data
-    callback_data = query.data
+    # Get callback query with safety check
+    query = getattr(update, 'callback_query', None)
+    if not query:
+        logger.error("Missing callback query in update")
+        return False
+        
+    # Get callback data with safety check
+    callback_data = getattr(query, 'data', '')
+    if not callback_data:
+        logger.error("Missing callback data in query")
+        return False
     
     # Check if this is a confirmation callback
     if not (callback_data.startswith("confirm_") or callback_data.startswith("cancel_")):
@@ -102,12 +112,15 @@ async def handle_confirmation_callback(
         
     # Get transaction data
     transaction_info = PENDING_CONFIRMATIONS[confirmation_id]
-    transaction_data = transaction_info["transaction_data"]
-    stored_user_id = transaction_info["user_id"]
+    transaction_data = transaction_info.get("transaction_data", {})
+    stored_user_id = transaction_info.get("user_id", 0)
+    
+    # Get effective user with safety check
+    effective_user = getattr(update, 'effective_user', None)
+    current_user_id = getattr(effective_user, 'id', 0) if effective_user else 0
     
     # Security check: Ensure the user confirming is the one who initiated
-    current_user_id = update.effective_user.id
-    if current_user_id != stored_user_id:
+    if current_user_id != stored_user_id or current_user_id == 0:
         logger.warning(f"User {current_user_id} tried to confirm transaction for user {stored_user_id}")
         await query.edit_message_text(
             "⚠️ Security error: You cannot confirm a transaction initiated by another user.",

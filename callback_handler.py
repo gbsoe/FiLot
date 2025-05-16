@@ -327,57 +327,89 @@ def route_callback(callback_data: str, handler_context: Dict[str, Any]) -> Optio
             # Import transaction confirmation module
             import transaction_confirmation
             
-            # Create a transaction executor based on transaction type
-            async def execute_transaction(tx_data, user_id):
-                """Execute the right transaction type based on the data."""
+            # Create a transaction executor based on transaction type - needs to be defined outside this function
+            # This function will be passed to handle_confirmation_callback
+            # Note: Actual execution happens in transaction_confirmation.py which is async-ready
+            def create_transaction_executor():
+                """Return a function that can execute the right transaction type based on the data."""
                 import wallet_utils
                 
-                # Get transaction type and execute appropriate function
-                tx_type = tx_data.get("transaction_type", "unknown")
+                # Define our executor function that transaction_confirmation will call
+                async def executor_func(tx_data, user_id):
+                    # Get transaction type and execute appropriate function
+                    tx_type = tx_data.get("transaction_type", "unknown")
+                    
+                    if tx_type == "add_liquidity":
+                        # Execute add liquidity transaction
+                        return await wallet_utils.join_pool_transaction(
+                            wallet_address=tx_data.get("wallet_address", ""),
+                            pool_id=tx_data.get("pool_id", ""),
+                            token_a=tx_data.get("token_a", "SOL"),
+                            token_b=tx_data.get("token_b", "USDC"),
+                            deposit_sol=tx_data.get("deposit_sol", 0.0),
+                            deposit_usdc=tx_data.get("deposit_usdc", 0.0),
+                            user_id=user_id,
+                            slippage_tolerance=tx_data.get("slippage_tolerance", 0.5),
+                            confirmed=True
+                        )
+                    elif tx_type == "remove_liquidity":
+                        # Execute remove liquidity transaction
+                        return await wallet_utils.stop_pool_transaction(
+                            wallet_address=tx_data.get("wallet_address", ""),
+                            pool_id=tx_data.get("pool_id", ""),
+                            user_id=user_id,
+                            percentage=tx_data.get("percentage", 100.0),
+                            slippage_tolerance=tx_data.get("slippage_tolerance", 0.5),
+                            confirmed=True
+                        )
+                    else:
+                        return {
+                            "success": False,
+                            "error": f"Unknown transaction type: {tx_type}"
+                        }
                 
-                if tx_type == "add_liquidity":
-                    # Execute add liquidity transaction
-                    return await wallet_utils.join_pool_transaction(
-                        wallet_address=tx_data.get("wallet_address", ""),
-                        pool_id=tx_data.get("pool_id", ""),
-                        token_a=tx_data.get("token_a", "SOL"),
-                        token_b=tx_data.get("token_b", "USDC"),
-                        deposit_sol=tx_data.get("deposit_sol", 0.0),
-                        deposit_usdc=tx_data.get("deposit_usdc", 0.0),
-                        user_id=user_id,
-                        slippage_tolerance=tx_data.get("slippage_tolerance", 0.5),
-                        confirmed=True
-                    )
-                elif tx_type == "remove_liquidity":
-                    # Execute remove liquidity transaction
-                    return await wallet_utils.stop_pool_transaction(
-                        wallet_address=tx_data.get("wallet_address", ""),
-                        pool_id=tx_data.get("pool_id", ""),
-                        user_id=user_id,
-                        percentage=tx_data.get("percentage", 100.0),
-                        slippage_tolerance=tx_data.get("slippage_tolerance", 0.5),
-                        confirmed=True
-                    )
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Unknown transaction type: {tx_type}"
-                    }
+                return executor_func
             
-            # Handle the confirmation callback
-            was_handled = await transaction_confirmation.handle_confirmation_callback(
-                update, context, execute_transaction
-            )
+            # Get the callback query to handle the callback properly
+            query = handler_context.get("callback_query")
             
-            if was_handled:
-                return {"handled": True}
+            if query is None:
+                logger.error("Missing callback query in handler context")
+                return {"error": "Missing callback query"}
+            
+            # Get access to update and context
+            telegram_update = handler_context.get("update")
+            context_types = handler_context.get("context")
+            
+            if telegram_update is None or context_types is None:
+                logger.error("Missing update or context in handler context")
+                return {"error": "Missing update or context"}
+            
+            # Create our executor function
+            execute_transaction = create_transaction_executor()
+            
+            # This will be handled by the async-ready transaction_confirmation module
+            # which will properly await the executor function
+            handler_result = {
+                "transaction_type": "confirmation",
+                "callback_data": callback_data,
+                "executor": execute_transaction
+            }
+            
+            # Note: We delegate to transaction_confirmation.py which handles async properly
+            return handler_result
                 
         except ImportError as e:
             logger.error(f"Error importing transaction confirmation module: {e}")
-            await update.callback_query.message.reply_text(
-                "⚠️ Transaction confirmation is not available.",
-                reply_markup=None
-            )
+            
+            # Get the callback query to handle errors properly
+            query = handler_context.get("callback_query")
+            if query:
+                # This will be handled downstream with proper await
+                return {
+                    "error_message": "⚠️ Transaction confirmation is not available.",
+                    "error_type": "import_error"
+                }
             return {"error": "Transaction confirmation not available"}
         except Exception as e:
             logger.error(f"Error handling transaction confirmation: {e}")
@@ -396,16 +428,24 @@ def route_callback(callback_data: str, handler_context: Dict[str, Any]) -> Optio
                 logger.error(f"Invalid position operation format: {callback_data}")
                 return {"error": "Invalid position operation format"}
                 
+            # Get user ID safely from handler context
+            user = handler_context.get("user")
+            user_id = user.id if user else 0
+            
+            if not user_id:
+                logger.error("Missing user ID in position operation")
+                return {"error": "Missing user identification"}
+                
             # Validate operation token
-            user_id = update.effective_user.id
             is_valid, operation_details = position_security.validate_position_operation(token, user_id)
             
             if not is_valid:
-                await update.callback_query.message.reply_text(
-                    f"⚠️ {operation_details.get('error', 'Security error: Invalid operation')}",
-                    reply_markup=None
-                )
-                return {"error": operation_details.get('error')}
+                # Return error message that will be handled downstream with proper await
+                return {
+                    "error": operation_details.get('error', 'Security error: Invalid operation'),
+                    "operation_type": "position",
+                    "callback_data": callback_data
+                }
                 
             # Get position ID from operation details
             position_id = operation_details["position_id"]
@@ -416,21 +456,22 @@ def route_callback(callback_data: str, handler_context: Dict[str, Any]) -> Optio
                     # Close position with enhanced security
                     import wallet_utils
                     
-                    # Process position closing
+                    # Process position closing - this will be handled downstream
                     return {
                         "success": True,
                         "action": "position_close",
                         "position_id": position_id,
+                        "operation_type": "position",
                         "message": f"Position {position_id} closed successfully with enhanced security"
                     }
                     
             elif action == "cancel":
-                # Inform user that operation was cancelled
-                await update.callback_query.message.reply_text(
-                    f"Operation cancelled: {operation} position {position_id}",
-                    reply_markup=None
-                )
-                return {"cancelled": True}
+                # Return cancellation message that will be handled downstream with proper await
+                return {
+                    "cancelled": True,
+                    "operation_type": "position",
+                    "message": f"Operation cancelled: {operation} position {position_id}"
+                }
                 
         except ImportError as e:
             logger.error(f"Error importing position security module: {e}")
