@@ -3044,13 +3044,13 @@ def create_application():
     application.add_handler(CommandHandler("social", social_command))
     
     # Register direct profile commands that don't rely on buttons
-    try:
-        from fix_profile_commands import high_risk_command, stable_command
-        application.add_handler(CommandHandler("high_risk", high_risk_command))
-        application.add_handler(CommandHandler("stable", stable_command))
-        logger.info("✅ Registered direct profile commands: /high_risk and /stable")
-    except Exception as e:
-        logger.error(f"❌ Failed to register direct profile commands: {e}")
+    application.add_handler(CommandHandler("high_risk", 
+        lambda update, context: set_risk_profile_command(update, context, "high-risk")))
+    application.add_handler(CommandHandler("stable", 
+        lambda update, context: set_risk_profile_command(update, context, "stable")))
+    application.add_handler(CommandHandler("set_profile", 
+        lambda update, context: set_risk_profile_command(update, context, None)))
+    logger.info("✅ Registered direct profile commands: /high_risk, /stable, and /set_profile")
     
     # Register our dedicated command button handlers from the new module as a fallback
     try:

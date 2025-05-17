@@ -1,14 +1,11 @@
 """
-Direct implementation of profile commands to bypass the problematic buttons.
-This module provides simple command handlers for /high_risk and /stable commands.
+Simple direct implementation of profile commands.
+This module provides simple command handlers for setting user risk profiles.
 """
 
 import logging
 import sqlite3
 from typing import Dict, Any, Optional
-
-from telegram import Update
-from telegram.ext import ContextTypes
 
 # Set up logging
 logging.basicConfig(
@@ -19,60 +16,6 @@ logger = logging.getLogger(__name__)
 
 # Database file path
 DB_FILE = 'filot_bot.db'
-
-async def high_risk_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Direct command to set user profile to high-risk.
-    
-    Args:
-        update: The update object
-        context: The context object
-    """
-    if update.effective_chat is None or update.effective_user is None:
-        logger.error("Missing chat or user object in update")
-        return
-    
-    user_id = update.effective_user.id
-    result = set_profile_direct(user_id, "high-risk")
-    
-    if result.get('success', False):
-        await update.message.reply_text(
-            "✅ Your profile has been set to *High-Risk*. "
-            "You'll now receive investment recommendations suited for a higher risk tolerance.",
-            parse_mode="Markdown"
-        )
-    else:
-        await update.message.reply_text(
-            f"❌ Sorry, I couldn't update your profile. Error: {result.get('message', 'Unknown error')}",
-            parse_mode="Markdown"
-        )
-
-async def stable_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Direct command to set user profile to stable.
-    
-    Args:
-        update: The update object
-        context: The context object
-    """
-    if update.effective_chat is None or update.effective_user is None:
-        logger.error("Missing chat or user object in update")
-        return
-    
-    user_id = update.effective_user.id
-    result = set_profile_direct(user_id, "stable")
-    
-    if result.get('success', False):
-        await update.message.reply_text(
-            "✅ Your profile has been set to *Stable*. "
-            "You'll now receive conservative investment recommendations with lower risk.",
-            parse_mode="Markdown"
-        )
-    else:
-        await update.message.reply_text(
-            f"❌ Sorry, I couldn't update your profile. Error: {result.get('message', 'Unknown error')}",
-            parse_mode="Markdown"
-        )
 
 def set_profile_direct(user_id: int, profile_type: str) -> Dict[str, Any]:
     """
@@ -149,4 +92,3 @@ def ensure_user_exists(user_id: int) -> None:
     
     conn.commit()
     conn.close()
-"""
