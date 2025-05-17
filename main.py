@@ -917,10 +917,6 @@ def run_telegram_bot():
                                 except Exception as e:
                                     # Log any errors
                                     logger.error(f"Error handling profile button: {e}")
-                                    update_obj.callback_query.answer("System error. Please try again later.")
-                                
-                                except Exception as e:
-                                    logger.error(f"Critical error in account profile callback handler: {e}")
                                     logger.error(traceback.format_exc())
                                     
                                     try:

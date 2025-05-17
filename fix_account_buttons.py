@@ -1,178 +1,156 @@
 """
-Direct fix for account section buttons.
-This is a simple, focused solution for the problematic buttons in the account section.
+Simple utility script to fix the account buttons directly via commands.
 """
 
-import logging
 import sqlite3
-import traceback
+import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Messages
+HIGH_RISK_MESSAGE = """
+🔴 *High-Risk Profile Selected*
+
+Your investment recommendations will now focus on:
+• Higher APR opportunities
+• Newer pools with growth potential
+• More volatile but potentially rewarding options
+
+_Note: Higher returns come with increased risk_
+"""
+
+STABLE_PROFILE_MESSAGE = """
+🟢 *Stable Profile Selected*
+
+Your investment recommendations will now focus on:
+• Established, reliable pools
+• Lower volatility options
+• More consistent but potentially lower APR
+
+_Note: Stability typically means more moderate returns_
+"""
+
 def fix_profile_high_risk(user_id):
     """
-    Set user profile to high-risk using direct database access.
+    Direct command to set profile to high-risk.
     
     Args:
-        user_id: The user's Telegram ID
+        user_id: User's ID
         
     Returns:
-        Success message
+        Message to send to the user
     """
     try:
-        logger.info(f"Setting high-risk profile for user {user_id}")
-        
-        # Connect to SQLite database directly
         conn = sqlite3.connect('filot_bot.db')
         cursor = conn.cursor()
         
-        # Create table if it doesn't exist
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            username TEXT,
-            first_name TEXT,
-            last_name TEXT,
-            risk_profile TEXT DEFAULT 'stable',
-            subscribed BOOLEAN DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            wallet_address TEXT,
-            verification_code TEXT,
-            is_verified BOOLEAN DEFAULT 0
-        )
-        ''')
+        # Ensure user exists
+        cursor.execute("SELECT id FROM users WHERE id=?", (user_id,))
+        user = cursor.fetchone()
         
-        # Check if user exists
-        cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
-        user_exists = cursor.fetchone()
-        
-        if user_exists:
-            # Update user's profile
+        if user:
+            # Update existing user
             cursor.execute("UPDATE users SET risk_profile = 'high-risk' WHERE id = ?", (user_id,))
-            logger.info(f"Updated existing user {user_id} profile to high-risk")
+            logger.info(f"Updated user {user_id} profile to high-risk")
         else:
-            # Insert new user with high-risk profile
+            # Create new user
             cursor.execute("INSERT INTO users (id, risk_profile) VALUES (?, 'high-risk')", (user_id,))
             logger.info(f"Created new user {user_id} with high-risk profile")
         
-        # Commit changes and close connection
+        # Commit changes
         conn.commit()
         conn.close()
         
-        # Return success message
-        return (
-            "🔴 *High-Risk Profile Selected*\n\n"
-            "Your investment recommendations will now focus on:\n"
-            "• Higher APR opportunities\n"
-            "• Newer pools with growth potential\n"
-            "• More volatile but potentially rewarding options\n\n"
-            "_Note: Higher returns come with increased risk_"
-        )
+        return HIGH_RISK_MESSAGE
         
     except Exception as e:
         logger.error(f"Error setting high-risk profile: {e}")
-        logger.error(traceback.format_exc())
-        return None
+        return "Sorry, there was an error setting your profile to high-risk. Please try again."
 
 def fix_profile_stable(user_id):
     """
-    Set user profile to stable using direct database access.
+    Direct command to set profile to stable.
     
     Args:
-        user_id: The user's Telegram ID
+        user_id: User's ID
         
     Returns:
-        Success message
+        Message to send to the user
     """
     try:
-        logger.info(f"Setting stable profile for user {user_id}")
-        
-        # Connect to SQLite database directly
         conn = sqlite3.connect('filot_bot.db')
         cursor = conn.cursor()
         
-        # Create table if it doesn't exist
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            username TEXT,
-            first_name TEXT,
-            last_name TEXT,
-            risk_profile TEXT DEFAULT 'stable',
-            subscribed BOOLEAN DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            wallet_address TEXT,
-            verification_code TEXT,
-            is_verified BOOLEAN DEFAULT 0
-        )
-        ''')
+        # Ensure user exists
+        cursor.execute("SELECT id FROM users WHERE id=?", (user_id,))
+        user = cursor.fetchone()
         
-        # Check if user exists
-        cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
-        user_exists = cursor.fetchone()
-        
-        if user_exists:
-            # Update user's profile
+        if user:
+            # Update existing user
             cursor.execute("UPDATE users SET risk_profile = 'stable' WHERE id = ?", (user_id,))
-            logger.info(f"Updated existing user {user_id} profile to stable")
+            logger.info(f"Updated user {user_id} profile to stable")
         else:
-            # Insert new user with stable profile
+            # Create new user
             cursor.execute("INSERT INTO users (id, risk_profile) VALUES (?, 'stable')", (user_id,))
             logger.info(f"Created new user {user_id} with stable profile")
         
-        # Commit changes and close connection
+        # Commit changes
         conn.commit()
         conn.close()
         
-        # Return success message
-        return (
-            "🟢 *Stable Profile Selected*\n\n"
-            "Your investment recommendations will now focus on:\n"
-            "• Established, reliable pools\n"
-            "• Lower volatility options\n"
-            "• More consistent but potentially lower APR\n\n"
-            "_Note: Stability typically means more moderate returns_"
-        )
+        return STABLE_PROFILE_MESSAGE
         
     except Exception as e:
         logger.error(f"Error setting stable profile: {e}")
-        logger.error(traceback.format_exc())
-        return None
+        return "Sorry, there was an error setting your profile to stable. Please try again."
 
 def get_wallet_connect_options():
     """
-    Get wallet connection options markup.
+    Get wallet connection options.
     
     Returns:
-        Dict with message and keyboard markup
+        Dict with message and keyboard
     """
-    try:
-        wallet_message = (
-            "🔐 *Connect Your Wallet* 🔐\n\n"
-            "Choose how you want to connect your wallet:\n\n"
-            "1. *Address Entry* - Enter your wallet address manually\n"
-            "2. *QR Code* - Scan a QR code with your wallet app\n\n"
-            "_Your private keys always remain secure in your wallet._"
-        )
-        
-        keyboard = {
+    return {
+        "message": """
+🔐 *Connect Your Wallet* 🔐
+
+Choose how you want to connect your wallet:
+
+1. *Address Entry* - Enter your wallet address manually
+2. *QR Code* - Scan a QR code with your wallet app
+
+_Your private keys always remain secure in your wallet._
+""",
+        "keyboard": {
             "inline_keyboard": [
                 [{"text": "Enter Wallet Address", "callback_data": "wallet_connect_address"}],
                 [{"text": "Connect via QR Code", "callback_data": "wallet_connect_qr"}],
                 [{"text": "⬅️ Back to Account", "callback_data": "menu_account"}]
             ]
         }
-        
-        return {
-            "message": wallet_message,
-            "keyboard": keyboard
-        }
-        
-    except Exception as e:
-        logger.error(f"Error creating wallet options: {e}")
-        logger.error(traceback.format_exc())
-        return None
+    }
+
+if __name__ == "__main__":
+    # Test code - only runs when script is executed directly
+    import sys
+    if len(sys.argv) < 3:
+        print("Usage: python fix_account_buttons.py <user_id> <profile_type>")
+        print("Example: python fix_account_buttons.py 12345678 high-risk")
+        sys.exit(1)
+    
+    user_id = int(sys.argv[1])
+    profile_type = sys.argv[2]
+    
+    if profile_type == "high-risk":
+        message = fix_profile_high_risk(user_id)
+    elif profile_type == "stable":
+        message = fix_profile_stable(user_id)
+    else:
+        print(f"Invalid profile type: {profile_type}")
+        sys.exit(1)
+    
+    print(message)
+    print(f"Profile set to {profile_type} for user {user_id}")

@@ -1,6 +1,6 @@
 """
-Completely isolated profile button handler to fix the Account section buttons.
-This module directly modifies the database with no dependencies on other modules.
+Completely isolated button handler to fix the Account section buttons.
+This module directly handles profile and wallet buttons with no dependencies on other modules.
 """
 
 import sqlite3
@@ -36,29 +36,54 @@ Your investment recommendations will now focus on:
 _Note: Stability typically means more moderate returns_
 """
 
-def handle_profile_button(user_id, callback_data):
+def handle_button(user_id, callback_data):
     """
-    Direct handler for profile buttons with no external dependencies.
+    Universal direct handler for account section buttons with no external dependencies.
     
     Args:
         user_id: User's Telegram ID
         callback_data: The callback data string
     
     Returns:
-        Tuple of (success, message)
+        Dict with success, message, and keyboard (if applicable)
     """
-    logger.info(f"Processing profile button: {callback_data} for user {user_id}")
+    logger.info(f"Processing button: {callback_data} for user {user_id}")
     
-    # Map callback data to profile types
+    # Handle profile buttons
     if callback_data in ["profile_high-risk", "account_profile_high-risk"]:
-        profile_type = "high-risk"
-        message = HIGH_RISK_MESSAGE
+        return _handle_profile_button(user_id, "high-risk")
     elif callback_data in ["profile_stable", "account_profile_stable"]:
-        profile_type = "stable"
-        message = STABLE_PROFILE_MESSAGE
+        return _handle_profile_button(user_id, "stable")
+    # Handle wallet button
+    elif callback_data in ["account_wallet", "wallet"]:
+        return {
+            "success": True,
+            "message": get_wallet_message(),
+            "keyboard": get_wallet_connection_markup()
+        }
     else:
-        logger.error(f"Unrecognized profile button: {callback_data}")
-        return False, f"Unrecognized profile button: {callback_data}"
+        logger.error(f"Unrecognized button: {callback_data}")
+        return {
+            "success": False,
+            "message": f"Unrecognized button: {callback_data}"
+        }
+
+def _handle_profile_button(user_id, profile_type):
+    """
+    Internal helper to handle profile button logic.
+    
+    Args:
+        user_id: User's Telegram ID
+        profile_type: Either 'high-risk' or 'stable'
+    
+    Returns:
+        Dict with success and message
+    """
+    # Select message based on profile type
+    if profile_type == "high-risk":
+        message = HIGH_RISK_MESSAGE
+    else:  # stable
+        message = STABLE_PROFILE_MESSAGE
     
     try:
         # Connect to database directly
@@ -105,11 +130,11 @@ def handle_profile_button(user_id, callback_data):
         conn.commit()
         conn.close()
         
-        return True, message
+        return {"success": True, "message": message}
         
     except Exception as e:
         logger.error(f"Error in handle_profile_button: {e}")
-        return False, f"Database error: {str(e)}"
+        return {"success": False, "message": f"Database error: {str(e)}"}
 
 def get_wallet_connection_markup():
     """
