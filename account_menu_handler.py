@@ -1,7 +1,6 @@
 """
-Direct account menu handler that provides reliable account functionality.
-This module contains a simple implementation that creates a working account menu
-with all required button options.
+Complete account menu handler with all buttons from screenshot.
+This provides a clean, reliable implementation for the Account section.
 """
 
 import logging
@@ -13,8 +12,7 @@ logger = logging.getLogger(__name__)
 
 def handle_account_button(user_id: int) -> Dict[str, Any]:
     """
-    Handle the Account button click with a direct implementation.
-    This function returns a working account menu with all required buttons.
+    Provide a complete account menu matching the screenshot.
     
     Args:
         user_id: The user's ID
@@ -23,14 +21,15 @@ def handle_account_button(user_id: int) -> Dict[str, Any]:
         Dict with message and reply_markup for the account menu
     """
     try:
-        # Get user info from the database
+        # Get user info directly using SQLite
         user_info = get_user_info(user_id)
         
-        # Create the message based on user info
+        # Create status indicators based on user info
         wallet_status = "✅ Connected" if user_info.get("wallet_connected", False) else "❌ Not Connected"
         risk_profile = user_info.get("risk_profile", "Moderate")
         subscription_status = "✅ Subscribed" if user_info.get("subscribed", False) else "❌ Not Subscribed"
         
+        # Create message that matches the screenshot
         message = (
             f"👤 *Your Account* 👤\n\n"
             f"Wallet: {wallet_status}\n"
@@ -39,7 +38,7 @@ def handle_account_button(user_id: int) -> Dict[str, Any]:
             "Select an option below to manage your account:"
         )
         
-        # Create the account menu keyboard with all required buttons
+        # Create reply markup that exactly matches the screenshot
         reply_markup = {
             "inline_keyboard": [
                 [{"text": "💼 Connect Wallet", "callback_data": "account_wallet"}],
@@ -66,16 +65,16 @@ def handle_account_button(user_id: int) -> Dict[str, Any]:
         }
     except Exception as e:
         logger.error(f"Error in handle_account_button: {e}")
-        # Create a simplified response if there's an error
+        # Create a fallback that still provides all required buttons
         return {
             "success": False,
-            "message": "👤 *Account Management* 👤\n\nManage your FiLot account settings and preferences:",
-            "reply_markup": create_basic_menu()
+            "message": "👤 *Account Management* 👤\n\nManage your account settings:",
+            "reply_markup": create_basic_account_menu()
         }
 
 def get_user_info(user_id: int) -> Dict[str, Any]:
     """
-    Get user info from the database with direct SQLite access.
+    Get user info directly from SQLite database.
     
     Args:
         user_id: The user's ID
@@ -85,17 +84,40 @@ def get_user_info(user_id: int) -> Dict[str, Any]:
     """
     conn = None
     try:
-        # Connect to SQLite database
+        # Connect directly to SQLite database
         conn = sqlite3.connect("filot_bot.db")
         cursor = conn.cursor()
+        
+        # Check if users table exists, create if not
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                user_id INTEGER PRIMARY KEY,
+                risk_profile TEXT DEFAULT 'Moderate',
+                subscribed INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Check if wallets table exists, create if not
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS wallets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                wallet_address TEXT,
+                wallet_type TEXT DEFAULT 'solana',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (user_id)
+            )
+        """)
+        
+        conn.commit()
         
         # Try to get user info
         cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
         user_row = cursor.fetchone()
         
-        # Check if user exists
+        # Create user if doesn't exist
         if not user_row:
-            # Create a new user if they don't exist
             cursor.execute(
                 "INSERT INTO users (user_id, risk_profile, subscribed) VALUES (?, ?, ?)",
                 (user_id, "Moderate", 0)
@@ -103,7 +125,7 @@ def get_user_info(user_id: int) -> Dict[str, Any]:
             conn.commit()
             cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
             user_row = cursor.fetchone()
-            
+        
         # Get column names
         columns = [desc[0] for desc in cursor.description]
         
@@ -117,14 +139,14 @@ def get_user_info(user_id: int) -> Dict[str, Any]:
         wallet_row = cursor.fetchone()
         user_info["wallet_connected"] = wallet_row is not None
         
-        # Convert boolean values for consistency
+        # Convert boolean values
         user_info["subscribed"] = bool(user_info.get("subscribed", 0))
         
         return user_info
     
     except Exception as e:
         logger.error(f"Error in get_user_info: {e}")
-        # Return default user info if there's an error
+        # Return default user info
         return {
             "user_id": user_id,
             "risk_profile": "Moderate",
@@ -132,13 +154,13 @@ def get_user_info(user_id: int) -> Dict[str, Any]:
             "subscribed": False
         }
     finally:
-        # Make sure to close the connection if it was opened
+        # Close connection if it exists
         if conn:
             conn.close()
 
-def create_basic_menu() -> Dict[str, Any]:
+def create_basic_account_menu() -> Dict[str, Any]:
     """
-    Create a basic account menu without any database access.
+    Create a basic account menu that matches the screenshot.
     
     Returns:
         Dict with inline keyboard markup
@@ -164,16 +186,15 @@ def create_basic_menu() -> Dict[str, Any]:
 
 def handle_wallet_button(user_id: int) -> Dict[str, Any]:
     """
-    Handle the wallet button click to show wallet connection options.
+    Handle wallet connection options.
     
     Args:
         user_id: The user's ID
         
     Returns:
-        Dict with success status, message, and reply_markup
+        Dict with message and reply markup
     """
     try:
-        # Create wallet connection options
         message = (
             "💼 *Connect Your Wallet* 💼\n\n"
             "Choose how you want to connect your wallet:"
@@ -194,10 +215,10 @@ def handle_wallet_button(user_id: int) -> Dict[str, Any]:
         }
     except Exception as e:
         logger.error(f"Error in handle_wallet_button: {e}")
-        # Return a simple fallback
+        # Return fallback
         return {
             "success": False,
-            "message": "💼 *Connect Your Wallet* 💼\n\nChoose how you want to connect your wallet:",
+            "message": "💼 *Connect Your Wallet* 💼\n\nChoose a connection method:",
             "reply_markup": {
                 "inline_keyboard": [
                     [{"text": "📝 Connect by Address", "callback_data": "wallet_connect_address"}],
@@ -208,20 +229,19 @@ def handle_wallet_button(user_id: int) -> Dict[str, Any]:
 
 def handle_profile_button(user_id: int, profile_type: str) -> Dict[str, Any]:
     """
-    Handle profile button clicks (high-risk or stable).
+    Handle profile selection (high-risk or stable).
     
     Args:
         user_id: The user's ID
         profile_type: Either 'high-risk' or 'stable'
         
     Returns:
-        Dict with success status and message
+        Dict with message and reply markup
     """
     try:
-        # Update the user's profile
+        # Update user profile
         update_user_profile(user_id, profile_type)
         
-        # Create a message for the selected profile
         if profile_type == "high-risk":
             message = (
                 "🔴 *High-Risk Profile Selected* 🔴\n\n"
@@ -241,7 +261,7 @@ def handle_profile_button(user_id: int, profile_type: str) -> Dict[str, Any]:
                 "and lower impermanent loss risk."
             )
         
-        # Get back to account menu keyboard
+        # Back to account menu button
         reply_markup = {
             "inline_keyboard": [
                 [{"text": "👤 Back to Account", "callback_data": "menu_account"}]
@@ -255,10 +275,10 @@ def handle_profile_button(user_id: int, profile_type: str) -> Dict[str, Any]:
         }
     except Exception as e:
         logger.error(f"Error in handle_profile_button: {e}")
-        # Return a simple fallback
+        # Return fallback
         return {
             "success": False,
-            "message": f"There was an error updating your profile. Please try again later.",
+            "message": "There was an error updating your profile. Please try again.",
             "reply_markup": {
                 "inline_keyboard": [
                     [{"text": "👤 Back to Account", "callback_data": "menu_account"}]
@@ -268,17 +288,18 @@ def handle_profile_button(user_id: int, profile_type: str) -> Dict[str, Any]:
 
 def update_user_profile(user_id: int, profile_type: str) -> bool:
     """
-    Update a user's risk profile directly in the database.
+    Update user profile in database.
     
     Args:
         user_id: The user's ID
         profile_type: Either 'high-risk' or 'stable'
         
     Returns:
-        True if update was successful, False otherwise
+        True if successful, False otherwise
     """
+    conn = None
     try:
-        # Connect to SQLite database
+        # Connect to database
         conn = sqlite3.connect("filot_bot.db")
         cursor = conn.cursor()
         
@@ -299,33 +320,32 @@ def update_user_profile(user_id: int, profile_type: str) -> bool:
                 (user_id, profile_type.title(), 0)
             )
         
-        # Commit the changes
         conn.commit()
-        
-        # Close the connection
-        conn.close()
-        
         return True
+    
     except Exception as e:
         logger.error(f"Error in update_user_profile: {e}")
         return False
+    
+    finally:
+        if conn:
+            conn.close()
 
 def handle_subscription_button(user_id: int, subscribe: bool) -> Dict[str, Any]:
     """
-    Handle subscription button clicks (subscribe or unsubscribe).
+    Handle subscribe/unsubscribe button.
     
     Args:
         user_id: The user's ID
         subscribe: True to subscribe, False to unsubscribe
         
     Returns:
-        Dict with success status and message
+        Dict with message and reply markup
     """
     try:
-        # Update the user's subscription status
+        # Update subscription status
         update_subscription_status(user_id, subscribe)
         
-        # Create a message for the subscription status
         if subscribe:
             message = (
                 "🔔 *Subscribed to Daily Updates* 🔔\n\n"
@@ -341,7 +361,7 @@ def handle_subscription_button(user_id: int, subscribe: bool) -> Dict[str, Any]:
                 "always subscribe again from your account menu."
             )
         
-        # Get back to account menu keyboard
+        # Back to account menu button
         reply_markup = {
             "inline_keyboard": [
                 [{"text": "👤 Back to Account", "callback_data": "menu_account"}]
@@ -355,10 +375,10 @@ def handle_subscription_button(user_id: int, subscribe: bool) -> Dict[str, Any]:
         }
     except Exception as e:
         logger.error(f"Error in handle_subscription_button: {e}")
-        # Return a simple fallback
+        # Return fallback
         return {
             "success": False,
-            "message": f"There was an error updating your subscription status. Please try again later.",
+            "message": "There was an error updating your subscription. Please try again.",
             "reply_markup": {
                 "inline_keyboard": [
                     [{"text": "👤 Back to Account", "callback_data": "menu_account"}]
@@ -368,17 +388,18 @@ def handle_subscription_button(user_id: int, subscribe: bool) -> Dict[str, Any]:
 
 def update_subscription_status(user_id: int, subscribed: bool) -> bool:
     """
-    Update a user's subscription status directly in the database.
+    Update subscription status in database.
     
     Args:
         user_id: The user's ID
         subscribed: True to subscribe, False to unsubscribe
         
     Returns:
-        True if update was successful, False otherwise
+        True if successful, False otherwise
     """
+    conn = None
     try:
-        # Connect to SQLite database
+        # Connect to database
         conn = sqlite3.connect("filot_bot.db")
         cursor = conn.cursor()
         
@@ -399,32 +420,32 @@ def update_subscription_status(user_id: int, subscribed: bool) -> bool:
                 (user_id, "Moderate", 1 if subscribed else 0)
             )
         
-        # Commit the changes
         conn.commit()
-        
-        # Close the connection
-        conn.close()
-        
         return True
+    
     except Exception as e:
         logger.error(f"Error in update_subscription_status: {e}")
         return False
+    
+    finally:
+        if conn:
+            conn.close()
 
 def handle_status_button(user_id: int) -> Dict[str, Any]:
     """
-    Handle the status button click to show user's account status.
+    Handle status button to show account details.
     
     Args:
         user_id: The user's ID
         
     Returns:
-        Dict with success status and message
+        Dict with message and reply markup
     """
     try:
         # Get user info
         user_info = get_user_info(user_id)
         
-        # Create a detailed status message
+        # Create detailed status message
         wallet_status = "✅ Connected" if user_info.get("wallet_connected", False) else "❌ Not Connected"
         risk_profile = user_info.get("risk_profile", "Moderate")
         subscription_status = "✅ Subscribed" if user_info.get("subscribed", False) else "❌ Not Subscribed"
@@ -435,10 +456,6 @@ def handle_status_button(user_id: int) -> Dict[str, Any]:
             f"Wallet: {wallet_status}\n"
             f"Risk Profile: {risk_profile}\n"
             f"Daily Updates: {subscription_status}\n\n"
-        )
-        
-        # Add investment status if available
-        message += (
             "💰 *Investment Status* 💰\n\n"
             "Total Invested: $0.00\n"
             "Active Pools: 0\n"
@@ -446,7 +463,7 @@ def handle_status_button(user_id: int) -> Dict[str, Any]:
             "Use the Explore or Invest buttons to start investing!"
         )
         
-        # Get back to account menu keyboard
+        # Back to account menu button
         reply_markup = {
             "inline_keyboard": [
                 [{"text": "👤 Back to Account", "callback_data": "menu_account"}]
@@ -460,10 +477,10 @@ def handle_status_button(user_id: int) -> Dict[str, Any]:
         }
     except Exception as e:
         logger.error(f"Error in handle_status_button: {e}")
-        # Return a simple fallback
+        # Return fallback
         return {
             "success": False,
-            "message": "There was an error retrieving your account status. Please try again later.",
+            "message": "There was an error retrieving your status. Please try again.",
             "reply_markup": {
                 "inline_keyboard": [
                     [{"text": "👤 Back to Account", "callback_data": "menu_account"}]
@@ -471,25 +488,25 @@ def handle_status_button(user_id: int) -> Dict[str, Any]:
             }
         }
 
-def process_account_button(callback_data: str, user_id: int) -> Optional[Dict[str, Any]]:
+def process_account_callback(callback_data: str, user_id: int) -> Optional[Dict[str, Any]]:
     """
-    Process any account-related button callback.
+    Process all account-related callbacks.
     
     Args:
-        callback_data: The callback data from the button
+        callback_data: The callback data from button
         user_id: The user's ID
         
     Returns:
-        Dict with result or None if the button isn't related to account
+        Dict with result or None if not account-related
     """
-    # Handle account wallet button
+    # Handle wallet button
     if callback_data == "account_wallet":
         return handle_wallet_button(user_id)
     
-    # Handle profile buttons with both callback patterns
-    elif callback_data == "account_profile_high-risk" or callback_data == "profile_high-risk":
+    # Handle profile buttons - both formats for compatibility
+    elif callback_data in ["account_profile_high-risk", "profile_high-risk"]:
         return handle_profile_button(user_id, "high-risk")
-    elif callback_data == "account_profile_stable" or callback_data == "profile_stable":
+    elif callback_data in ["account_profile_stable", "profile_stable"]:
         return handle_profile_button(user_id, "stable")
     
     # Handle subscription buttons
