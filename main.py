@@ -755,7 +755,7 @@ def run_telegram_bot():
                         # Account menu options
                         "walletconnect", "status", "subscribe", "unsubscribe",
                         # Profile options
-                        "profile_high-risk", "profile_stable",
+                        "profile_high-risk", "profile_stable", "account_profile_high-risk", "account_profile_stable",
                         # Amount options
                         "amount_50", "amount_100", "amount_250", "amount_500", "amount_1000", "amount_5000", "amount_custom"
                     ]
@@ -871,47 +871,98 @@ def run_telegram_bot():
                             # Handle account profile selection callbacks
                             elif callback_data.startswith("account_profile_"):
                                 try:
-                                    # First try with our direct profile fix
+                                    logger.info(f"ACCOUNT PROFILE BUTTON CLICKED: {callback_data}")
+                                    
+                                    # Import profile handler for consistent UI
+                                    from keyboard_utils import MAIN_KEYBOARD
+                                    
+                                    # Parse the profile type from the callback data
+                                    profile_type = callback_data.replace("account_profile_", "")
+                                    
+                                    # Prepare appropriate emoji and profile-specific message
+                                    profile_emoji = "🔴" if profile_type == "high-risk" else "🟢"
+                                    
+                                    if profile_type == "high-risk":
+                                        profile_message = (
+                                            f"{profile_emoji} *High-Risk Profile Selected*\n\n"
+                                            f"Your investment recommendations will now focus on:\n"
+                                            f"• Higher APR opportunities\n"
+                                            f"• Newer pools with growth potential\n"
+                                            f"• More volatile but potentially rewarding options\n\n"
+                                            f"_Note: Higher returns come with increased risk_"
+                                        )
+                                    else:  # stable
+                                        profile_message = (
+                                            f"{profile_emoji} *Stable Profile Selected*\n\n"
+                                            f"Your investment recommendations will now focus on:\n"
+                                            f"• Established, reliable pools\n"
+                                            f"• Lower volatility options\n"
+                                            f"• More consistent but potentially lower APR\n\n"
+                                            f"_Note: Stability typically means more moderate returns_"
+                                        )
+                                    
+                                    # DIRECT DATABASE UPDATE
                                     try:
-                                        # Import the direct profile fix module
-                                        import direct_profile_fix
-                                        
-                                        # Get user and chat IDs
+                                        # Get user ID
                                         user_id = update_obj.callback_query.from_user.id
-                                        chat_id = update_obj.callback_query.message.chat_id
                                         
-                                        # Process the profile callback directly
-                                        result = direct_profile_fix.process_profile_callback(
-                                            callback_data, 
-                                            user_id, 
-                                            chat_id
+                                        # Update profile using direct SQL approach
+                                        import sqlite3
+                                        
+                                        # Connect to database
+                                        db_path = 'filot_bot.db'
+                                        conn = sqlite3.connect(db_path)
+                                        cursor = conn.cursor()
+                                        
+                                        # Check if user exists
+                                        cursor.execute('SELECT id FROM users WHERE id = ?', (user_id,))
+                                        user_exists = cursor.fetchone()
+                                        
+                                        if user_exists:
+                                            # Update existing user
+                                            cursor.execute(
+                                                'UPDATE users SET risk_profile = ? WHERE id = ?',
+                                                (profile_type, user_id)
+                                            )
+                                            logger.info(f"Updated existing user {user_id} profile to {profile_type}")
+                                        else:
+                                            # Create new user
+                                            cursor.execute(
+                                                'INSERT INTO users (id, risk_profile, created_at, last_active) VALUES (?, ?, datetime("now"), datetime("now"))',
+                                                (user_id, profile_type)
+                                            )
+                                            logger.info(f"Created new user {user_id} with {profile_type} profile")
+                                        
+                                        # Commit changes
+                                        conn.commit()
+                                        conn.close()
+                                        
+                                        # Send profile message
+                                        send_response(
+                                            chat_id,
+                                            profile_message,
+                                            parse_mode="Markdown",
+                                            reply_markup=MAIN_KEYBOARD
                                         )
                                         
-                                        # Check if the operation was successful
-                                        if result.get("success"):
-                                            # Log success
-                                            logger.info(f"Successfully updated user profile using direct fix (account): {result}")
-                                            
-                                            # Send the message to the user
-                                            send_response(
-                                                chat_id,
-                                                result.get("message", f"Profile set to {callback_data.replace('account_profile_', '')}"),
-                                                parse_mode="Markdown",
-                                                reply_markup=MAIN_KEYBOARD
-                                            )
-                                            
-                                            # Acknowledge the callback
-                                            update_obj.callback_query.answer("Profile updated!")
-                                            return
-                                        else:
-                                            # Log failure
-                                            logger.warning(f"Failed to update profile using direct fix (account): {result}")
-                                            # Continue with traditional approach
-                                    except ImportError:
-                                        logger.warning("Direct profile fix module not available, using traditional approach (account)")
-                                    except Exception as direct_err:
-                                        logger.error(f"Error using direct profile fix (account): {direct_err}")
+                                        # Acknowledge callback
+                                        update_obj.callback_query.answer("Profile updated successfully!")
+                                        
+                                    except Exception as sql_err:
+                                        logger.error(f"Database error updating profile: {sql_err}")
                                         logger.error(traceback.format_exc())
+                                        
+                                        # Fallback for database error
+                                        update_obj.callback_query.answer("Error updating profile. Please try again.")
+                                        send_response(
+                                            chat_id,
+                                            "Sorry, there was an error updating your profile. Please try again.",
+                                            reply_markup=MAIN_KEYBOARD
+                                        )
+                                        
+                                except Exception as e:
+                                    logger.error(f"Critical error handling account profile callback: {e}")
+                                    logger.error(traceback.format_exc())
                                     
                                     # Get the profile from the callback data (traditional approach)
                                     profile = callback_data.replace("account_profile_", "")
