@@ -2183,31 +2183,40 @@ Share your experiences and learn from others!
                                     logger.info(f"Triggering account menu from menu_account button")
                                     
                                     try:
-                                        # Use our simplified direct account menu handler
-                                        import menu_account_fix
+                                        # Use our super simple direct account menu handler
+                                        import direct_account_menu
                                         
                                         # Get the user ID
                                         user_id = update_obj.callback_query.from_user.id
                                         
-                                        # Get account info and inline buttons using our direct handler
-                                        result = menu_account_fix.handle_account_button(user_id)
+                                        # Get the simplest possible menu
+                                        menu_data = direct_account_menu.fixed_account_menu(user_id)
                                         
-                                        # Send the response directly
+                                        # Send the response directly - keeping it simple
                                         send_response(
                                             chat_id,
-                                            result.get("message", "👤 *Account Management* 👤\n\nManage your FiLot account settings and preferences:"),
+                                            menu_data["message"],
                                             parse_mode="Markdown",
-                                            reply_markup=result.get("reply_markup")
+                                            reply_markup=menu_data["reply_markup"]
                                         )
                                         
-                                        logger.info("Successfully displayed account menu using simplified handler")
+                                        logger.info("Successfully displayed account menu using minimal handler")
                                         return
                                     except Exception as e:
-                                        logger.error(f"Error using menu account fix: {e}")
-                                        logger.error(traceback.format_exc())
-                                        # Import from menus as fallback
-                                        from menus import get_account_menu
-                                        reply_markup = get_account_menu()
+                                        logger.error(f"Error using direct account menu: {e}")
+                                        # Very simple fallback with minimal chance of error
+                                        send_response(
+                                            chat_id,
+                                            "👤 Account\n\nManage your account settings:",
+                                            reply_markup={
+                                                "inline_keyboard": [
+                                                    [{"text": "🔴 High-Risk Profile", "callback_data": "account_profile_high-risk"}],
+                                                    [{"text": "🟢 Stable Profile", "callback_data": "account_profile_stable"}],
+                                                    [{"text": "🏠 Back to Main Menu", "callback_data": "back_to_main"}]
+                                                ]
+                                            }
+                                        )
+                                        return
                                     
                                     # Send account menu with proper user info
                                     try:
