@@ -1,19 +1,76 @@
 """
-Direct command handlers for the FiLot Telegram bot.
-These commands provide a direct way to set user profiles and other settings.
+Direct command handlers for critical bot functionality.
+This includes profile selection commands that bypass the button system entirely.
 """
 
-import sqlite3
 import logging
-import re
-from typing import Optional, Tuple
+import sqlite3
+from typing import Dict, Any, Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Success messages
-HIGH_RISK_MESSAGE = """
+# Database file
+DB_FILE = "filot_bot.db"
+
+def set_profile(user_id: int, profile_type: str) -> Dict[str, Any]:
+    """
+    Set user profile directly in the database.
+    
+    Args:
+        user_id: User ID
+        profile_type: Either 'high-risk' or 'stable'
+        
+    Returns:
+        Response with success status and message
+    """
+    try:
+        # Connect to database
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        
+        # Make sure the table exists
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY,
+            username TEXT,
+            first_name TEXT,
+            last_name TEXT,
+            risk_profile TEXT DEFAULT 'stable',
+            investment_horizon TEXT DEFAULT 'medium',
+            subscribed BOOLEAN DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            wallet_address TEXT,
+            verification_code TEXT,
+            verified BOOLEAN DEFAULT 0
+        )
+        ''')
+        
+        # Check if user exists
+        cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
+        user_exists = cursor.fetchone() is not None
+        
+        if user_exists:
+            # Update existing user
+            logger.info(f"Direct command: Updating user {user_id} to {profile_type} profile")
+            cursor.execute("UPDATE users SET risk_profile = ? WHERE id = ?", (profile_type, user_id))
+        else:
+            # Create new user
+            logger.info(f"Direct command: Creating user {user_id} with {profile_type} profile")
+            cursor.execute(
+                "INSERT INTO users (id, risk_profile, username) VALUES (?, ?, ?)",
+                (user_id, profile_type, f"user_{user_id}")
+            )
+            
+        # Commit changes
+        conn.commit()
+        conn.close()
+        
+        # Format response message
+        if profile_type == "high-risk":
+            message = """
 🔴 *High-Risk Profile Selected*
 
 Your investment recommendations will now focus on:
@@ -23,8 +80,8 @@ Your investment recommendations will now focus on:
 
 _Note: Higher returns come with increased risk_
 """
-
-STABLE_PROFILE_MESSAGE = """
+        else:  # stable
+            message = """
 🟢 *Stable Profile Selected*
 
 Your investment recommendations will now focus on:
@@ -34,115 +91,54 @@ Your investment recommendations will now focus on:
 
 _Note: Stability typically means more moderate returns_
 """
-
-def process_set_profile_command(user_id: int, message_text: str) -> Tuple[bool, str]:
-    """
-    Process the /set_profile command to directly set a user's risk profile.
-    
-    Args:
-        user_id: The user's Telegram ID
-        message_text: The full command text including arguments
         
-    Returns:
-        Tuple of (success, message)
-    """
-    # Extract the profile type from the message
-    match = re.search(r'/set_profile\s+(\S+)', message_text)
-    
-    if not match:
-        return False, "Please specify a profile type: /set_profile high-risk or /set_profile stable"
-    
-    profile_type = match.group(1).lower()
-    
-    # Validate the profile type
-    if profile_type not in ["high-risk", "stable"]:
-        return False, "Invalid profile type. Please use either 'high-risk' or 'stable'."
-    
-    try:
-        # Connect to the database
-        conn = sqlite3.connect('filot_bot.db')
-        cursor = conn.cursor()
-        
-        # Ensure users table exists
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            username TEXT,
-            first_name TEXT,
-            last_name TEXT,
-            risk_profile TEXT DEFAULT 'stable',
-            subscribed BOOLEAN DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            wallet_address TEXT,
-            verification_code TEXT,
-            is_verified BOOLEAN DEFAULT 0
-        )
-        ''')
-        
-        # Check if user exists
-        cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
-        user_exists = cursor.fetchone()
-        
-        if user_exists:
-            # Update existing user
-            cursor.execute(
-                "UPDATE users SET risk_profile = ? WHERE id = ?",
-                (profile_type, user_id)
-            )
-            logger.info(f"Updated user {user_id} profile to {profile_type}")
-        else:
-            # Create new user with profile
-            cursor.execute(
-                "INSERT INTO users (id, risk_profile) VALUES (?, ?)",
-                (user_id, profile_type)
-            )
-            logger.info(f"Created new user {user_id} with {profile_type} profile")
-        
-        # Commit changes and close connection
-        conn.commit()
-        conn.close()
-        
-        # Return success message based on profile type
-        if profile_type == "high-risk":
-            return True, HIGH_RISK_MESSAGE
-        else:  # stable
-            return True, STABLE_PROFILE_MESSAGE
-            
+        return {
+            "success": True,
+            "message": message
+        }
     except Exception as e:
-        logger.error(f"Error setting profile: {e}")
-        return False, f"Sorry, there was an error setting your profile: {str(e)}"
+        logger.error(f"Error in direct command profile setting: {e}")
+        return {
+            "success": False,
+            "message": "Sorry, there was an error setting your profile. Please try again later."
+        }
 
-def process_wallet_connect_command(user_id: int) -> dict:
-    """
-    Process the /connect_wallet command to show wallet connection options.
+# Command handlers
+def handle_high_risk_command(update: Any, context: Any) -> None:
+    """Handle /high_risk command."""
+    user_id = update.message.from_user.id
+    result = set_profile(user_id, "high-risk")
     
-    Args:
-        user_id: The user's Telegram ID
+    if result["success"]:
+        update.message.reply_markdown(result["message"])
+    else:
+        update.message.reply_text(result["message"])
+
+def handle_stable_command(update: Any, context: Any) -> None:
+    """Handle /stable command."""
+    user_id = update.message.from_user.id
+    result = set_profile(user_id, "stable")
+    
+    if result["success"]:
+        update.message.reply_markdown(result["message"])
+    else:
+        update.message.reply_text(result["message"])
+
+# Main function for testing
+if __name__ == "__main__":
+    import sys
+    
+    if len(sys.argv) < 3:
+        print("Usage: python direct_commands.py <user_id> <profile_type>")
+        sys.exit(1)
         
-    Returns:
-        Dict with message and keyboard markup
-    """
-    wallet_message = """
-🔐 *Connect Your Wallet* 🔐
-
-Choose how you want to connect your wallet:
-
-1. *Address Entry* - Enter your wallet address manually
-2. *QR Code* - Scan a QR code with your wallet app
-
-_Your private keys always remain secure in your wallet._
-"""
-
-    wallet_keyboard = {
-        "inline_keyboard": [
-            [{"text": "Enter Wallet Address", "callback_data": "wallet_connect_address"}],
-            [{"text": "Connect via QR Code", "callback_data": "wallet_connect_qr"}],
-            [{"text": "⬅️ Back to Account", "callback_data": "menu_account"}]
-        ]
-    }
+    user_id = int(sys.argv[1])
+    profile_type = sys.argv[2]
     
-    return {
-        "message": wallet_message,
-        "keyboard": wallet_keyboard
-    }
+    if profile_type not in ["high-risk", "stable"]:
+        print(f"Invalid profile type: {profile_type}")
+        sys.exit(1)
+        
+    result = set_profile(user_id, profile_type)
+    print(f"Success: {result['success']}")
+    print(f"Message: {result['message']}")

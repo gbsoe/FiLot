@@ -36,61 +36,26 @@ Your investment recommendations will now focus on:
 _Note: Stability typically means more moderate returns_
 """
 
-def handle_button(user_id, callback_data):
-    """
-    Universal direct handler for account section buttons with no external dependencies.
-    
-    Args:
-        user_id: User's Telegram ID
-        callback_data: The callback data string
-    
-    Returns:
-        Dict with success, message, and keyboard (if applicable)
-    """
-    logger.info(f"Processing button: {callback_data} for user {user_id}")
-    
-    # Handle profile buttons
-    if callback_data in ["profile_high-risk", "account_profile_high-risk"]:
-        return _handle_profile_button(user_id, "high-risk")
-    elif callback_data in ["profile_stable", "account_profile_stable"]:
-        return _handle_profile_button(user_id, "stable")
-    # Handle wallet button
-    elif callback_data in ["account_wallet", "wallet"]:
-        return {
-            "success": True,
-            "message": get_wallet_message(),
-            "keyboard": get_wallet_connection_markup()
-        }
-    else:
-        logger.error(f"Unrecognized button: {callback_data}")
-        return {
-            "success": False,
-            "message": f"Unrecognized button: {callback_data}"
-        }
+# Database file
+DB_FILE = "filot_bot.db"
 
-def _handle_profile_button(user_id, profile_type):
+def set_user_profile(user_id, profile_type):
     """
-    Internal helper to handle profile button logic.
+    Set a user's profile directly in the database.
     
     Args:
-        user_id: User's Telegram ID
+        user_id: The user's ID
         profile_type: Either 'high-risk' or 'stable'
-    
+        
     Returns:
-        Dict with success and message
+        True if successful, False otherwise
     """
-    # Select message based on profile type
-    if profile_type == "high-risk":
-        message = HIGH_RISK_MESSAGE
-    else:  # stable
-        message = STABLE_PROFILE_MESSAGE
-    
     try:
-        # Connect to database directly
-        conn = sqlite3.connect('filot_bot.db')
+        # Connect to database
+        conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
         
-        # Create table if needed
+        # Create table if not exists
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY,
@@ -98,73 +63,134 @@ def _handle_profile_button(user_id, profile_type):
             first_name TEXT,
             last_name TEXT,
             risk_profile TEXT DEFAULT 'stable',
+            investment_horizon TEXT DEFAULT 'medium',
             subscribed BOOLEAN DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             wallet_address TEXT,
             verification_code TEXT,
-            is_verified BOOLEAN DEFAULT 0
+            verified BOOLEAN DEFAULT 0
         )
         ''')
         
         # Check if user exists
         cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
-        user_exists = cursor.fetchone()
+        user_exists = cursor.fetchone() is not None
         
         if user_exists:
             # Update existing user
+            logger.info(f"Updating existing user {user_id} with {profile_type} profile")
             cursor.execute(
                 "UPDATE users SET risk_profile = ? WHERE id = ?",
                 (profile_type, user_id)
             )
-            logger.info(f"Updated existing user {user_id} profile to {profile_type}")
         else:
-            # Create new user with profile
+            # Create new user
+            logger.info(f"Creating new user {user_id} with {profile_type} profile")
             cursor.execute(
-                "INSERT INTO users (id, risk_profile) VALUES (?, ?)",
-                (user_id, profile_type)
+                "INSERT INTO users (id, risk_profile, username) VALUES (?, ?, ?)",
+                (user_id, profile_type, f"user_{user_id}")
             )
-            logger.info(f"Created new user {user_id} with {profile_type} profile")
-        
-        # Commit changes and close connection
+            
+        # Commit and close
         conn.commit()
         conn.close()
         
-        return {"success": True, "message": message}
+        return True
+    except Exception as e:
+        logger.error(f"Error setting user profile: {e}")
+        return False
+
+def handle_profile_button(callback_data, user_id):
+    """
+    Handle profile button press with any format.
+    
+    Args:
+        callback_data: The callback data from the button
+        user_id: The user's ID
+        
+    Returns:
+        Dict with success status and message
+    """
+    # Map all known callback formats to profile types
+    profile_mapping = {
+        # Account section buttons
+        "account_profile_high-risk": "high-risk",
+        "account_profile_stable": "stable",
+        # Alternative formats
+        "profile_high-risk": "high-risk",
+        "profile_stable": "stable"
+    }
+    
+    # Check if this is a profile button
+    profile_type = profile_mapping.get(callback_data)
+    
+    if not profile_type:
+        # Not a profile button
+        return None
+        
+    # Update the profile
+    success = set_user_profile(user_id, profile_type)
+    
+    if not success:
+        return {
+            "success": False,
+            "message": "Sorry, there was an error updating your profile. Please try again later."
+        }
+        
+    # Format response based on profile type
+    message = HIGH_RISK_MESSAGE if profile_type == "high-risk" else STABLE_PROFILE_MESSAGE
+    
+    return {
+        "success": True,
+        "message": message
+    }
+    
+def process_button_callback(update, context):
+    """
+    Process a button callback from Telegram.
+    
+    Args:
+        update: The Telegram update
+        context: The Telegram context
+        
+    Returns:
+        True if handled, False if not
+    """
+    try:
+        query = update.callback_query
+        callback_data = query.data
+        user_id = query.from_user.id
+        
+        # Process the button
+        result = handle_profile_button(callback_data, user_id)
+        
+        if not result:
+            # Not our button
+            return False
+            
+        # Answer the callback query
+        query.answer()
+        
+        # Update the message
+        if result["success"]:
+            query.edit_message_text(
+                text=result["message"],
+                parse_mode="Markdown"
+            )
+        else:
+            query.edit_message_text(text=result["message"])
+            
+        return True
         
     except Exception as e:
-        logger.error(f"Error in handle_profile_button: {e}")
-        return {"success": False, "message": f"Database error: {str(e)}"}
-
-def get_wallet_connection_markup():
-    """
-    Get the keyboard markup for wallet connection options.
-    
-    Returns:
-        Dict containing inline keyboard markup
-    """
-    return {
-        "inline_keyboard": [
-            [{"text": "Enter Wallet Address", "callback_data": "wallet_connect_address"}],
-            [{"text": "Connect via QR Code", "callback_data": "wallet_connect_qr"}],
-            [{"text": "⬅️ Back to Account", "callback_data": "menu_account"}]
-        ]
-    }
-
-def get_wallet_message():
-    """
-    Get the message for wallet connection options.
-    
-    Returns:
-        String with wallet connection message
-    """
-    return """
-🔐 *Connect Your Wallet* 🔐
-
-Choose how you want to connect your wallet:
-
-1. *Address Entry* - Enter your wallet address manually
-2. *QR Code* - Scan a QR code with your wallet app
-
-_Your private keys always remain secure in your wallet._
-"""
+        logger.error(f"Error processing button callback: {e}")
+        try:
+            # Try to send error message
+            update.callback_query.answer()
+            update.callback_query.edit_message_text(
+                "Sorry, there was an error processing your request."
+            )
+        except:
+            pass
+        return True  # We tried to handle it
