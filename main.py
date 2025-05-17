@@ -2223,18 +2223,21 @@ Share your experiences and learn from others!
                                         loop.close()
                                 
                                 elif menu_action == "account":
-                                    # Handle account menu with our new complete implementation
-                                    logger.info(f"Triggering account menu handler from menu button")
+                                    # Handle account menu with our final ultimate fix
+                                    logger.info(f"Triggering simplified account menu")
                                     
                                     try:
-                                        # Import our new comprehensive account menu handler
-                                        import account_menu_handler
+                                        # Import our ultimate account fix that bypasses all problematic code
+                                        import ultimate_account_fix
                                         
                                         # Get user ID from the update
                                         user_id = update_obj.callback_query.from_user.id
                                         
-                                        # Get account menu with all required buttons
-                                        result = account_menu_handler.handle_account_button(user_id)
+                                        # Get account menu with direct implementation
+                                        result = ultimate_account_fix.create_account_menu(user_id)
+                                        
+                                        # Log intermediate data for debugging
+                                        logger.info(f"ACCOUNT DEBUG - Generated account menu successfully")
                                         
                                         # Send account menu with all buttons
                                         send_response(
@@ -2244,13 +2247,13 @@ Share your experiences and learn from others!
                                             reply_markup=result["reply_markup"]
                                         )
                                         
-                                        logger.info("Successfully displayed complete account menu")
+                                        logger.info("Successfully displayed simplified account menu")
                                     except Exception as e:
-                                        logger.error(f"Error in account menu handler: {e}")
+                                        logger.error(f"Error in ultimate account fix: {e}")
                                         logger.error(f"Traceback: {traceback.format_exc()}")
                                         
-                                        # Even in failure, show all required buttons
-                                        fallback_markup = {
+                                        # Provide an absolute fallback with static markup
+                                        static_markup = {
                                             "inline_keyboard": [
                                                 [{"text": "💼 Connect Wallet", "callback_data": "account_wallet"}],
                                                 [
@@ -2269,16 +2272,16 @@ Share your experiences and learn from others!
                                             ]
                                         }
                                         
-                                        # Send fallback menu with all required buttons
+                                        # Use static data as ultimate fallback
                                         send_response(
                                             chat_id,
                                             "👤 *Account Management* 👤\n\n"
                                             "Manage your FiLot account settings and preferences:",
                                             parse_mode="Markdown",
-                                            reply_markup=fallback_markup
+                                            reply_markup=static_markup
                                         )
                                         
-                                        logger.info("Displayed fallback account menu with all required buttons")
+                                        logger.info("Displayed static fallback account menu")
                                 
                                 else:
                                     logger.warning(f"Unknown menu action: {menu_action}")
