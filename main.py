@@ -871,98 +871,59 @@ def run_telegram_bot():
                             # Handle account profile selection callbacks
                             elif callback_data.startswith("account_profile_"):
                                 try:
-                                    logger.info(f"ACCOUNT PROFILE BUTTON CLICKED: {callback_data}")
-                                    
-                                    # Import profile handler for consistent UI
+                                    # Import the improved account button fix
+                                    import account_button_fix
                                     from keyboard_utils import MAIN_KEYBOARD
                                     
-                                    # Parse the profile type from the callback data
-                                    profile_type = callback_data.replace("account_profile_", "")
+                                    # Use our specialized direct handler
+                                    result = account_button_fix.fix_account_profile_buttons(update_obj.callback_query)
                                     
-                                    # Prepare appropriate emoji and profile-specific message
-                                    profile_emoji = "🔴" if profile_type == "high-risk" else "🟢"
-                                    
-                                    if profile_type == "high-risk":
-                                        profile_message = (
-                                            f"{profile_emoji} *High-Risk Profile Selected*\n\n"
-                                            f"Your investment recommendations will now focus on:\n"
-                                            f"• Higher APR opportunities\n"
-                                            f"• Newer pools with growth potential\n"
-                                            f"• More volatile but potentially rewarding options\n\n"
-                                            f"_Note: Higher returns come with increased risk_"
-                                        )
-                                    else:  # stable
-                                        profile_message = (
-                                            f"{profile_emoji} *Stable Profile Selected*\n\n"
-                                            f"Your investment recommendations will now focus on:\n"
-                                            f"• Established, reliable pools\n"
-                                            f"• Lower volatility options\n"
-                                            f"• More consistent but potentially lower APR\n\n"
-                                            f"_Note: Stability typically means more moderate returns_"
-                                        )
-                                    
-                                    # DIRECT DATABASE UPDATE
-                                    try:
-                                        # Get user ID
-                                        user_id = update_obj.callback_query.from_user.id
-                                        
-                                        # Update profile using direct SQL approach
-                                        import sqlite3
-                                        
-                                        # Connect to database
-                                        db_path = 'filot_bot.db'
-                                        conn = sqlite3.connect(db_path)
-                                        cursor = conn.cursor()
-                                        
-                                        # Check if user exists
-                                        cursor.execute('SELECT id FROM users WHERE id = ?', (user_id,))
-                                        user_exists = cursor.fetchone()
-                                        
-                                        if user_exists:
-                                            # Update existing user
-                                            cursor.execute(
-                                                'UPDATE users SET risk_profile = ? WHERE id = ?',
-                                                (profile_type, user_id)
-                                            )
-                                            logger.info(f"Updated existing user {user_id} profile to {profile_type}")
-                                        else:
-                                            # Create new user
-                                            cursor.execute(
-                                                'INSERT INTO users (id, risk_profile, created_at, last_active) VALUES (?, ?, datetime("now"), datetime("now"))',
-                                                (user_id, profile_type)
-                                            )
-                                            logger.info(f"Created new user {user_id} with {profile_type} profile")
-                                        
-                                        # Commit changes
-                                        conn.commit()
-                                        conn.close()
-                                        
-                                        # Send profile message
+                                    # Check if the fix was successful
+                                    if result["success"]:
+                                        # Send the formatted message
                                         send_response(
                                             chat_id,
-                                            profile_message,
+                                            result["message"],
                                             parse_mode="Markdown",
                                             reply_markup=MAIN_KEYBOARD
                                         )
                                         
-                                        # Acknowledge callback
+                                        # Acknowledge the callback
                                         update_obj.callback_query.answer("Profile updated successfully!")
                                         
-                                    except Exception as sql_err:
-                                        logger.error(f"Database error updating profile: {sql_err}")
-                                        logger.error(traceback.format_exc())
+                                        # Log the success
+                                        logger.info(f"✅ Account profile button fix succeeded for {callback_data}")
+                                    else:
+                                        # Log the error
+                                        logger.error(f"❌ Account profile button fix failed: {result.get('error', 'Unknown error')}")
                                         
-                                        # Fallback for database error
+                                        # Acknowledge the callback with error
                                         update_obj.callback_query.answer("Error updating profile. Please try again.")
+                                        
+                                        # Send error message
                                         send_response(
                                             chat_id,
                                             "Sorry, there was an error updating your profile. Please try again.",
                                             reply_markup=MAIN_KEYBOARD
                                         )
                                         
+                                except ImportError:
+                                    logger.error(f"Could not import account_button_fix module")
+                                    update_obj.callback_query.answer("System error. Please try again later.")
+                                
                                 except Exception as e:
-                                    logger.error(f"Critical error handling account profile callback: {e}")
+                                    logger.error(f"Critical error in account profile callback handler: {e}")
                                     logger.error(traceback.format_exc())
+                                    
+                                    try:
+                                        update_obj.callback_query.answer("System error. Please try again later.")
+                                        send_response(
+                                            chat_id,
+                                            "Sorry, there was a system error processing your request. Please try again later.",
+                                            reply_markup=MAIN_KEYBOARD
+                                        )
+                                    except Exception:
+                                        logger.error("Failed to send error response", exc_info=True)
                                     
                                     # Get the profile from the callback data (traditional approach)
                                     profile = callback_data.replace("account_profile_", "")
