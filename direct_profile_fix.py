@@ -1,12 +1,11 @@
 """
-Direct and isolated fix for profile buttons with no external dependencies.
-This module handles both account_profile_* and profile_* button formats.
+Direct profile button handler for both callback formats.
+This fixes the profile buttons regardless of the callback format used.
 """
 
 import logging
 import sqlite3
-import json
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -15,9 +14,74 @@ logger = logging.getLogger(__name__)
 # Database file
 DB_FILE = "filot_bot.db"
 
-def update_profile_in_db(user_id: int, profile_type: str) -> bool:
+def process_profile_callback(callback_data: str, user_id: int, chat_id: int) -> Dict[str, Any]:
     """
-    Update user profile directly in the database.
+    Process profile button callbacks.
+    
+    Args:
+        callback_data: The callback data from the button press
+        user_id: The user's ID
+        chat_id: The chat ID
+        
+    Returns:
+        Dict with success status and message
+    """
+    logger.info(f"Processing profile callback: {callback_data} for user {user_id}")
+    
+    # Determine which profile type was selected
+    if callback_data in ["profile_high-risk", "account_profile_high-risk"]:
+        profile_type = "high-risk"
+    elif callback_data in ["profile_stable", "account_profile_stable"]:
+        profile_type = "stable"
+    else:
+        logger.error(f"Unknown profile type in callback: {callback_data}")
+        return {
+            "success": False,
+            "message": "Unknown profile type. Please try again."
+        }
+    
+    # Update the user's profile in the database
+    success = update_user_profile(user_id, profile_type)
+    
+    if success:
+        # Return appropriate message based on profile type
+        if profile_type == "high-risk":
+            message = """
+🔴 *High-Risk Profile Selected*
+
+Your investment recommendations will now focus on:
+• Higher APR opportunities
+• Newer pools with growth potential
+• More volatile but potentially rewarding options
+
+_Note: Higher returns come with increased risk_
+"""
+        else:  # stable
+            message = """
+🟢 *Stable Profile Selected*
+
+Your investment recommendations will now focus on:
+• Established, reliable pools
+• Lower volatility options
+• More consistent but potentially lower APR
+
+_Note: Stability typically means more moderate returns_
+"""
+        
+        return {
+            "success": True,
+            "message": message,
+            "profile_type": profile_type
+        }
+    else:
+        return {
+            "success": False,
+            "message": "There was an error updating your profile. Please try again later."
+        }
+
+def update_user_profile(user_id: int, profile_type: str) -> bool:
+    """
+    Update user profile in database.
     
     Args:
         user_id: The user's ID
@@ -31,7 +95,7 @@ def update_profile_in_db(user_id: int, profile_type: str) -> bool:
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
         
-        # Create users table if it doesn't exist
+        # Make sure the table exists
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY,
@@ -55,11 +119,11 @@ def update_profile_in_db(user_id: int, profile_type: str) -> bool:
         
         if user_exists:
             # Update existing user
-            logger.info(f"Updating existing user {user_id} with profile {profile_type}")
+            logger.info(f"Updating existing user {user_id} with {profile_type} profile")
             cursor.execute("UPDATE users SET risk_profile = ? WHERE id = ?", (profile_type, user_id))
         else:
             # Create new user
-            logger.info(f"Creating new user {user_id} with profile {profile_type}")
+            logger.info(f"Creating new user {user_id} with {profile_type} profile")
             cursor.execute(
                 "INSERT INTO users (id, risk_profile, username) VALUES (?, ?, ?)",
                 (user_id, profile_type, f"user_{user_id}")
@@ -73,136 +137,3 @@ def update_profile_in_db(user_id: int, profile_type: str) -> bool:
     except Exception as e:
         logger.error(f"Database error: {e}")
         return False
-
-def create_profile_response(profile_type: str) -> Dict[str, Any]:
-    """
-    Create a standardized response for profile selection.
-    
-    Args:
-        profile_type: Either 'high-risk' or 'stable'
-        
-    Returns:
-        Dict with success status and message
-    """
-    if profile_type == "high-risk":
-        message = """
-🔴 *High-Risk Profile Selected*
-
-Your investment recommendations will now focus on:
-• Higher APR opportunities
-• Newer pools with growth potential
-• More volatile but potentially rewarding options
-
-_Note: Higher returns come with increased risk_
-"""
-    else:  # stable
-        message = """
-🟢 *Stable Profile Selected*
-
-Your investment recommendations will now focus on:
-• Established, reliable pools
-• Lower volatility options
-• More consistent but potentially lower APR
-
-_Note: Stability typically means more moderate returns_
-"""
-
-    return {
-        "success": True, 
-        "message": message,
-        "profile_type": profile_type
-    }
-
-def handle_profile_button(callback_data: str, user_id: int) -> Optional[Dict[str, Any]]:
-    """
-    Handle profile button callbacks with any format.
-    
-    Args:
-        callback_data: The callback data from the button
-        user_id: The user's ID
-        
-    Returns:
-        Dict with response or None if not a profile button
-    """
-    # Define all possible profile button formats
-    profile_mapping = {
-        # Main menu versions
-        "profile_high-risk": "high-risk",
-        "profile_stable": "stable",
-        # Account menu versions
-        "account_profile_high-risk": "high-risk",
-        "account_profile_stable": "stable"
-    }
-    
-    # Check if this is a profile button
-    profile_type = profile_mapping.get(callback_data)
-    if not profile_type:
-        # Not a profile button we handle
-        return None
-    
-    # Log this action
-    logger.info(f"Processing {callback_data} button for user {user_id}")
-    
-    # Update the database
-    success = update_profile_in_db(user_id, profile_type)
-    
-    if success:
-        # Return successful response
-        return create_profile_response(profile_type)
-    else:
-        # Return error response
-        return {
-            "success": False,
-            "message": "Sorry, there was an error updating your profile. Please try again later."
-        }
-
-# Function for direct Telegram integration
-def process_callback_query(update: Any, context: Any) -> bool:
-    """
-    Process callback query for profile buttons directly in Telegram.
-    
-    Args:
-        update: The Telegram update object
-        context: The Telegram context object
-        
-    Returns:
-        True if handled, False otherwise
-    """
-    try:
-        # Extract essential data
-        query = update.callback_query
-        callback_data = query.data
-        user_id = query.from_user.id
-        
-        # Process the button
-        result = handle_profile_button(callback_data, user_id)
-        
-        if result is None:
-            # Not our button
-            return False
-            
-        # Answer the callback
-        query.answer()
-        
-        # Update the message
-        if result["success"]:
-            query.edit_message_text(
-                text=result["message"],
-                parse_mode="Markdown"
-            )
-        else:
-            query.edit_message_text(text=result["message"])
-            
-        return True
-        
-    except Exception as e:
-        logger.error(f"Error in process_callback_query: {e}")
-        try:
-            # Try to send an error message
-            update.callback_query.answer()
-            update.callback_query.edit_message_text(
-                "Sorry, there was an error processing your request."
-            )
-        except:
-            pass
-        return True  # We tried to handle it
