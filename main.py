@@ -2179,20 +2179,20 @@ Share your experiences and learn from others!
                                     logger.info("Successfully displayed simplified explore menu")
                                 
                                 elif menu_action == "account":
-                                    # Handle account menu item
-                                    logger.info(f"Triggering account menu from menu_account button")
+                                    # Handle account menu item using our ultra-simple ultimate_fix
+                                    logger.info(f"Triggering account menu from menu_account button using ultimate_fix")
                                     
                                     try:
-                                        # Use our super simple direct account menu handler
-                                        import direct_account_menu
+                                        # Import the ultimate fix module
+                                        import ultimate_fix
                                         
                                         # Get the user ID
                                         user_id = update_obj.callback_query.from_user.id
                                         
-                                        # Get the simplest possible menu
-                                        menu_data = direct_account_menu.fixed_account_menu(user_id)
+                                        # Get the ultra-simple account menu
+                                        menu_data = ultimate_fix.get_account_menu()
                                         
-                                        # Send the response directly - keeping it simple
+                                        # Send the response directly
                                         send_response(
                                             chat_id,
                                             menu_data["message"],
@@ -2200,11 +2200,11 @@ Share your experiences and learn from others!
                                             reply_markup=menu_data["reply_markup"]
                                         )
                                         
-                                        logger.info("Successfully displayed account menu using minimal handler")
+                                        logger.info("Successfully displayed account menu using ultimate_fix")
                                         return
                                     except Exception as e:
-                                        logger.error(f"Error using direct account menu: {e}")
-                                        # Very simple fallback with minimal chance of error
+                                        logger.error(f"Error using ultimate fix for account menu: {e}")
+                                        # Extremely simple fallback with even less chance of error
                                         send_response(
                                             chat_id,
                                             "👤 Account\n\nManage your account settings:",
