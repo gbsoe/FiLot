@@ -52,14 +52,17 @@ def get_explore_menu() -> InlineKeyboardMarkup:
 def get_account_menu() -> InlineKeyboardMarkup:
     """
     Creates the One-Touch inline keyboard for account command options with improved visuals
+    
+    Note: The profile buttons use both profile_high-risk and account_profile_high-risk formats
+    to ensure compatibility with all handlers.
     """
     keyboard = [
         [
             InlineKeyboardButton("💼 Connect Wallet", callback_data="account_wallet")
         ],
         [
-            InlineKeyboardButton("🔴 High-Risk Profile", callback_data="profile_high-risk"),
-            InlineKeyboardButton("🟢 Stable Profile", callback_data="profile_stable")
+            InlineKeyboardButton("🔴 High-Risk Profile", callback_data="account_profile_high-risk"),
+            InlineKeyboardButton("🟢 Stable Profile", callback_data="account_profile_stable")
         ],
         [
             InlineKeyboardButton("🔔 Subscribe", callback_data="account_subscribe"),

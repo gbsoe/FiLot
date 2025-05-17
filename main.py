@@ -1160,7 +1160,32 @@ def run_telegram_bot():
                             
                             # Handle account callback menu items
                             elif callback_data.startswith("account_"):
-                                # Extract the account action
+                                # Try our new fixed account handler for profile buttons first
+                                try:
+                                    # Import our new fixed account handler
+                                    import fixed_account_handler
+                                    
+                                    # Check if this is a profile button
+                                    if "profile" in callback_data:
+                                        # Get user ID
+                                        user_id = update_obj.callback_query.from_user.id
+                                        
+                                        # Use the fixed account handler
+                                        result = fixed_account_handler.handle_account_button(callback_data, user_id)
+                                        
+                                        # If we successfully handled it, send the response and return
+                                        if result.get("success"):
+                                            logger.info(f"Successfully handled profile button using fixed_account_handler: {result}")
+                                            send_response(
+                                                chat_id,
+                                                result.get("message", "Profile updated successfully!"),
+                                                parse_mode="Markdown"
+                                            )
+                                            return
+                                except Exception as fixed_handler_err:
+                                    logger.error(f"Error using fixed account handler: {fixed_handler_err}")
+                                
+                                # Extract the account action and continue with the original flow
                                 account_action = callback_data.replace("account_", "")
                                 
                                 if account_action == "wallet":
