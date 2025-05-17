@@ -868,33 +868,25 @@ def run_telegram_bot():
                                         "Sorry, there was an error with the investment flow. Please try again using the Invest button."
                                     )
                                     
-                            # Handle account profile selection callbacks
-                            elif callback_data.startswith("account_profile_"):
+                            # Handle ALL profile selection callbacks (account_profile_* AND profile_*)
+                            elif callback_data.startswith("account_profile_") or callback_data.startswith("profile_"):
                                 try:
-                                    # Import our specialized fix module
-                                    import fix_account_buttons
+                                    # Import our universal direct button fix module
+                                    import direct_button_fix
                                     from keyboard_utils import MAIN_KEYBOARD
                                     
                                     # Get user ID
                                     user_id = update_obj.callback_query.from_user.id
                                     
-                                    # Check which profile type to set
-                                    if callback_data == "account_profile_high-risk":
-                                        # Use the high-risk profile fix
-                                        message = fix_account_buttons.fix_profile_high_risk(user_id)
-                                    elif callback_data == "account_profile_stable":
-                                        # Use the stable profile fix
-                                        message = fix_account_buttons.fix_profile_stable(user_id)
-                                    else:
-                                        # Unknown profile type
-                                        message = None
+                                    # Use our universal button handler that handles both formats
+                                    result = direct_button_fix.handle_button(callback_data, user_id)
                                     
                                     # Check if the fix was successful
-                                    if message:
+                                    if result and result.get("success", False):
                                         # Send the formatted message
                                         send_response(
                                             chat_id,
-                                            message,
+                                            result["message"],
                                             parse_mode="Markdown",
                                             reply_markup=MAIN_KEYBOARD
                                         )
@@ -909,7 +901,8 @@ def run_telegram_bot():
                                         return
                                     else:
                                         # Log the error
-                                        logger.error(f"❌ Failed to set profile with {callback_data}")
+                                        error_msg = result.get("message", "Unknown error") if result else "Handler returned no result"
+                                        logger.error(f"❌ Failed to set profile: {error_msg}")
                                         
                                         # Acknowledge the callback with error
                                         update_obj.callback_query.answer("Error updating profile. Please try again.")
@@ -1174,37 +1167,38 @@ def run_telegram_bot():
                                 account_action = callback_data.replace("account_", "")
                                 
                                 if account_action == "wallet":
-                                    # Use our specialized fix for wallet button
+                                    # Use our universal fix for all button issues
                                     try:
-                                        # Import our fix module
-                                        import fix_account_buttons
+                                        # Import our universal direct button fix module
+                                        import direct_button_fix
                                         
                                         # Get user ID
                                         user_id = update_obj.callback_query.from_user.id
                                         
-                                        # Get wallet options
-                                        wallet_options = fix_account_buttons.get_wallet_connect_options()
+                                        # Use the universal handler for wallet button
+                                        result = direct_button_fix.handle_button("account_wallet", user_id)
                                         
-                                        if wallet_options:
+                                        if result and result.get("success", False):
                                             # Send the response with custom reply markup
                                             send_response(
                                                 chat_id,
-                                                wallet_options["message"],
+                                                result["message"],
                                                 parse_mode="Markdown",
-                                                reply_markup=wallet_options["keyboard"]
+                                                reply_markup=result.get("keyboard", {})
                                             )
                                             
                                             # Acknowledge the callback
                                             update_obj.callback_query.answer("Wallet connection options ready")
                                             
                                             # Log success
-                                            logger.info("✅ Wallet button handler succeeded")
+                                            logger.info("✅ Wallet button handler succeeded using direct_button_fix")
                                             
                                             # Return to skip further processing
                                             return
                                         else:
                                             # Log error
-                                            logger.error("❌ Wallet button handler failed")
+                                            error_msg = result.get("message", "Unknown error") if result else "Handler returned no result"
+                                            logger.error(f"❌ Wallet button handler failed: {error_msg}")
                                     except Exception as e:
                                         logger.error(f"Error in wallet button direct handler: {e}")
                                         logger.error(traceback.format_exc())
