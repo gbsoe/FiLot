@@ -2223,42 +2223,53 @@ Share your experiences and learn from others!
                                         loop.close()
                                 
                                 elif menu_action == "account":
-                                    # Handle account menu item with direct implementation to avoid relying on database
-                                    logger.info(f"Triggering simplified account flow from menu button")
-                                    
-                                    # Import account menu from menus.py for consistency
-                                    from menus import get_account_menu
+                                    # Handle account menu item with our direct handler
+                                    logger.info(f"Triggering direct account handler from menu button")
                                     
                                     try:
-                                        # Use our simple account handler to get account info directly
-                                        import simple_account_handler
+                                        # Use our direct account menu handler
+                                        import direct_account_menu
                                         
                                         # Get user ID from the update
                                         user_id = update_obj.callback_query.from_user.id
                                         
-                                        # Get account info using our simple handler
-                                        account_info = simple_account_handler.get_account_info(user_id)
+                                        # Get account info directly with our reliable handler
+                                        result = direct_account_menu.handle_account_button(user_id)
                                         
-                                        reply_markup = get_account_menu()
+                                        # Send account menu with user info
+                                        send_response(
+                                            chat_id,
+                                            result["message"],
+                                            parse_mode="Markdown",
+                                            reply_markup=result["reply_markup"]
+                                        )
+                                        
+                                        logger.info("Successfully displayed account menu using direct handler")
                                     except Exception as e:
-                                        logger.error(f"Error in account handler: {e}")
-                                        reply_markup = get_account_menu()
-                                    
-                                    # Send account menu directly
-                                    send_response(
-                                        chat_id,
-                                        "👤 *Your Account* 👤\n\n"
-                                        "Wallet: ❌ Not Connected\n"
-                                        "Risk Profile: Moderate\n"
-                                        "Daily Updates: ❌ Not Subscribed\n\n"
-                                        "Select an option below to manage your account:",
-                                        parse_mode="Markdown",
-                                        reply_markup=reply_markup
-                                    )
-                                    
-                                    # No need to send additional messages about the keyboard
-                                    
-                                    logger.info("Successfully displayed simplified account menu")
+                                        logger.error(f"Error in direct account handler: {e}")
+                                        
+                                        # Create a simplified account menu without database access as fallback
+                                        fallback_markup = {
+                                            "inline_keyboard": [
+                                                [{"text": "💼 Connect Wallet", "callback_data": "account_wallet"}],
+                                                [
+                                                    {"text": "🔴 High-Risk Profile", "callback_data": "account_profile_high-risk"},
+                                                    {"text": "🟢 Stable Profile", "callback_data": "account_profile_stable"}
+                                                ],
+                                                [{"text": "🏠 Back to Main Menu", "callback_data": "back_to_main"}]
+                                            ]
+                                        }
+                                        
+                                        # Send fallback menu
+                                        send_response(
+                                            chat_id,
+                                            "👤 *Account Management* 👤\n\n"
+                                            "Manage your FiLot account settings and preferences:",
+                                            parse_mode="Markdown",
+                                            reply_markup=fallback_markup
+                                        )
+                                        
+                                        logger.info("Successfully displayed fallback account menu")
                                 
                                 else:
                                     logger.warning(f"Unknown menu action: {menu_action}")
