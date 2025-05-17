@@ -1078,33 +1078,33 @@ def run_telegram_bot():
                                     )
                             
                             # Handle account callback menu items
-                            elif callback_data.startswith("account_"):
-                                # Try our new fixed account handler for profile buttons first
+                            elif callback_data.startswith("account_") or callback_data in ["profile_high-risk", "profile_stable"]:
+                                # Use our new comprehensive account menu handler
                                 try:
-                                    # Import our new fixed account handler
-                                    import fixed_account_handler
+                                    # Import our new account menu handler
+                                    import account_menu_handler
                                     
-                                    # Check if this is a profile button
-                                    if "profile" in callback_data:
-                                        # Get user ID
-                                        user_id = update_obj.callback_query.from_user.id
-                                        
-                                        # Use the fixed account handler
-                                        result = fixed_account_handler.handle_account_button(callback_data, user_id)
-                                        
-                                        # If we successfully handled it, send the response and return
-                                        if result.get("success"):
-                                            logger.info(f"Successfully handled profile button using fixed_account_handler: {result}")
-                                            send_response(
-                                                chat_id,
-                                                result.get("message", "Profile updated successfully!"),
-                                                parse_mode="Markdown"
-                                            )
-                                            return
-                                except Exception as fixed_handler_err:
-                                    logger.error(f"Error using fixed account handler: {fixed_handler_err}")
+                                    # Get user ID
+                                    user_id = update_obj.callback_query.from_user.id
+                                    
+                                    # Process any account-related button using the new handler
+                                    result = account_menu_handler.process_account_callback(callback_data, user_id)
+                                    
+                                    # If the handler processed this button, send the response and return
+                                    if result:
+                                        logger.info(f"Successfully handled account button: {callback_data}")
+                                        send_response(
+                                            chat_id,
+                                            result.get("message", "Account updated successfully!"),
+                                            parse_mode="Markdown",
+                                            reply_markup=result.get("reply_markup")
+                                        )
+                                        return
+                                except Exception as account_handler_err:
+                                    logger.error(f"Error using account menu handler: {account_handler_err}")
+                                    logger.error(traceback.format_exc())
                                 
-                                # Extract the account action and continue with the original flow
+                                # Extract the account action and continue with the original flow as fallback
                                 account_action = callback_data.replace("account_", "")
                                 
                                 if account_action == "wallet":
@@ -2223,20 +2223,20 @@ Share your experiences and learn from others!
                                         loop.close()
                                 
                                 elif menu_action == "account":
-                                    # Handle account menu item with our direct handler
-                                    logger.info(f"Triggering direct account handler from menu button")
+                                    # Handle account menu with our new complete implementation
+                                    logger.info(f"Triggering account menu handler from menu button")
                                     
                                     try:
-                                        # Use our direct account menu handler
-                                        import direct_account_menu
+                                        # Import our new comprehensive account menu handler
+                                        import account_menu_handler
                                         
                                         # Get user ID from the update
                                         user_id = update_obj.callback_query.from_user.id
                                         
-                                        # Get account info directly with our reliable handler
-                                        result = direct_account_menu.handle_account_button(user_id)
+                                        # Get account menu with all required buttons
+                                        result = account_menu_handler.handle_account_button(user_id)
                                         
-                                        # Send account menu with user info
+                                        # Send account menu with all buttons
                                         send_response(
                                             chat_id,
                                             result["message"],
@@ -2244,11 +2244,12 @@ Share your experiences and learn from others!
                                             reply_markup=result["reply_markup"]
                                         )
                                         
-                                        logger.info("Successfully displayed account menu using direct handler")
+                                        logger.info("Successfully displayed complete account menu")
                                     except Exception as e:
-                                        logger.error(f"Error in direct account handler: {e}")
+                                        logger.error(f"Error in account menu handler: {e}")
+                                        logger.error(f"Traceback: {traceback.format_exc()}")
                                         
-                                        # Create a simplified account menu without database access as fallback
+                                        # Even in failure, show all required buttons
                                         fallback_markup = {
                                             "inline_keyboard": [
                                                 [{"text": "💼 Connect Wallet", "callback_data": "account_wallet"}],
@@ -2256,11 +2257,19 @@ Share your experiences and learn from others!
                                                     {"text": "🔴 High-Risk Profile", "callback_data": "account_profile_high-risk"},
                                                     {"text": "🟢 Stable Profile", "callback_data": "account_profile_stable"}
                                                 ],
+                                                [
+                                                    {"text": "🔔 Subscribe", "callback_data": "account_subscribe"},
+                                                    {"text": "🔕 Unsubscribe", "callback_data": "account_unsubscribe"}
+                                                ],
+                                                [
+                                                    {"text": "❓ Help", "callback_data": "show_help"},
+                                                    {"text": "📊 Status", "callback_data": "account_status"}
+                                                ],
                                                 [{"text": "🏠 Back to Main Menu", "callback_data": "back_to_main"}]
                                             ]
                                         }
                                         
-                                        # Send fallback menu
+                                        # Send fallback menu with all required buttons
                                         send_response(
                                             chat_id,
                                             "👤 *Account Management* 👤\n\n"
@@ -2269,7 +2278,7 @@ Share your experiences and learn from others!
                                             reply_markup=fallback_markup
                                         )
                                         
-                                        logger.info("Successfully displayed fallback account menu")
+                                        logger.info("Displayed fallback account menu with all required buttons")
                                 
                                 else:
                                     logger.warning(f"Unknown menu action: {menu_action}")
