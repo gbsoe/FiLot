@@ -868,25 +868,26 @@ def run_telegram_bot():
                                         "Sorry, there was an error with the investment flow. Please try again using the Invest button."
                                     )
                                     
-                            # Handle ALL profile selection callbacks (account_profile_* AND profile_*)
+                            # SIMPLIFIED APPROACH FOR PROFILE BUTTONS
                             elif callback_data.startswith("account_profile_") or callback_data.startswith("profile_"):
                                 try:
-                                    # Import our universal direct button fix module
-                                    import direct_button_fix
-                                    from keyboard_utils import MAIN_KEYBOARD
+                                    # Import our simplified profile button manager
+                                    import profile_button_manager
                                     
                                     # Get user ID
                                     user_id = update_obj.callback_query.from_user.id
                                     
-                                    # Use our universal button handler that handles both formats
-                                    result = direct_button_fix.handle_button(callback_data, user_id)
+                                    # Use our completely independent handler
+                                    success, message = profile_button_manager.handle_profile_button(user_id, callback_data)
                                     
-                                    # Check if the fix was successful
-                                    if result and result.get("success", False):
-                                        # Send the formatted message
+                                    if success:
+                                        # Get the main keyboard for a consistent UI
+                                        from keyboard_utils import MAIN_KEYBOARD
+
+                                        # Send the success message
                                         send_response(
                                             chat_id,
-                                            result["message"],
+                                            message,
                                             parse_mode="Markdown",
                                             reply_markup=MAIN_KEYBOARD
                                         )
@@ -895,27 +896,27 @@ def run_telegram_bot():
                                         update_obj.callback_query.answer("Profile updated successfully!")
                                         
                                         # Log the success
-                                        logger.info(f"✅ Profile set successfully for {callback_data}")
-                                        
-                                        # Return to stop further processing
-                                        return
+                                        logger.info(f"✅ Profile button handled successfully: {callback_data}")
                                     else:
                                         # Log the error
-                                        error_msg = result.get("message", "Unknown error") if result else "Handler returned no result"
-                                        logger.error(f"❌ Failed to set profile: {error_msg}")
+                                        logger.error(f"❌ Profile button error: {message}")
                                         
                                         # Acknowledge the callback with error
-                                        update_obj.callback_query.answer("Error updating profile. Please try again.")
+                                        update_obj.callback_query.answer("Profile update failed. Please try again.")
                                         
-                                        # Send error message
+                                        # Send error message to user
                                         send_response(
                                             chat_id,
                                             "Sorry, there was an error updating your profile. Please try again.",
-                                            reply_markup=MAIN_KEYBOARD
+                                            parse_mode="Markdown"
                                         )
-                                        
-                                except ImportError:
-                                    logger.error(f"Could not import account_button_fix module")
+                                    
+                                    # Always return to prevent further processing
+                                    return
+                                    
+                                except Exception as e:
+                                    # Log any errors
+                                    logger.error(f"Error handling profile button: {e}")
                                     update_obj.callback_query.answer("System error. Please try again later.")
                                 
                                 except Exception as e:
