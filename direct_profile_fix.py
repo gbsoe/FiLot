@@ -142,6 +142,29 @@ def process_profile_callback(callback_data: str, user_id: int, chat_id: int) -> 
     """
     logger.info(f"Direct profile fix: Processing {callback_data} for user {user_id}")
     
+    # Simple rate limiting to prevent multiple rapid clicks
+    now = time.time()
+    key = f"{user_id}_{callback_data}"
+    last_time = getattr(process_profile_callback, 'last_attempts', {}).get(key, 0)
+    
+    # Store the last attempts on the function object to persist between calls
+    if not hasattr(process_profile_callback, 'last_attempts'):
+        process_profile_callback.last_attempts = {}
+    
+    # Check if this is a rapid button press (within 1.5 seconds)
+    if now - last_time < 1.5:
+        logger.info(f"Direct profile fix: Rate limiting profile button for user {user_id}")
+        return {
+            "success": True,
+            "action": "throttled",
+            "message": "Your profile is being updated. Please wait...",
+            "chat_id": chat_id
+        }
+    
+    # Update the last attempt time
+    process_profile_callback.last_attempts[key] = now
+    
+    # Use direct SQL for reliability (completely bypass SQLAlchemy)
     try:
         # Extract profile type from callback data
         if callback_data == "high-risk" or callback_data == "profile_high-risk":
@@ -155,51 +178,78 @@ def process_profile_callback(callback_data: str, user_id: int, chat_id: int) -> 
                 "error": f"Unknown profile type: {callback_data}",
                 "chat_id": chat_id
             }
-            
-        # Set the profile
-        result = set_user_profile(user_id, profile_type)
         
-        # Prepare response for Telegram
-        if result.get("success", False):
-            # Create appropriate emoji and message
-            emoji = "🔴" if profile_type == "high-risk" else "🟢"
+        # DIRECT SQL APPROACH - Most reliable
+        import sqlite3
+        
+        try:
+            # Connect to the database directly
+            db_path = 'filot_bot.db'
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
             
-            if profile_type == "high-risk":
-                message = (
-                    f"{emoji} *High-Risk Profile Selected*\n\n"
-                    f"Your investment recommendations will now focus on:\n"
-                    f"• Higher APR opportunities\n"
-                    f"• Newer pools with growth potential\n"
-                    f"• More volatile but potentially rewarding options\n\n"
-                    f"_Note: Higher returns come with increased risk_"
+            # Check if the user exists
+            cursor.execute('SELECT id, risk_profile FROM users WHERE id = ?', (user_id,))
+            user_row = cursor.fetchone()
+            
+            if user_row:
+                # User exists, update profile
+                old_profile = user_row[1]
+                cursor.execute('UPDATE users SET risk_profile = ? WHERE id = ?', (profile_type, user_id))
+                conn.commit()
+                logger.info(f"Direct SQL: Updated user {user_id} profile from '{old_profile}' to '{profile_type}'")
+                success = True
+            else:
+                # User doesn't exist, create a new one
+                cursor.execute(
+                    'INSERT INTO users (id, risk_profile, created_at, last_active) VALUES (?, ?, datetime("now"), datetime("now"))',
+                    (user_id, profile_type)
                 )
-            else:  # stable
-                message = (
-                    f"{emoji} *Stable Profile Selected*\n\n"
-                    f"Your investment recommendations will now focus on:\n"
-                    f"• Established, reliable pools\n"
-                    f"• Lower volatility options\n"
-                    f"• More consistent but potentially lower APR\n\n"
-                    f"_Note: Stability typically means more moderate returns_"
-                )
+                conn.commit()
+                logger.info(f"Direct SQL: Created new user {user_id} with '{profile_type}' profile")
+                success = True
+            
+            conn.close()
+            
+            if success:
+                # Create appropriate emoji and message
+                emoji = "🔴" if profile_type == "high-risk" else "🟢"
                 
-            # Return success response
-            return {
-                "success": True,
-                "action": "profile_set",
-                "profile": profile_type,
-                "message": message,
-                "chat_id": chat_id
-            }
-        else:
-            # Return error response
-            return {
-                "success": False,
-                "action": "error",
-                "message": f"Sorry, there was an error setting your profile. Please try again in a moment. Error: {result.get('error', 'Unknown error')}",
-                "chat_id": chat_id
-            }
-            
+                if profile_type == "high-risk":
+                    message = (
+                        f"{emoji} *High-Risk Profile Selected*\n\n"
+                        f"Your investment recommendations will now focus on:\n"
+                        f"• Higher APR opportunities\n"
+                        f"• Newer pools with growth potential\n"
+                        f"• More volatile but potentially rewarding options\n\n"
+                        f"_Note: Higher returns come with increased risk_"
+                    )
+                else:  # stable
+                    message = (
+                        f"{emoji} *Stable Profile Selected*\n\n"
+                        f"Your investment recommendations will now focus on:\n"
+                        f"• Established, reliable pools\n"
+                        f"• Lower volatility options\n"
+                        f"• More consistent but potentially lower APR\n\n"
+                        f"_Note: Stability typically means more moderate returns_"
+                    )
+                    
+                # Return success response
+                return {
+                    "success": True,
+                    "action": "profile_set",
+                    "profile": profile_type,
+                    "message": message,
+                    "chat_id": chat_id
+                }
+            else:
+                raise Exception("Failed to update database")
+                
+        except sqlite3.Error as sql_err:
+            logger.error(f"Direct SQL error: {sql_err}")
+            logger.error(traceback.format_exc())
+            raise sql_err
+    
     except Exception as e:
         logger.error(f"Direct profile fix: Error processing profile callback: {e}")
         logger.error(traceback.format_exc())
