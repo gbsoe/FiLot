@@ -66,8 +66,7 @@ def get_account_menu() -> InlineKeyboardMarkup:
             InlineKeyboardButton("🔕 Unsubscribe", callback_data="account_unsubscribe")
         ],
         [
-            InlineKeyboardButton("❓ Help", callback_data="account_help"),
-            InlineKeyboardButton("📊 Status", callback_data="account_status")
+            InlineKeyboardButton("❓ Help", callback_data="account_help")
         ],
         [
             InlineKeyboardButton("🏠 Back to Main Menu", callback_data="back_to_main")
