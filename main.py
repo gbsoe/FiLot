@@ -2186,14 +2186,44 @@ Share your experiences and learn from others!
                                     from menus import get_account_menu
                                     reply_markup = get_account_menu()
                                     
-                                    # Send account menu directly
-                                    send_response(
-                                        chat_id,
-                                        "👤 *Account Management* 👤\n\n"
-                                        "Manage your FiLot account settings and preferences:",
-                                        parse_mode="Markdown",
-                                        reply_markup=reply_markup
-                                    )
+                                    # Send account menu with proper user info
+                                    try:
+                                        if 'account_info' in locals() and account_info.get("success"):
+                                            # Create account details message from the info
+                                            wallet_status = account_info.get("wallet_status", "❌ Not Connected")
+                                            profile_type = account_info.get("profile_type", "Not Set")
+                                            subscription_status = account_info.get("subscription_status", "❌ Not Subscribed")
+                                            
+                                            # Send account menu with user info
+                                            send_response(
+                                                chat_id,
+                                                f"👤 *Your Account* 👤\n\n"
+                                                f"*Wallet:* {wallet_status}\n"
+                                                f"*Risk Profile:* {profile_type}\n"
+                                                f"*Daily Updates:* {subscription_status}\n\n"
+                                                f"Select an option below to manage your account:",
+                                                parse_mode="Markdown",
+                                                reply_markup=reply_markup
+                                            )
+                                        else:
+                                            # Fallback to simpler account menu
+                                            send_response(
+                                                chat_id,
+                                                "👤 *Account Management* 👤\n\n"
+                                                "Manage your FiLot account settings and preferences:",
+                                                parse_mode="Markdown",
+                                                reply_markup=reply_markup
+                                            )
+                                    except Exception as account_display_err:
+                                        logger.error(f"Error displaying account info: {account_display_err}")
+                                        # Fallback to simpler account menu
+                                        send_response(
+                                            chat_id,
+                                            "👤 *Account Management* 👤\n\n"
+                                            "Manage your FiLot account settings and preferences:",
+                                            parse_mode="Markdown",
+                                            reply_markup=reply_markup
+                                        )
                                     
                                     logger.info("Successfully displayed account menu via menu_account callback")
                                 
@@ -2240,7 +2270,21 @@ Share your experiences and learn from others!
                                     
                                     # Import account menu from menus.py for consistency
                                     from menus import get_account_menu
-                                    reply_markup = get_account_menu()
+                                    
+                                    try:
+                                        # Use our simple account handler to get account info directly
+                                        import simple_account_handler
+                                        
+                                        # Get user ID from the update
+                                        user_id = update_obj.callback_query.from_user.id
+                                        
+                                        # Get account info using our simple handler
+                                        account_info = simple_account_handler.get_account_info(user_id)
+                                        
+                                        reply_markup = get_account_menu()
+                                    except Exception as e:
+                                        logger.error(f"Error in account handler: {e}")
+                                        reply_markup = get_account_menu()
                                     
                                     # Send account menu directly
                                     send_response(
