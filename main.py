@@ -1079,20 +1079,20 @@ def run_telegram_bot():
                             
                             # Handle account callback menu items
                             elif callback_data.startswith("account_") or callback_data in ["profile_high-risk", "profile_stable"]:
-                                # Use our new comprehensive account menu handler
+                                # Use our ultra-simplified ultimate account handler
                                 try:
-                                    # Import our new account menu handler
-                                    import account_menu_handler
+                                    # Import our ultimate account fix that bypasses all problematic code
+                                    import ultimate_account_fix
                                     
                                     # Get user ID
                                     user_id = update_obj.callback_query.from_user.id
                                     
-                                    # Process any account-related button using the new handler
-                                    result = account_menu_handler.process_account_callback(callback_data, user_id)
+                                    # Process any account-related button using the ultimate handler
+                                    result = ultimate_account_fix.process_account_button(callback_data, user_id)
                                     
                                     # If the handler processed this button, send the response and return
                                     if result:
-                                        logger.info(f"Successfully handled account button: {callback_data}")
+                                        logger.info(f"Successfully processed account button: {callback_data}")
                                         send_response(
                                             chat_id,
                                             result.get("message", "Account updated successfully!"),
@@ -1100,11 +1100,11 @@ def run_telegram_bot():
                                             reply_markup=result.get("reply_markup")
                                         )
                                         return
-                                except Exception as account_handler_err:
-                                    logger.error(f"Error using account menu handler: {account_handler_err}")
+                                except Exception as e:
+                                    logger.error(f"Error in ultimate account handler: {e}")
                                     logger.error(traceback.format_exc())
                                 
-                                # Extract the account action and continue with the original flow as fallback
+                                # Extract account action for fallback processing
                                 account_action = callback_data.replace("account_", "")
                                 
                                 if account_action == "wallet":
@@ -2223,36 +2223,34 @@ Share your experiences and learn from others!
                                         loop.close()
                                 
                                 elif menu_action == "account":
-                                    # Handle account menu with our final ultimate fix
-                                    logger.info(f"Triggering simplified account menu")
+                                    # Handle account menu with our simplest direct fix
+                                    logger.info(f"Using ultra-simple direct menu fix")
                                     
                                     try:
-                                        # Import our ultimate account fix that bypasses all problematic code
-                                        import ultimate_account_fix
+                                        # Import our direct menu fix
+                                        import direct_menu_fix
                                         
-                                        # Get user ID from the update
-                                        user_id = update_obj.callback_query.from_user.id
+                                        # Get menu and message directly
+                                        menu = direct_menu_fix.get_account_menu()
+                                        message = direct_menu_fix.get_account_message()
                                         
-                                        # Get account menu with direct implementation
-                                        result = ultimate_account_fix.create_account_menu(user_id)
-                                        
-                                        # Log intermediate data for debugging
-                                        logger.info(f"ACCOUNT DEBUG - Generated account menu successfully")
+                                        # Log success
+                                        logger.info(f"ACCOUNT DEBUG - Using direct static menu")
                                         
                                         # Send account menu with all buttons
                                         send_response(
                                             chat_id,
-                                            result["message"],
+                                            message,
                                             parse_mode="Markdown",
-                                            reply_markup=result["reply_markup"]
+                                            reply_markup=menu
                                         )
                                         
-                                        logger.info("Successfully displayed simplified account menu")
+                                        logger.info("Successfully displayed direct static account menu")
                                     except Exception as e:
-                                        logger.error(f"Error in ultimate account fix: {e}")
+                                        logger.error(f"Error in direct menu fix: {e}")
                                         logger.error(f"Traceback: {traceback.format_exc()}")
                                         
-                                        # Provide an absolute fallback with static markup
+                                        # Hardcoded fallback as absolute last resort
                                         static_markup = {
                                             "inline_keyboard": [
                                                 [{"text": "💼 Connect Wallet", "callback_data": "account_wallet"}],
@@ -2272,7 +2270,7 @@ Share your experiences and learn from others!
                                             ]
                                         }
                                         
-                                        # Use static data as ultimate fallback
+                                        # Use hardcoded data as ultimate fallback
                                         send_response(
                                             chat_id,
                                             "👤 *Account Management* 👤\n\n"
@@ -2281,7 +2279,7 @@ Share your experiences and learn from others!
                                             reply_markup=static_markup
                                         )
                                         
-                                        logger.info("Displayed static fallback account menu")
+                                        logger.info("Displayed hardcoded fallback account menu")
                                 
                                 else:
                                     logger.warning(f"Unknown menu action: {menu_action}")
