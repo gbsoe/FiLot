@@ -2182,19 +2182,43 @@ Share your experiences and learn from others!
                                     # Handle account menu item
                                     logger.info(f"Triggering account menu from menu_account button")
                                     
-                                    # Import from menus to ensure consistency
-                                    from menus import get_account_menu
-                                    reply_markup = get_account_menu()
+                                    try:
+                                        # Use our final account button fix to get a reliable account menu
+                                        import account_button_fix_final
+                                        
+                                        # Get the user ID
+                                        user_id = update_obj.callback_query.from_user.id
+                                        
+                                        # Get account info with menu using our direct handler
+                                        account_result = account_button_fix_final.handle_account_button(user_id)
+                                        
+                                        # Extract message and reply markup from the result
+                                        account_message = account_result.get("message")
+                                        reply_markup = account_result.get("reply_markup")
+                                        
+                                        logger.info(f"Successfully got account info using the final fix")
+                                    except Exception as e:
+                                        logger.error(f"Error using account button fix: {e}")
+                                        # Import from menus as fallback
+                                        from menus import get_account_menu
+                                        reply_markup = get_account_menu()
                                     
                                     # Send account menu with proper user info
                                     try:
-                                        if 'account_info' in locals() and account_info.get("success"):
-                                            # Create account details message from the info
+                                        # If we got account message from the fix, use it
+                                        if 'account_message' in locals() and account_message:
+                                            send_response(
+                                                chat_id,
+                                                account_message,
+                                                parse_mode="Markdown",
+                                                reply_markup=reply_markup
+                                            )
+                                        # Otherwise fallback to the previous method
+                                        elif 'account_info' in locals() and account_info.get("success"):
                                             wallet_status = account_info.get("wallet_status", "❌ Not Connected")
                                             profile_type = account_info.get("profile_type", "Not Set")
                                             subscription_status = account_info.get("subscription_status", "❌ Not Subscribed")
                                             
-                                            # Send account menu with user info
                                             send_response(
                                                 chat_id,
                                                 f"👤 *Your Account* 👤\n\n"
@@ -2206,7 +2230,7 @@ Share your experiences and learn from others!
                                                 reply_markup=reply_markup
                                             )
                                         else:
-                                            # Fallback to simpler account menu
+                                            # Fallback to simplest account menu
                                             send_response(
                                                 chat_id,
                                                 "👤 *Account Management* 👤\n\n"
@@ -2216,7 +2240,7 @@ Share your experiences and learn from others!
                                             )
                                     except Exception as account_display_err:
                                         logger.error(f"Error displaying account info: {account_display_err}")
-                                        # Fallback to simpler account menu
+                                        # Absolute fallback to simplest account menu
                                         send_response(
                                             chat_id,
                                             "👤 *Account Management* 👤\n\n"
