@@ -134,9 +134,11 @@ def set_high_risk_profile(user_id: int, chat_id: int) -> Dict[str, Any]:
         
         # Try an alternative approach if the first one fails
         try:
-            # Import database utils directly
-            import db_utils
-            db_utils.set_user_profile(user_id, "high-risk")
+            # Try using a different approach - direct SQL
+            from app import db
+            db.session.execute("UPDATE users SET risk_profile = 'high-risk' WHERE id = :user_id", 
+                              {"user_id": user_id})
+            db.session.commit()
             
             logger.info(f"Set user {user_id} profile to 'high-risk' using db_utils")
             
