@@ -871,15 +871,18 @@ def run_telegram_bot():
                             # Handle account profile selection callbacks
                             elif callback_data.startswith("account_profile_"):
                                 try:
-                                    # Import the improved account button fix
-                                    import account_button_fix
+                                    # Import our new account handlers module
+                                    import account_handlers
                                     from keyboard_utils import MAIN_KEYBOARD
                                     
+                                    # Get user ID
+                                    user_id = update_obj.callback_query.from_user.id
+                                    
                                     # Use our specialized direct handler
-                                    result = account_button_fix.fix_account_profile_buttons(update_obj.callback_query)
+                                    result = account_handlers.handle_account_button(callback_data, user_id)
                                     
                                     # Check if the fix was successful
-                                    if result["success"]:
+                                    if result and result["success"]:
                                         # Send the formatted message
                                         send_response(
                                             chat_id,
@@ -895,7 +898,8 @@ def run_telegram_bot():
                                         logger.info(f"✅ Account profile button fix succeeded for {callback_data}")
                                     else:
                                         # Log the error
-                                        logger.error(f"❌ Account profile button fix failed: {result.get('error', 'Unknown error')}")
+                                        error_msg = result.get("message", "Unknown error") if result else "Handler returned no result"
+                                        logger.error(f"❌ Account profile button fix failed: {error_msg}")
                                         
                                         # Acknowledge the callback with error
                                         update_obj.callback_query.answer("Error updating profile. Please try again.")
@@ -1160,8 +1164,43 @@ def run_telegram_bot():
                                 account_action = callback_data.replace("account_", "")
                                 
                                 if account_action == "wallet":
-                                    # Redirect to walletconnect handler
-                                    logger.info("Redirecting account_wallet to walletconnect handler")
+                                    # Handle wallet button click with custom approach
+                                    try:
+                                        # Import our account handlers
+                                        import account_handlers
+                                        
+                                        # Get user ID
+                                        user_id = update_obj.callback_query.from_user.id
+                                        
+                                        # Use the specialized handler for wallet button
+                                        result = account_handlers.handle_wallet_button(user_id)
+                                        
+                                        if result and result["success"]:
+                                            # Send the response with custom reply markup
+                                            send_response(
+                                                chat_id,
+                                                result["message"],
+                                                parse_mode="Markdown",
+                                                reply_markup=result["reply_markup"]
+                                            )
+                                            
+                                            # Acknowledge the callback
+                                            update_obj.callback_query.answer("Wallet connection options ready")
+                                            
+                                            # Log success
+                                            logger.info("✅ Wallet button handler succeeded")
+                                            
+                                            # Return to skip further processing
+                                            return
+                                        else:
+                                            # Log error
+                                            logger.error("❌ Wallet button handler failed")
+                                    except Exception as e:
+                                        logger.error(f"Error in wallet button direct handler: {e}")
+                                        logger.error(traceback.format_exc())
+                                    
+                                    # Fallback: Redirect to walletconnect handler
+                                    logger.info("Falling back to walletconnect handler")
                                     callback_data = "walletconnect"
                                     # Continue to the walletconnect handler below
                                 
