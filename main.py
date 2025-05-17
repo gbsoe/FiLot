@@ -871,7 +871,49 @@ def run_telegram_bot():
                             # Handle risk profile selection callbacks
                             elif callback_data.startswith("profile_"):
                                 try:
-                                    # Get the profile from the callback data
+                                    # First try with our direct profile fix
+                                    try:
+                                        # Import the direct profile fix module
+                                        import direct_profile_fix
+                                        
+                                        # Get user and chat IDs
+                                        user_id = update_obj.callback_query.from_user.id
+                                        chat_id = update_obj.callback_query.message.chat_id
+                                        
+                                        # Process the profile callback directly
+                                        result = direct_profile_fix.process_profile_callback(
+                                            callback_data, 
+                                            user_id, 
+                                            chat_id
+                                        )
+                                        
+                                        # Check if the operation was successful
+                                        if result.get("success"):
+                                            # Log success
+                                            logger.info(f"Successfully updated user profile using direct fix: {result}")
+                                            
+                                            # Send the message to the user
+                                            send_response(
+                                                chat_id,
+                                                result.get("message", f"Profile set to {callback_data.replace('profile_', '')}"),
+                                                parse_mode="Markdown",
+                                                reply_markup=MAIN_KEYBOARD
+                                            )
+                                            
+                                            # Acknowledge the callback
+                                            update_obj.callback_query.answer("Profile updated!")
+                                            return
+                                        else:
+                                            # Log failure
+                                            logger.warning(f"Failed to update profile using direct fix: {result}")
+                                            # Continue with traditional approach
+                                    except ImportError:
+                                        logger.warning("Direct profile fix module not available, using traditional approach")
+                                    except Exception as direct_err:
+                                        logger.error(f"Error using direct profile fix: {direct_err}")
+                                        logger.error(traceback.format_exc())
+                                    
+                                    # Get the profile from the callback data (traditional approach)
                                     profile = callback_data.replace("profile_", "")
                                     
                                     # Import main keyboard for consistent UI
