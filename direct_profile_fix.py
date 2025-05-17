@@ -166,11 +166,25 @@ def process_profile_callback(callback_data: str, user_id: int, chat_id: int) -> 
     
     # Use direct SQL for reliability (completely bypass SQLAlchemy)
     try:
-        # Extract profile type from callback data
-        if callback_data == "high-risk" or callback_data == "profile_high-risk":
+        # Extract profile type from callback data with more patterns
+        if callback_data in ["high-risk", "profile_high-risk", "account_profile_high-risk"]:
             profile_type = "high-risk"
-        elif callback_data == "stable" or callback_data == "profile_stable":
+        elif callback_data in ["stable", "profile_stable", "account_profile_stable"]:
             profile_type = "stable"
+        # Extract from a pattern like "profile_ACTION", "account_profile_ACTION", etc.
+        elif "_" in callback_data:
+            parts = callback_data.split("_")
+            potential_profile = parts[-1]  # Get the last part
+            if potential_profile in ["high-risk", "stable"]:
+                profile_type = potential_profile
+                logger.info(f"Extracted profile type '{profile_type}' from complex pattern: {callback_data}")
+            else:
+                logger.warning(f"Direct profile fix: Unknown profile type extracted from {callback_data}")
+                return {
+                    "success": False,
+                    "error": f"Unknown profile type extracted from: {callback_data}",
+                    "chat_id": chat_id
+                }
         else:
             logger.warning(f"Direct profile fix: Unknown profile type in {callback_data}")
             return {
@@ -212,6 +226,9 @@ def process_profile_callback(callback_data: str, user_id: int, chat_id: int) -> 
             conn.close()
             
             if success:
+                # Log additional details for debugging
+                logger.info(f"Direct profile fix successfully processed callback '{callback_data}' for user {user_id} to set profile '{profile_type}'")
+                
                 # Create appropriate emoji and message
                 emoji = "🔴" if profile_type == "high-risk" else "🟢"
                 

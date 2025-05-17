@@ -868,6 +868,145 @@ def run_telegram_bot():
                                         "Sorry, there was an error with the investment flow. Please try again using the Invest button."
                                     )
                                     
+                            # Handle account profile selection callbacks
+                            elif callback_data.startswith("account_profile_"):
+                                try:
+                                    # First try with our direct profile fix
+                                    try:
+                                        # Import the direct profile fix module
+                                        import direct_profile_fix
+                                        
+                                        # Get user and chat IDs
+                                        user_id = update_obj.callback_query.from_user.id
+                                        chat_id = update_obj.callback_query.message.chat_id
+                                        
+                                        # Process the profile callback directly
+                                        result = direct_profile_fix.process_profile_callback(
+                                            callback_data, 
+                                            user_id, 
+                                            chat_id
+                                        )
+                                        
+                                        # Check if the operation was successful
+                                        if result.get("success"):
+                                            # Log success
+                                            logger.info(f"Successfully updated user profile using direct fix (account): {result}")
+                                            
+                                            # Send the message to the user
+                                            send_response(
+                                                chat_id,
+                                                result.get("message", f"Profile set to {callback_data.replace('account_profile_', '')}"),
+                                                parse_mode="Markdown",
+                                                reply_markup=MAIN_KEYBOARD
+                                            )
+                                            
+                                            # Acknowledge the callback
+                                            update_obj.callback_query.answer("Profile updated!")
+                                            return
+                                        else:
+                                            # Log failure
+                                            logger.warning(f"Failed to update profile using direct fix (account): {result}")
+                                            # Continue with traditional approach
+                                    except ImportError:
+                                        logger.warning("Direct profile fix module not available, using traditional approach (account)")
+                                    except Exception as direct_err:
+                                        logger.error(f"Error using direct profile fix (account): {direct_err}")
+                                        logger.error(traceback.format_exc())
+                                    
+                                    # Get the profile from the callback data (traditional approach)
+                                    profile = callback_data.replace("account_profile_", "")
+                                    
+                                    # Import main keyboard for consistent UI
+                                    from keyboard_utils import MAIN_KEYBOARD
+                                    
+                                    # Prepare detailed profile message
+                                    profile_emoji = "🔴" if profile == "high-risk" else "🟢"
+                                    
+                                    if profile == "high-risk":
+                                        profile_message = (
+                                            f"{profile_emoji} *High-Risk Profile Selected*\n\n"
+                                            f"Your investment recommendations will now focus on:\n"
+                                            f"• Higher APR opportunities\n"
+                                            f"• Newer pools with growth potential\n"
+                                            f"• More volatile but potentially rewarding options\n\n"
+                                            f"_Note: Higher returns come with increased risk_"
+                                        )
+                                    else:  # stable
+                                        profile_message = (
+                                            f"{profile_emoji} *Stable Profile Selected*\n\n"
+                                            f"Your investment recommendations will now focus on:\n"
+                                            f"• Established, reliable pools\n"
+                                            f"• Lower volatility options\n"
+                                            f"• More consistent but potentially lower APR\n\n"
+                                            f"_Note: Stability typically means more moderate returns_"
+                                        )
+                                    
+                                    # Update the user's profile in the database
+                                    try:
+                                        # Import the app for database access
+                                        from app import app
+                                        
+                                        # Get the user ID from the update
+                                        user_id = update_obj.callback_query.from_user.id
+                                        
+                                        # Update the user profile in the database
+                                        with app.app_context():
+                                            # Import User model
+                                            from models import User, db
+                                            
+                                            # Get or create the user
+                                            user = db.session.query(User).filter_by(id=user_id).first()
+                                            if not user:
+                                                # Create a new user
+                                                user = User()
+                                                user.id = user_id
+                                                db.session.add(user)
+                                            
+                                            # Update user's profile
+                                            user.risk_profile = profile
+                                            db.session.commit()
+                                        
+                                        # Log the updated profile
+                                        logger.info(f"Updated user {user_id} profile to {profile}")
+                                        
+                                        # Send the detailed profile message to the user
+                                        send_response(
+                                            chat_id, 
+                                            profile_message, 
+                                            parse_mode="Markdown",
+                                            reply_markup=MAIN_KEYBOARD
+                                        )
+                                        
+                                        # Acknowledge the callback
+                                        update_obj.callback_query.answer("Profile updated!")
+                                    except Exception as db_err:
+                                        logger.error(f"Database error updating profile: {db_err}")
+                                        logger.error(traceback.format_exc())
+                                        
+                                        # Acknowledge the callback with an error message
+                                        update_obj.callback_query.answer("Error updating profile. Please try again.")
+                                        
+                                        # Send an error message to the user
+                                        send_response(
+                                            chat_id,
+                                            "Sorry, there was an error updating your profile. Please try again later.",
+                                            reply_markup=MAIN_KEYBOARD
+                                        )
+                                except Exception as e:
+                                    logger.error(f"Error handling profile callback: {e}")
+                                    logger.error(traceback.format_exc())
+                                    
+                                    # Attempt to notify the user
+                                    try:
+                                        update_obj.callback_query.answer("Error processing profile selection")
+                                        send_response(
+                                            chat_id,
+                                            "Sorry, there was an error processing your profile selection. Please try again later.",
+                                            reply_markup=MAIN_KEYBOARD
+                                        )
+                                    except Exception as notify_err:
+                                        logger.error(f"Error sending error notification: {notify_err}")
+
                             # Handle risk profile selection callbacks
                             elif callback_data.startswith("profile_"):
                                 try:
@@ -1025,8 +1164,8 @@ def run_telegram_bot():
                                         "🟢 *Stable*: Lower risk pools with more consistent returns",
                                         parse_mode="Markdown",
                                         reply_markup={"inline_keyboard": [
-                                            [{"text": "🔴 High-Risk Profile", "callback_data": "profile_high-risk"}],
-                                            [{"text": "🟢 Stable Profile", "callback_data": "profile_stable"}]
+                                            [{"text": "🔴 High-Risk Profile", "callback_data": "account_profile_high-risk"}],
+                                            [{"text": "🟢 Stable Profile", "callback_data": "account_profile_stable"}]
                                         ]}
                                     )
                                     return
