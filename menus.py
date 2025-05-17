@@ -58,8 +58,8 @@ def get_account_menu() -> InlineKeyboardMarkup:
             InlineKeyboardButton("💼 Connect Wallet", callback_data="account_wallet")
         ],
         [
-            InlineKeyboardButton("🔴 High-Risk Profile", callback_data="account_profile_high-risk"),
-            InlineKeyboardButton("🟢 Stable Profile", callback_data="account_profile_stable")
+            InlineKeyboardButton("🔴 High-Risk Profile", callback_data="profile_high-risk"),
+            InlineKeyboardButton("🟢 Stable Profile", callback_data="profile_stable")
         ],
         [
             InlineKeyboardButton("🔔 Subscribe", callback_data="account_subscribe"),
