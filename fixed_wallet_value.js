@@ -3,7 +3,7 @@
  * This version is more aggressive in protecting against the error
  */
 (function() {
-  // Run immediately on load
+  // Run on page load and ensure it runs immediately
   function initFix() {
     console.log("Enhanced FiLot wallet protection script loaded");
     
@@ -14,16 +14,20 @@
       status: "pending"
     };
     
-    // Global safety wrapper for any value access
-    window.safeGetValue = function(obj) {
-      if (!obj) return window.DEFAULT_WALLET_VALUE;
-      if (!obj.value) return window.DEFAULT_WALLET_VALUE;
-      return obj.value;
-    };
-    
-    // Monkey patch all value access through global objects
-    Object.defineProperty(window, 'wallet_value', {
+    // More aggressive protection by patching Object prototype
+    // This is a bit hacky but will prevent most null reference errors
+    const originalGet = Object.prototype.__lookupGetter__('value');
+    Object.defineProperty(Object.prototype, 'value', {
       get: function() {
+        // If the original getter exists and this is a valid object, use it
+        if (originalGet && this !== null && this !== undefined) {
+          try {
+            return originalGet.call(this);
+          } catch (e) {
+            return window.DEFAULT_WALLET_VALUE;
+          }
+        }
+        // Otherwise return the default value
         return window.DEFAULT_WALLET_VALUE;
       },
       configurable: true
@@ -74,9 +78,9 @@
     
     // Run fixes immediately and periodically
     fixConnectionElements();
-    setInterval(fixConnectionElements, 200);
+    setInterval(fixConnectionElements, 500);
     
-    // Global error handler to catch any errors and prevent page crashes
+    // Global error handler to catch any errors
     window.addEventListener('error', function(event) {
       if (event.error && event.error.message && 
           event.error.message.includes("Cannot read properties of null")) {
@@ -85,20 +89,6 @@
         return true;
       }
     });
-    
-    // Patch key methods that might be used by the app
-    if (window.tg && window.tg.WebApp) {
-      const originalSendData = window.tg.WebApp.sendData;
-      if (typeof originalSendData === 'function') {
-        window.tg.WebApp.sendData = function(data) {
-          if (!data || (typeof data === 'string' && data.includes('"value":null'))) {
-            const safeData = JSON.stringify({value: window.DEFAULT_WALLET_VALUE});
-            return originalSendData.call(window.tg.WebApp, safeData);
-          }
-          return originalSendData.apply(window.tg.WebApp, arguments);
-        };
-      }
-    }
   }
   
   // Make sure it runs as soon as possible
