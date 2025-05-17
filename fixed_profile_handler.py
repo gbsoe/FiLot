@@ -10,7 +10,7 @@ import traceback
 import time
 from typing import Dict, Any, Optional, List, Tuple
 import json
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound
 
 # Configure logging
 logging.basicConfig(
@@ -111,9 +111,8 @@ def set_high_risk_profile(user_id: int, chat_id: int) -> Dict[str, Any]:
             
             logger.info(f"Updated user {user_id} profile from '{old_profile}' to 'high-risk'")
         except NoResultFound:
-            # Create a new user
-            new_user = User()
-            new_user.telegram_id = user_id
+            # Create a new user with the id field (which is the telegram_id)
+            new_user = User(id=user_id)
             setattr(new_user, 'risk_profile', 'high-risk')
             db.session.add(new_user)
             db.session.commit()
@@ -189,9 +188,8 @@ def set_stable_profile(user_id: int, chat_id: int) -> Dict[str, Any]:
             
             logger.info(f"Updated user {user_id} profile from '{old_profile}' to 'stable'")
         except NoResultFound:
-            # Create a new user
-            new_user = User()
-            new_user.telegram_id = user_id
+            # Create a new user with the id field (which is the telegram_id)
+            new_user = User(id=user_id)
             setattr(new_user, 'risk_profile', 'stable')
             db.session.add(new_user)
             db.session.commit()

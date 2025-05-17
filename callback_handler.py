@@ -1203,11 +1203,11 @@ def handle_profile_action(profile_type: str, context: Dict[str, Any]) -> Dict[st
     # First try using our specialized fixed profile handler if available
     try:
         # Import the fixed profile handler
-        from fixed_profile_handler import handle_profile_selection
+        from fixed_profile_handler import handle_profile_setting
         logger.info(f"Using fixed profile handler for profile_{profile_type} from user {user_id}")
         
         # Use the specialized handler
-        result = handle_profile_selection(user_id, chat_id, profile_type)
+        result = handle_profile_setting(user_id, chat_id, profile_type)
         
         # If we got a result, return it
         if result:
